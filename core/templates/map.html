@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bản đồ trạm sạc - Vị trí & Hướng dẫn đường đi</title>
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Leaflet Routing Machine -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; }
+        #info { padding: 15px; background: #f8f9fa; text-align: center; }
+        #map { height: 70vh; width: 100%; }
+        #status { color: #d32f2f; font-weight: bold; }
+        .route-btn { margin: 5px; padding: 8px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .route-btn:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h2>Bản đồ trạm sạc xe điện</h2>
+        <p>Click nút định vị (hình target) để lấy vị trí hiện tại và xem đường đi đến trạm gần nhất</p>
+        <p id="status">Đang chờ vị trí...</p>
+
+        <div id="nearest-info">
+            <strong>Trạm gần nhất:</strong> <span id="tram-name">-</span><br>
+            Khoảng cách: <span id="distance">-</span><br>
+            Địa chỉ: <span id="tram-address">-</span>
+        </div>
+
+        <div id="all-trams" style="margin-top: 15px;">
+            <strong>Các trạm khác (click để xem đường đi):</strong><br>
+            <div id="tram-list"></div>
+        </div>
+    </div>
+
+    <div id="map">{{ map_html|safe }}</div>
+
+    <script>
+        let userLat = null;
+        let userLon = null;
+        let routingControl = null;
+        let mapInstance = null;  // Biến toàn cục để truy cập bản đồ Leaflet
+
+        // Lấy instance map từ Folium (Folium tạo id='map_xxxx')
+        window.onload = function() {
+            // Tìm id của div map do Folium tạo (thường là map_ + số random)
+            const mapDiv = document.querySelector('div[id^="map_"]');
+            if (mapDiv) {
+                mapInstance = window[mapDiv.id];  // Folium gán biến toàn cục trùng id
+            }
+
+            if (!mapInstance) {
+                console.error("Không tìm thấy instance map Leaflet");
+                document.getElementById('status').innerText = 'Lỗi: Không tải được bản đồ';
+            }
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(success, error, {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                });
+            } else {
+                document.getElementById('status').innerText = 'Trình duyệt không hỗ trợ định vị.';
+            }
+
+            // Tạo danh sách tất cả trạm (lấy từ popup hoặc data attribute nếu cần)
+            // Ở đây ta giả sử bạn đã có danh sách trạm từ Django, hoặc hard-code tạm
+            // Nếu muốn lấy động → thêm vào context Django và render <script> tag
+        };
+
+        function success(position) {
+            userLat = position.coords.latitude;
+            userLon = position.coords.longitude;
+            console.log("Vị trí hiện tại:", userLat, userLon);
+
+            document.getElementById('status').innerText = 'Đã lấy vị trí thành công! Đang tìm trạm gần nhất...';
+
+            fetch("/core/api/nearest-tram/", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `lat=${userLat}&lon=${userLon}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('status').innerText = 'Lỗi: ' + data.error;
+                } else {
+                    document.getElementById('tram-name').innerText = data.nearest_tram.ten_tram;
+                    document.getElementById('distance').innerText = data.min_distance;
+                    document.getElementById('tram-address').innerText = data.nearest_tram.dia_chi;
+                    document.getElementById('status').innerText = 'Trạm gần nhất đã cập nhật!';
+
+                    const tramLat = data.nearest_tram.lat;
+                    const tramLon = data.nearest_tram.lon;
+
+                    drawRoute(userLat, userLon, tramLat, tramLon, data.nearest_tram.ten_tram);
+
+                    // Hiển thị danh sách các trạm khác (nếu bạn muốn)
+                    // Bạn có thể truyền list trams từ Django context và render ở đây
+                }
+            })
+            .catch(error => {
+                console.error('Lỗi AJAX:', error);
+                document.getElementById('status').innerText = 'Không gửi được dữ liệu vị trí.';
+            });
+        }
+
+        function drawRoute(startLat, startLon, endLat, endLon, tramName) {
+            if (!mapInstance) {
+                console.error("Map instance not found");
+                return;
+            }
+
+            // Xóa route cũ nếu có
+            if (routingControl) {
+                routingControl.remove();
+            }
+
+            routingControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(startLat, startLon),
+                    L.latLng(endLat, endLon)
+                ],
+                routeWhileDragging: true,
+                show: true,
+                addWaypoints: false,
+                fitSelectedRoutes: true,
+                router: L.Routing.osrmv1({
+                    serviceUrl: 'https://router.project-osrm.org/route/v1'
+                }),
+                createMarker: function(i, wp) {
+                    if (i === 1) {  // chỉ tạo marker cho điểm đến
+                        return L.marker(wp.latLng, {
+                            icon: L.divIcon({
+                                className: 'marker-tram',
+                                html: `<div style="background:red;color:white;padding:5px;border-radius:50%;">${tramName}</div>`
+                            })
+                        });
+                    }
+                    return null;
+                }
+            }).addTo(mapInstance);
+
+            document.getElementById('status').innerText += ` Đường đi đến ${tramName} đã vẽ!`;
+        }
+
+        function error(err) {
+            let msg = 'Không lấy được vị trí.';
+            if (err.code === 1) msg = 'Bạn đã từ chối chia sẻ vị trí.';
+            if (err.code === 2) msg = 'Vị trí không khả dụng.';
+            if (err.code === 3) msg = 'Hết thời gian chờ.';
+            document.getElementById('status').innerText = msg;
+        }
+    </script>
+</body>
+</html>

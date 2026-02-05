@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bản đồ trạm sạc - Vị trí & Hướng dẫn đường đi</title>
+
+    <!-- Bootstrap CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Leaflet Routing Machine -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; }
+        #info { padding: 15px; background: #f8f9fa; text-align: center; }
+        #map { height: 70vh; width: 100%; }
+        #status { color: #d32f2f; font-weight: bold; }
+        .route-btn { margin: 5px; padding: 8px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .route-btn:hover { background: #0056b3; }
+        .card-img-top { object-fit: contain; } /* Nếu có ảnh trong info */
+    </style>
+</head>
+<body>
+
+    <!-- Header / Navbar đồng bộ với trang chủ -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success sticky-top shadow">
+        <div class="container">
+            <a class="navbar-brand fw-bold fst-italic" href="{% url 'trang_chu' %}">
+                <i class="bi bi-lightning-charge-fill"></i> EV STORE
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            Danh mục hãng
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">VinFast</a></li>
+                            <li><a class="dropdown-item" href="#">Dat Bike</a></li>
+                            <li><a class="dropdown-item" href="#">Yadea</a></li>
+                            <li><a class="dropdown-item" href="#">Pega</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="#">Tin tức</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm sạc</a></li>
+                </ul>
+
+                <form class="d-flex me-3" role="search">
+                    <input class="form-control me-2" type="search" placeholder="Tìm xe..." aria-label="Search">
+                    <button class="btn btn-outline-light" type="submit"><i class="bi bi-search"></i></button>
+                </form>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light text-success fw-bold">Đăng nhập</button>
+                    <button class="btn btn-outline-light">Đăng ký</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Nội dung chính -->
+    <div id="info">
+        <h2>Bản đồ trạm sạc xe điện</h2>
+        <p>Click nút định vị (hình target) để lấy vị trí hiện tại và xem đường đi đến trạm gần nhất</p>
+        <p id="status">Đang chờ vị trí...</p>
+
+        <div id="nearest-info">
+            <strong>Trạm gần nhất:</strong> <span id="tram-name">-</span><br>
+            Khoảng cách: <span id="distance">-</span><br>
+            Địa chỉ: <span id="tram-address">-</span>
+        </div>
+
+        <div id="all-trams" style="margin-top: 15px;">
+            <strong>Các trạm khác (click để xem đường đi):</strong><br>
+            <div id="tram-list"></div>
+        </div>
+    </div>
+
+    <div id="map">{{ map_html|safe }}</div>
+
+    <script>
+        let userLat = null;
+        let userLon = null;
+        let routingControl = null;
+        let mapInstance = null;
+
+        window.onload = function() {
+            const mapDiv = document.querySelector('div[id^="map_"]');
+            if (mapDiv) {
+                mapInstance = window[mapDiv.id];
+            }
+
+            if (!mapInstance) {
+                console.error("Không tìm thấy instance map Leaflet");
+                document.getElementById('status').innerText = 'Lỗi: Không tải được bản đồ';
+            }
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(success, error, {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                });
+            } else {
+                document.getElementById('status').innerText = 'Trình duyệt không hỗ trợ định vị.';
+            }
+        };
+
+        function success(position) {
+            userLat = position.coords.latitude;
+            userLon = position.coords.longitude;
+            console.log("Vị trí hiện tại:", userLat, userLon);
+
+            document.getElementById('status').innerText = 'Đã lấy vị trí thành công! Đang tìm trạm gần nhất...';
+
+            fetch("/core/api/nearest-tram/", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `lat=${userLat}&lon=${userLon}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('status').innerText = 'Lỗi: ' + data.error;
+                } else {
+                    document.getElementById('tram-name').innerText = data.nearest_tram.ten_tram;
+                    document.getElementById('distance').innerText = data.min_distance;
+                    document.getElementById('tram-address').innerText = data.nearest_tram.dia_chi;
+                    document.getElementById('status').innerText = 'Trạm gần nhất đã cập nhật!';
+
+                    const tramLat = data.nearest_tram.lat;
+                    const tramLon = data.nearest_tram.lon;
+
+                    drawRoute(userLat, userLon, tramLat, tramLon, data.nearest_tram.ten_tram);
+                }
+            })
+            .catch(error => {
+                console.error('Lỗi AJAX:', error);
+                document.getElementById('status').innerText = 'Không gửi được dữ liệu vị trí.';
+            });
+        }
+
+        function drawRoute(startLat, startLon, endLat, endLon, tramName) {
+            if (!mapInstance) return;
+
+            if (routingControl) routingControl.remove();
+
+            routingControl = L.Routing.control({
+                waypoints: [L.latLng(startLat, startLon), L.latLng(endLat, endLon)],
+                routeWhileDragging: true,
+                show: true,
+                addWaypoints: false,
+                fitSelectedRoutes: true,
+                router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
+                createMarker: function(i, wp) {
+                    if (i === 1) {
+                        return L.marker(wp.latLng, {
+                            icon: L.divIcon({
+                                className: 'marker-tram',
+                                html: `<div style="background:red;color:white;padding:5px;border-radius:50%;">${tramName}</div>`
+                            })
+                        });
+                    }
+                    return null;
+                }
+            }).addTo(mapInstance);
+
+            document.getElementById('status').innerText += ` Đường đi đến ${tramName} đã vẽ!`;
+        }
+
+        function error(err) {
+            let msg = 'Không lấy được vị trí.';
+            if (err.code === 1) msg = 'Bạn đã từ chối chia sẻ vị trí.';
+            if (err.code === 2) msg = 'Vị trí không khả dụng.';
+            if (err.code === 3) msg = 'Hết thời gian chờ.';
+            document.getElementById('status').innerText = msg;
+        }
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

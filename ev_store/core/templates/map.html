@@ -42,7 +42,6 @@
 </head>
 <body>
 
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-success sticky-top shadow">
         <div class="container-fluid px-4">
             <a class="navbar-brand fw-bold" href="#">
@@ -64,9 +63,8 @@
         </div>
     </nav>
 
-    <!-- Sidebar -->
     <div id="sidebar">
-        <h5 class="mb-3"><i class="bi bi-ev-station-fill text-success me-2"></i>Trạm sạc gần bạn</h5>
+        <h5 class="mb-3"><i class="bi bi-ev-station-fill text-success me-2"></i>Trạm sạc quanh bạn</h5>
         <p id="status"><span class="loading-spinner me-2"></span>Đang lấy vị trí...</p>
 
         <div class="mb-4">
@@ -84,7 +82,7 @@
             </div>
         </div>
 
-        <h6 class="mt-4 mb-2">Các trạm gần đây khác</h6>
+        <h6 class="mt-4 mb-2">Danh sách trạm lân cận</h6>
         <div id="tram-list" class="list-group"></div>
     </div>
 
@@ -102,11 +100,44 @@
         window.onload = () => {
             map = L.map('map').setView([DEFAULT_LAT, DEFAULT_LON], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
+                attribution: '© OpenStreetMap contributors'
             }).addTo(map);
 
             tramLayer.addTo(map);
 
+            // --- TÍNH NĂNG MỚI: BẤM ĐỂ CHỌN VỊ TRÍ ---
+            map.on('click', function(e) {
+                userLat = e.latlng.lat;
+                userLon = e.latlng.lng;
+
+                // Cập nhật ghim và vòng tròn
+                if (userMarker) {
+                    userMarker.setLatLng([userLat, userLon]);
+                    userMarker.getPopup().setContent("<b>Vị trí bạn chọn</b>").update();
+                } else {
+                    userMarker = L.marker([userLat, userLon]).addTo(map).bindPopup('<b>Vị trí bạn chọn</b>').openPopup();
+                }
+                if (radiusCircle) {
+                    radiusCircle.setLatLng([userLat, userLon]);
+                }
+                if (routingControl) {
+                    routingControl.remove();
+                    routingControl = null;
+                }
+
+                // Reset giao diện và tìm trạm mới
+                document.getElementById('status').innerHTML = '<span class="loading-spinner me-2"></span>Đang quét trạm quanh vị trí mới...';
+                document.getElementById('tram-name').textContent = "-";
+                document.getElementById('distance').textContent = "-";
+                document.getElementById('tram-address').textContent = "-";
+                document.getElementById('tram-type').textContent = "-";
+                document.getElementById('google-maps-btn').disabled = true;
+
+                fetchNearbyTrams();
+            });
+            // ------------------------------------------
+
+            // Định vị GPS lúc mới vào trang
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     pos => {
@@ -117,7 +148,7 @@
                         fetchNearbyTrams();
                     },
                     err => {
-                        document.getElementById('status').innerHTML = '<i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Không lấy được vị trí → dùng mặc định TP.HCM trung tâm';
+                        document.getElementById('status').innerHTML = '<i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Không lấy được vị trí → dùng mặc định TP.HCM';
                         document.getElementById('status').classList.add('text-warning');
                         userLat = DEFAULT_LAT;
                         userLon = DEFAULT_LON;
@@ -141,7 +172,7 @@
                 .openPopup();
 
             radiusCircle = L.circle([userLat, userLon], {
-                radius: 15000,
+                radius: 20000, // Khớp với bán kính 20km của Python
                 color: '#198754',
                 fillColor: '#198754',
                 fillOpacity: 0.12
@@ -152,8 +183,7 @@
 
         async function fetchNearbyTrams() {
             try {
-                document.getElementById('status').innerHTML = '<span class="loading-spinner me-2"></span>Đang tải trạm sạc gần nhất...';
-                const response = await fetch('/api/nearest-tram/', {
+                const response = await fetch('/core/api/nearest-tram/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ lat: userLat, lon: userLon, radius: 20000 })
@@ -162,6 +192,8 @@
                 if (!response.ok) throw new Error('Lỗi server');
 
                 const data = await response.json();
+                
+                // Nhận toàn bộ danh sách trạm từ Backend
                 allTrams = data.trams || [];
 
                 if (allTrams.length === 0) {
@@ -174,26 +206,33 @@
             } catch (err) {
                 console.error(err);
                 document.getElementById('status').innerHTML = '<i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Lỗi tải dữ liệu trạm sạc';
+                
+                // Tránh lỗi hiển thị khi backend báo 404
+                allTrams = [];
+                displayTrams(allTrams);
             }
         }
 
         function displayTrams(trams) {
             const listEl = document.getElementById('tram-list');
             listEl.innerHTML = '';
+            
+            // Xóa sạch các ghim cũ trên bản đồ trước khi vẽ ghim mới
+            tramLayer.clearLayers();
 
             trams.forEach((tram, idx) => {
-                // Sidebar item
+                // Thêm vào Sidebar
                 const item = document.createElement('div');
                 item.className = 'tram-item list-group-item';
                 item.innerHTML = `
                     <strong>${tram.ten_tram}</strong><br>
                     <small class="text-muted">${tram.dia_chi}</small><br>
-                    <small class="text-success">${tram.distance ? '≈' + tram.distance + 'km • ' : ''}${tram.loai_sac} (${tram.cong_suat}kW)</small>
+                    <small class="text-success">${tram.distance ? 'Cách ≈ ' + tram.distance + ' km • ' : ''}${tram.loai_sac} (${tram.cong_suat}kW)</small>
                 `;
                 item.onclick = () => selectTram(tram, idx);
                 listEl.appendChild(item);
 
-                // Map marker
+                // Thêm Ghim lên bản đồ
                 const marker = L.marker([tram.lat, tram.lon], {
                     icon: L.divIcon({
                         className: 'marker-tram',
@@ -206,14 +245,15 @@
                 marker.bindPopup(`
                     <b>${tram.ten_tram}</b><br>
                     ${tram.dia_chi}<br>
-                    ${tram.distance ? 'Khoảng cách: ≈' + tram.distance + 'km<br>' : ''}
+                    ${tram.distance ? 'Khoảng cách: ≈ ' + tram.distance + ' km<br>' : ''}
                     Loại: ${tram.loai_sac} • ${tram.cong_suat}kW<br>
-                    <button class="btn btn-sm btn-success mt-2" onclick="selectTram(allTrams[${idx}], ${idx})">Chọn & Đi</button>
+                    <button class="btn btn-sm btn-success mt-2" onclick="selectTram(allTrams[${idx}], ${idx})">Chỉ đường tới đây</button>
                 `);
 
                 marker.on('click', () => selectTram(tram, idx));
             });
 
+            // Tự động chọn trạm gần nhất (trạm đầu tiên) nếu có
             if (trams.length > 0) selectTram(trams[0], 0);
         }
 
@@ -221,7 +261,7 @@
             selectedTram = tram;
 
             document.getElementById('tram-name').textContent = tram.ten_tram;
-            document.getElementById('distance').textContent = tram.distance ? `≈${tram.distance} km` : 'Chưa tính';
+            document.getElementById('distance').textContent = tram.distance ? `≈ ${tram.distance} km` : 'Chưa tính';
             document.getElementById('tram-address').textContent = tram.dia_chi;
             document.getElementById('tram-type').textContent = `${tram.loai_sac} (${tram.cong_suat}kW)`;
 
@@ -230,7 +270,7 @@
             document.querySelectorAll('.tram-item').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tram-item')[idx]?.classList.add('active');
 
-            map.setView([tram.lat, tram.lon], 15);
+            map.setView([tram.lat, tram.lon], 14);
             drawRoute(tram.lat, tram.lon, tram.ten_tram);
         }
 
@@ -239,7 +279,7 @@
 
             routingControl = L.Routing.control({
                 waypoints: [L.latLng(userLat, userLon), L.latLng(destLat, destLon)],
-                routeWhileDragging: true,
+                routeWhileDragging: false,
                 show: false,
                 addWaypoints: false,
                 fitSelectedRoutes: true,
@@ -257,6 +297,7 @@
 
         function openGoogleMaps() {
             if (!selectedTram) return;
+            // Link Google Maps chuẩn để chỉ đường
             const url = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLon}&destination=${selectedTram.lat},${selectedTram.lon}&travelmode=driving`;
             window.open(url, '_blank');
         }

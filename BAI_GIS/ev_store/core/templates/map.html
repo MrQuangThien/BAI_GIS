@@ -160,6 +160,8 @@
         <div class="mb-4">
             <strong>Trạm đang chọn:</strong>
             <div class="card mt-2 shadow-sm border-0">
+                <img id="tram-image" src="" class="card-img-top" style="height: 160px; object-fit: cover; display: none;" alt="Ảnh trạm sạc">
+
                 <div class="card-body">
                     <h6 id="tram-name" class="card-title mb-2">-</h6>
                     <p class="mb-1">Khoảng cách: <span id="distance">-</span></p>
@@ -199,10 +201,19 @@
 
             // BẤM ĐỂ CHỌN VỊ TRÍ MỚI
             map.on('click', function (e) {
+
+                // --- BẮT ĐẦU ĐOẠN CODE FIX LỖI (ĐÃ CẬP NHẬT) ---
+                if (e.originalEvent.target.tagName.toLowerCase() === 'path') {
+                    // Chỉ chặn lại nếu bấm trúng đường rẽ (path KHÔNG có class vung-dem-circle)
+                    if (!e.originalEvent.target.classList.contains('vung-dem-circle')) {
+                        return; 
+                    }
+                }
+                // --- KẾT THÚC ĐOẠN CODE FIX LỖI ---
+
                 userLat = e.latlng.lat;
                 userLon = e.latlng.lng;
-
-
+                
                 if (userMarker) {
                     userMarker.setLatLng([userLat, userLon]);
                     userMarker.getPopup().setContent("<b>Vị trí bạn chọn</b>").update();
@@ -217,7 +228,6 @@
                     routingControl = null;
                 }
 
-
                 document.getElementById('status').innerHTML = '<span class="loading-spinner me-2"></span>Đang quét trạm quanh vị trí mới...';
                 document.getElementById('tram-name').textContent = "-";
                 document.getElementById('distance').textContent = "-";
@@ -227,7 +237,6 @@
 
                 fetchNearbyTrams();
             });
-
 
             // Lấy vị trí GPS người dùng
             if (navigator.geolocation) {
@@ -267,7 +276,8 @@
                 radius: currentRadius,
                 color: '#198754',
                 fillColor: '#198754',
-                fillOpacity: 0.12
+                fillOpacity: 0.12,
+                className: 'vung-dem-circle' // Gắn thẻ nhận diện vòng tròn
             }).addTo(map);
 
             map.fitBounds(radiusCircle.getBounds().pad(0.2));
@@ -288,7 +298,7 @@
                 allTrams = data.trams || [];
 
                 if (allTrams.length === 0) {
-                    document.getElementById('status').innerHTML = '<i class="bi bi-info-circle-fill text-info me-2"></i>Không tìm thấy trạm trong bán kính 20km';
+                    document.getElementById('status').innerHTML = '<i class="bi bi-info-circle-fill text-info me-2"></i>Không tìm thấy trạm trong bán kính ' + (currentRadius/1000) + 'km';
                 } else {
                     document.getElementById('status').innerHTML = `<i class="bi bi-check-circle-fill text-success me-2"></i>Tìm thấy ${allTrams.length} trạm`;
                 }
@@ -306,11 +316,9 @@
         function displayTrams(trams) {
             const listEl = document.getElementById('tram-list');
             listEl.innerHTML = '';
-
             tramLayer.clearLayers();
 
             trams.forEach((tram, idx) => {
-
                 const item = document.createElement('div');
                 item.className = 'tram-item list-group-item';
                 item.innerHTML = `
@@ -321,7 +329,6 @@
                 item.onclick = () => selectTram(tram, idx);
                 listEl.appendChild(item);
 
-
                 const marker = L.marker([tram.lat, tram.lon], {
                     icon: L.divIcon({
                         className: 'marker-tram',
@@ -331,13 +338,17 @@
                     })
                 }).addTo(tramLayer);
 
-               
+                // Dùng ảnh tạm (placeholder) cực đẹp nếu Database chưa có trường hình ảnh
+                const imgUrl = tram.hinh_anh ? tram.hinh_anh : 'https://images.unsplash.com/photo-1593941707882-a5bba14938cb?auto=format&fit=crop&q=80&w=400&h=200';
+
+                // BỔ SUNG ẢNH VÀO POPUP TRÊN BẢN ĐỒ
                 marker.bindPopup(`
-                    <div style="text-align: center;">
-                        <b class="text-success">${tram.ten_tram}</b><br>
-                        ${tram.distance ? 'Cách bạn: <b>≈ ' + tram.distance + ' km</b><br>' : ''}
-                        Loại: ${tram.loai_sac} • ${tram.cong_suat}kW<br>
-                        <button class="btn btn-sm btn-success mt-2" onclick="triggerSelectTram(${idx})">
+                    <div style="text-align: center; width: 220px;">
+                        <img src="${imgUrl}" style="width: 100%; height: 110px; object-fit: cover; border-radius: 6px; margin-bottom: 10px;">
+                        <b class="text-success d-block mb-1">${tram.ten_tram}</b>
+                        ${tram.distance ? '<span class="text-muted fs-7">Cách bạn: <b>≈ ' + tram.distance + ' km</b></span><br>' : ''}
+                        <span class="text-muted fs-7">Loại: ${tram.loai_sac} • ${tram.cong_suat}kW</span><br>
+                        <button class="btn btn-sm btn-success w-100 mt-2 fw-bold" onclick="triggerSelectTram(${idx})">
                             <i class="bi bi-geo-alt-fill"></i> Chỉ đường tới đây
                         </button>
                     </div>
@@ -346,90 +357,125 @@
                 marker.on('click', () => selectTram(tram, idx));
             });
 
-
-            if (trams.length > 0) selectTram(trams[0], 0);
+            // Nếu muốn mở trang web lên không chọn trạm nào mặc định thì TẮT dòng dưới đi
+            // if (trams.length > 0) selectTram(trams[0], 0); 
         }
 
-        // Hàm mồi để fix lỗi truyền tham số Object trong chuỗi HTML
+        // HÀM MỚI: CHỈ VẼ ĐƯỜNG KHI BẤM NÚT "CHỈ ĐƯỜNG TỚI ĐÂY"
         function triggerSelectTram(idx) {
-            selectTram(allTrams[idx], idx);
-            map.closePopup(); // Đóng popup sau khi bấm chỉ đường
+            const tram = allTrams[idx];
+            selectTram(tram, idx); // Cập nhật thông tin vào Sidebar trước
+            drawRoute(tram.lat, tram.lon, tram.ten_tram); // SAU ĐÓ MỚI VẼ ĐƯỜNG
+            map.closePopup(); 
         }
 
+        // HÀM MỚI: CHỈ XEM THÔNG TIN, KHÔNG VẼ ĐƯỜNG
         function selectTram(tram, idx) {
             selectedTram = tram;
 
+            // Cập nhật thông tin chữ
             document.getElementById('tram-name').textContent = tram.ten_tram;
             document.getElementById('distance').textContent = tram.distance ? `≈ ${tram.distance} km` : 'Chưa tính';
             document.getElementById('tram-address').textContent = tram.dia_chi;
             document.getElementById('tram-type').textContent = `${tram.loai_sac} (${tram.cong_suat}kW)`;
-
             document.getElementById('google-maps-btn').disabled = false;
 
+            // Cập nhật Hình ảnh lên Sidebar
+            const imgUrl = tram.hinh_anh ? tram.hinh_anh : 'https://images.unsplash.com/photo-1593941707882-a5bba14938cb?auto=format&fit=crop&q=80&w=400&h=200';
+            const imgEl = document.getElementById('tram-image');
+            imgEl.src = imgUrl;
+            imgEl.style.display = 'block';
+
+            // Đổi màu item đang chọn trong danh sách
             document.querySelectorAll('.tram-item').forEach(el => el.classList.remove('active'));
             const listItems = document.querySelectorAll('.tram-item');
             if (listItems[idx]) listItems[idx].classList.add('active');
 
-            map.setView([tram.lat, tram.lon], 14);
-            drawRoute(tram.lat, tram.lon, tram.ten_tram);
+            // Xóa đường dẫn cũ (nếu có) khi người dùng đổi ý click xem trạm khác
+            if (routingControl) {
+                routingControl.remove();
+                routingControl = null;
+            }
+
+            // Chỉ di chuyển camera tới trạm, KHÔNG GỌI drawRoute ở đây nữa!
+            map.setView([tram.lat, tram.lon], 15);
         }
 
-        function drawRoute(destLat, destLon, name) {
+       function drawRoute(destLat, destLon, name) {
             if (routingControl) routingControl.remove();
 
             routingControl = L.Routing.control({
                 waypoints: [L.latLng(userLat, userLon), L.latLng(destLat, destLon)],
                 routeWhileDragging: false,
-                show: false,
+                show: false, 
+                showAlternatives: true, 
+
+               // 3. STYLE CHO ĐƯỜNG ĐƯỢC CHỌN (Đường chính)
+                lineOptions: {
+                    styles: [
+                        // LỚP 1: Lớp "hitbox" to đùng (18px) màu trắng mờ để dễ bấm trúng
+                        {color: 'white', opacity: 0.6, weight: 18}, 
+                        // LỚP 2: Lớp màu hiển thị chính, đè lên trên lớp trắng
+                        {color: '#198754', opacity: 1, weight: 7} 
+                    ]
+                },
+
+                // 4. STYLE CHO CÁC ĐƯỜNG PHỤ (Đường thay thế)
+                altLineOptions: {
+                    styles: [
+                        // LỚP 1: Lớp "hitbox" to đùng (18px) màu trắng mờ để bắt cú click
+                        {color: 'white', opacity: 0.6, weight: 18}, 
+                        // LỚP 2: Lớp màu hiển thị phụ, đè lên trên lớp trắng
+                        {color: '#fd7e14', opacity: 0.9, weight: 6} 
+                    ]
+                },
+
                 addWaypoints: false,
                 fitSelectedRoutes: true,
-                router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
-                lineOptions: {
-                    styles: [{ color: '#198754', opacity: 0.8, weight: 6 }] // Đường màu xanh lá EV
-                },
+                
+               // Ép tìm đường thay thế bằng OSRM
+                router: L.Routing.osrmv1({ 
+                    serviceUrl: 'https://router.project-osrm.org/route/v1',
+                    useHints: false,
+                    routingOptions: { alternatives: true } 
+                }),
                 createMarker: (i, wp) => {
-                    if (i === 1) { // 1 là điểm đích
+                    if (i === 1) { 
                         return L.marker(wp.latLng, {
                             icon: L.divIcon({
                                 className: 'marker-tram',
-                                html: '<i class="bi bi-geo-alt-fill"></i>', // Sửa lỗi vỡ icon
+                                html: '<i class="bi bi-geo-alt-fill"></i>', 
                                 iconSize: [38, 38],
                                 iconAnchor: [19, 19]
                             })
-                        }).bindTooltip("Đích đến: " + name, { permanent: true, direction: 'top' });
+                        }).bindTooltip("Đích đến: " + name, {permanent: true, direction: 'top'});
                     }
-                    return null; // Không vẽ đè lên điểm xuất phát
+                    return null; 
                 }
             }).addTo(map);
         }
 
-        // FIX LỖI LINK GOOGLE MAPS
         function openGoogleMaps() {
             if (!selectedTram) return;
-            // Link chuẩn của Google Maps API
             const url = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLon}&destination=${selectedTram.lat},${selectedTram.lon}&travelmode=driving`;
             window.open(url, '_blank');
         }
 
-
         // ---------------------------------------------------------
-        // CHỨC NĂNG 2: BỘ LỌC THUỘC TÍNH (Lọc mảng allTrams)
+        // CHỨC NĂNG 2: BỘ LỌC THUỘC TÍNH
         // ---------------------------------------------------------
         function apDungBoLoc() {
             if (!allTrams || allTrams.length === 0) return;
 
-            const filterType = document.getElementById('filter-type').value; // 'all', 'DC', 'AC'
-            const filterPower = document.getElementById('filter-power').checked; // true/false
+            const filterType = document.getElementById('filter-type').value; 
+            const filterPower = document.getElementById('filter-power').checked; 
 
-            // Lọc dữ liệu từ giỏ allTrams
             const filteredTrams = allTrams.filter(tram => {
-                // Kiểm tra loại sạc
                 let matchType = true;
                 if (filterType !== 'all') {
                     matchType = tram.loai_sac.toUpperCase().includes(filterType);
                 }
 
-                // Kiểm tra công suất
                 let matchPower = true;
                 if (filterPower) {
                     matchPower = parseFloat(tram.cong_suat) >= 50.0;
@@ -438,32 +484,27 @@
                 return matchType && matchPower;
             });
 
-            // Vẽ lại bản đồ với danh sách đã lọc
             displayTrams(filteredTrams);
             document.getElementById('status').innerHTML = `<i class="bi bi-funnel-fill text-success me-2"></i>Đã lọc ra ${filteredTrams.length} trạm phù hợp`;
         }
 
         // ---------------------------------------------------------
-        // CHỨC NĂNG 3: TÌM KIẾM ĐỊA CHỈ (Geocoding API Nominatim)
+        // CHỨC NĂNG 3: TÌM KIẾM ĐỊA CHỈ
         // ---------------------------------------------------------
         async function timKiemDiaChi(query) {
             if (!query) return;
             document.getElementById('status').innerHTML = '<span class="loading-spinner me-2"></span>Đang bay đến địa chỉ...';
 
             try {
-                // Gọi API miễn phí của OpenStreetMap để dịch chữ thành Tọa độ
                 const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=vn`);
                 const data = await res.json();
 
                 if (data.length > 0) {
-                    // Lấy tọa độ điểm đầu tiên tìm được
                     userLat = parseFloat(data[0].lat);
                     userLon = parseFloat(data[0].lon);
 
-                    // Bay bản đồ tới đó
                     map.setView([userLat, userLon], 14);
 
-                    // Cập nhật ghim và vòng tròn
                     if (userMarker) {
                         userMarker.setLatLng([userLat, userLon]).getPopup().setContent(`<b>${data[0].display_name}</b>`).update();
                     } else {
@@ -474,7 +515,6 @@
 
                     document.getElementById('status').innerHTML = '<span class="loading-spinner me-2"></span>Đang quét trạm khu vực này...';
 
-                    // Gửi tọa độ mới về Backend để quét trạm xung quanh
                     fetchNearbyTrams();
                 } else {
                     alert("Không tìm thấy địa chỉ này! Thử gõ thêm tên Tỉnh/Thành phố nhé.");
@@ -489,23 +529,19 @@
         // CHỨC NĂNG 1: THAY ĐỔI BÁN KÍNH VÙNG ĐỆM ĐỘNG
         // ---------------------------------------------------------
         function thayDoiBanKinh() {
-            // Lấy số km trên thanh trượt và nhân 1000 để ra mét
             let km = document.getElementById('radius-slider').value;
             currentRadius = km * 1000;
 
-            // 1. Phình to hoặc thu nhỏ vòng tròn màu xanh lá trên bản đồ
             if (radiusCircle && userLat && userLon) {
                 radiusCircle.setRadius(currentRadius);
                 map.fitBounds(radiusCircle.getBounds().pad(0.2));
             }
 
-            // 2. Gửi lệnh cho Backend quét lại các trạm lọt vào vòng tròn mới này
             if (userLat && userLon) {
                 document.getElementById('status').innerHTML = '<span class="loading-spinner me-2"></span>Đang quét lại bán kính mới...';
                 fetchNearbyTrams();
             }
         }
-
 
     </script>
 

@@ -33,6 +33,9 @@ class TramSac(models.Model):
     trang_thai = models.BooleanField(default=True)
     lat = models.FloatField()
     lon = models.FloatField()
+    # Thêm trường lưu link ảnh
+    # Đổi thành ImageField, ảnh tải lên sẽ tự chui vào thư mục media/tram_sac_images/
+    hinh_anh = models.ImageField(upload_to='tram_sac_images/', null=True, blank=True)
 
     def __str__(self):
         return self.ten_tram

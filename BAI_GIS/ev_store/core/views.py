@@ -12,14 +12,11 @@ from django.contrib.auth import login, logout
 from django.contrib import messages
 
 # --- QUAN TRỌNG: Import đúng nơi bạn khai báo ---
-
-# 1. Lấy Model và XeDienForm từ models.py (vì bạn để XeDienForm ở đây)
 from .models import TramSac, XeDien, CuaHang, XeDienForm 
-
-# 2. Lấy các Form người dùng từ forms.py
 from .forms import RegisterForm, UserForm
+
 # ==========================================
-# 1. GIAO DIỆN TRANG CHỦ (Dùng trang_chu.html)
+# 1. GIAO DIỆN TRANG CHỦ
 # ==========================================
 def trang_chu(request):
     context = {
@@ -30,7 +27,7 @@ def trang_chu(request):
 
 
 # ==========================================
-# 2. GIAO DIỆN BẢN ĐỒ (Dùng map.html)
+# 2. GIAO DIỆN BẢN ĐỒ
 # ==========================================
 def haversine(lat1, lon1, lat2, lon2):
     """Tính khoảng cách km giữa 2 điểm (Haversine formula)"""
@@ -94,6 +91,8 @@ def get_nearest_tram(request):
                         'loai_sac': tram.loai_sac,
                         'lat': float(tram.lat),
                         'lon': float(tram.lon),
+                        # ĐÃ SỬA LẠI: Lấy đường dẫn URL của file ảnh tải lên
+                       'hinh_anh': tram.hinh_anh.url if tram.hinh_anh else '',
                         'distance': round(dist, 2)
                     })
             except (ValueError, TypeError):
@@ -108,31 +107,22 @@ def get_nearest_tram(request):
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import XeDien, XeDienForm
 
 # ==========================================
-# 3. GIAO DIỆN TRANG QUẢN TRỊ (Dùng dashboard.html)
-
+# 3. GIAO DIỆN TRANG QUẢN TRỊ
+# ==========================================
 def is_admin(user):
     return user.is_superuser
 
 def is_staff(user):
     return user.is_staff or user.is_superuser
 
-
-
-
-# ==========================================
 @login_required
 @user_passes_test(is_staff)
 def admin_dashboard(request):
-    # Đếm số liệu thống kê
     tong_so_tram = TramSac.objects.count()
     tram_hoat_dong = TramSac.objects.filter(trang_thai=True).count()
     tram_bao_tri = tong_so_tram - tram_hoat_dong
-    
-    # Lấy danh sách 5 trạm mới nhất đưa ra bảng
     tram_moi_nhat = TramSac.objects.all().order_by('-id')[:5]
 
     context = {
@@ -141,35 +131,29 @@ def admin_dashboard(request):
         'tram_bao_tri': tram_bao_tri,
         'tram_moi_nhat': tram_moi_nhat,
     }
-    
-    # Dòng này chính là lệnh báo cho Python biết phải lôi file dashboard.html ra để dùng
     return render(request, 'dashboard.html', context)
+
 @login_required
 @user_passes_test(is_staff)
-
 def quan_ly_tram_sac(request):
-    # Lấy toàn bộ danh sách trạm sạc, sắp xếp trạm mới nhất lên đầu
     danh_sach_tram = TramSac.objects.all().order_by('-id')
-    
-    context = {
-        'danh_sach_tram': danh_sach_tram,
-    }
-    return render(request, 'quan_ly_tram_sac.html', context)
+    return render(request, 'quan_ly_tram_sac.html', {'danh_sach_tram': danh_sach_tram})
+
 @login_required
 @user_passes_test(is_staff)
 def them_tram_sac(request):
     if request.method == 'POST':
-        # Lấy dữ liệu từ form HTML gửi lên
         ten_tram = request.POST.get('ten_tram')
         dia_chi = request.POST.get('dia_chi')
         cong_suat = request.POST.get('cong_suat')
         loai_sac = request.POST.get('loai_sac')
         lat = request.POST.get('lat')
         lon = request.POST.get('lon')
-        # Checkbox: nếu tích thì là 'on' (True), không tích là rỗng (False)
         trang_thai = request.POST.get('trang_thai') == 'on'
+        
+        # ĐÃ SỬA LẠI: Lấy file từ request.FILES thay vì request.POST
+        hinh_anh = request.FILES.get('hinh_anh')
 
-        # Lưu vào Database
         TramSac.objects.create(
             ten_tram=ten_tram,
             dia_chi=dia_chi,
@@ -177,27 +161,26 @@ def them_tram_sac(request):
             loai_sac=loai_sac,
             lat=lat,
             lon=lon,
-            trang_thai=trang_thai
+            trang_thai=trang_thai,
+            hinh_anh=hinh_anh 
         )
-        # Lưu xong tự động load lại trang danh sách
         return redirect('quan_ly_tram_sac')
         
     return redirect('quan_ly_tram_sac')
+
 @login_required
 @user_passes_test(is_staff)
 def xoa_tram_sac(request, tram_id):
-    # Tìm trạm theo ID, nếu có thì xóa
     tram = get_object_or_404(TramSac, id=tram_id)
     tram.delete()
     return redirect('quan_ly_tram_sac')
+
 @login_required
 @user_passes_test(is_staff)
 def sua_tram_sac(request, tram_id):
-    # Tìm trạm cần sửa theo ID
     tram = get_object_or_404(TramSac, id=tram_id)
     
     if request.method == 'POST':
-        # Cập nhật thông tin mới từ form
         tram.ten_tram = request.POST.get('ten_tram')
         tram.dia_chi = request.POST.get('dia_chi')
         tram.cong_suat = request.POST.get('cong_suat')
@@ -206,17 +189,25 @@ def sua_tram_sac(request, tram_id):
         tram.lon = request.POST.get('lon')
         tram.trang_thai = request.POST.get('trang_thai') == 'on'
         
-        # Lưu đè lên dữ liệu cũ
+        # ĐÃ SỬA LẠI: Kiểm tra xem user có tải file ảnh mới lên không, có thì mới lưu đè
+        if 'hinh_anh' in request.FILES:
+            tram.hinh_anh = request.FILES.get('hinh_anh')
+        
         tram.save()
         return redirect('quan_ly_tram_sac')
         
     return redirect('quan_ly_tram_sac')
+
+
+# ==========================================
+# 4. QUẢN LÝ XE ĐIỆN VÀ USER
+# ==========================================
 @login_required
 @user_passes_test(is_staff)
 def danh_sach_xe(request):
     tat_ca_xe = XeDien.objects.all()
-    # Đảm bảo tên file ở đây khớp chính xác với tên file trong thư mục
     return render(request, 'danh_sach_xe.html', {'tat_ca_xe': tat_ca_xe})
+
 @login_required
 @user_passes_test(is_staff)
 def them_xe(request):
@@ -226,7 +217,6 @@ def them_xe(request):
         return redirect('danh_sach_xe')
     return render(request, 'xe_form.html', {'form': form, 'title': 'Thêm Xe Mới'})
 
-# Sửa xe
 @login_required
 @user_passes_test(is_staff)
 def sua_xe(request, pk):
@@ -237,7 +227,6 @@ def sua_xe(request, pk):
         return redirect('danh_sach_xe')
     return render(request, 'xe_form.html', {'form': form, 'title': 'Chỉnh Sửa Xe'})
 
-# Xóa xe
 @login_required
 @user_passes_test(is_staff)
 def xoa_xe(request, pk):
@@ -246,15 +235,10 @@ def xoa_xe(request, pk):
         xe.delete()
         return redirect('danh_sach_xe')
     return render(request, 'xe_confirm_delete.html', {'xe': xe})
-def list_user(request):
-    users = User.objects.all()
-    return render(request, 'users/list_user.html', {'users': users})
-
 
 @login_required
 @user_passes_test(is_admin)
 def list_user(request):
-    # Bây giờ User.objects sẽ hoạt động vì đã import đúng từ django.contrib.auth
     users = User.objects.all()
     return render(request, 'users/list_user.html', {'users': users})
 
@@ -265,7 +249,7 @@ def them_user(request):
         form = UserForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password']) # Mã hóa mật khẩu
+            user.set_password(form.cleaned_data['password'])
             user.save()
             return redirect('list_user')
     else:
@@ -290,31 +274,30 @@ def sua_user(request, id):
 def xoa_user(request, id):
     user = get_object_or_404(User, id=id)
     if request.user.id == user.id:
-      
         return redirect('list_user')
     user.delete()
     return redirect('list_user')
+
 def logout_view(request):
-   
     logout(request)
     messages.success(request, "Bạn đã đăng xuất thành công!")
     return redirect('trang_chu')
+
 def dang_ky_view(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            # 1. Lưu user nhưng chưa commit để mã hóa mật khẩu
+
             user = form.save(commit=False)
             user.set_password(form.cleaned_data['password'])
             user.save()
-            
-            # 2. Đăng nhập ngay lập tức cho người dùng mới
+
+
             login(request, user)
-            
-            # 3. Chuyển về trang chủ
+
             return redirect('trang_chu')
     else:
-        # Nếu là GET (mới vào trang), tạo form trống
+
         form = RegisterForm()
-    
+        
     return render(request, 'register.html', {'form': form})

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ban_do_tram_sac, get_nearest_tram, admin_dashboard, quan_ly_tram_sac, sua_xe, them_tram_sac, them_xe, xoa_tram_sac, sua_tram_sac,danh_sach_xe, xoa_xe
+from .views import ban_do_tram_sac, get_nearest_tram, admin_dashboard, quan_ly_tram_sac, sua_xe, them_tram_sac, them_xe, trang_chu, xoa_tram_sac, sua_tram_sac,danh_sach_xe, xoa_xe
 from django.contrib import admin  # <-- THÊM ĐÚNG DÒNG NÀY VÀO
 from django.contrib.auth import views as auth_views
 from . import views
@@ -13,6 +13,7 @@ urlpatterns = [
     path("api/nearest-tram/", get_nearest_tram, name='get_nearest_tram'),  # ← endpoint AJAX
     # ĐƯỜNG DẪN TỚI TRANG QUẢN TRỊ MỚI CỦA BẠN:
     path("dashboard/", admin_dashboard, name='admin_dashboard'),
+     path("trang_chu/", trang_chu, name='trang_chu'),
 
     path("quan-ly-tram-sac/", quan_ly_tram_sac, name='quan_ly_tram_sac'),
 
@@ -34,5 +35,7 @@ path('login/', auth_views.LoginView.as_view(), name='login'),
     path('users/add/', views.them_user, name='them_user'),
     path('users/edit/<int:id>/', views.sua_user, name='sua_user'),
     path('users/delete/<int:id>/', views.xoa_user, name='xoa_user'),
+ path('logout/', views.logout_view, name='logout'),
+ path('register/', views.dang_ky_view, name='register')
 
 ]

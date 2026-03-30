@@ -7,11 +7,17 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required, user_passes_test
-# SỬA DÒNG NÀY: Import User chuẩn của Django
-from django.contrib.auth.models import User 
+from django.contrib.auth.models import User
+from django.contrib.auth import login, logout 
+from django.contrib import messages
 
-from .models import TramSac, XeDien, CuaHang
-from .models import XeDien, TramSac, CuaHang, XeDienForm, UserForm
+# --- QUAN TRỌNG: Import đúng nơi bạn khai báo ---
+
+# 1. Lấy Model và XeDienForm từ models.py (vì bạn để XeDienForm ở đây)
+from .models import TramSac, XeDien, CuaHang, XeDienForm 
+
+# 2. Lấy các Form người dùng từ forms.py
+from .forms import RegisterForm, UserForm
 # ==========================================
 # 1. GIAO DIỆN TRANG CHỦ (Dùng trang_chu.html)
 # ==========================================
@@ -284,7 +290,31 @@ def sua_user(request, id):
 def xoa_user(request, id):
     user = get_object_or_404(User, id=id)
     if request.user.id == user.id:
-        # Ngăn tự xóa chính mình
+      
         return redirect('list_user')
     user.delete()
     return redirect('list_user')
+def logout_view(request):
+   
+    logout(request)
+    messages.success(request, "Bạn đã đăng xuất thành công!")
+    return redirect('trang_chu')
+def dang_ky_view(request):
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            # 1. Lưu user nhưng chưa commit để mã hóa mật khẩu
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.save()
+            
+            # 2. Đăng nhập ngay lập tức cho người dùng mới
+            login(request, user)
+            
+            # 3. Chuyển về trang chủ
+            return redirect('trang_chu')
+    else:
+        # Nếu là GET (mới vào trang), tạo form trống
+        form = RegisterForm()
+    
+    return render(request, 'register.html', {'form': form})

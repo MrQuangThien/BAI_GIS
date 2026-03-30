@@ -123,5 +123,5 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'danh_sach_xe'  # Trang hiển thị sau khi đăng nhập thành công
+LOGIN_REDIRECT_URL = 'trang_chu'  
 LOGOUT_REDIRECT_URL = 'login'

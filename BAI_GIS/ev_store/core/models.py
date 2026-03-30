@@ -58,18 +58,3 @@ class XeDienForm(forms.ModelForm):
             'trang_thai': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'cua_hang': forms.Select(attrs={'class': 'form-select'}),
         }
-class UserForm(forms.ModelForm):
-    password = forms.CharField(
-        required=False, 
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Nhập mật khẩu mới'})
-    )
-    is_staff = forms.BooleanField(required=False, label="Quyền Nhân viên")
-    is_superuser = forms.BooleanField(required=False, label="Quyền Admin")
-
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'password', 'is_staff', 'is_superuser']
-        widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-        }

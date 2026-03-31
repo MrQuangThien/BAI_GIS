@@ -69,3 +69,40 @@ class XeDienForm(forms.ModelForm):
             'trang_thai': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'cua_hang': forms.Select(attrs={'class': 'form-select'}),
         }
+
+class DonHang(models.Model):
+    # Khai báo các lựa chọn cho Loại đơn và Trạng thái
+    LOAI_DON_CHOICES = [
+        ('A', 'Đặt giữ xe (Không cần thanh toán, giữ 1-2 ngày)'),
+        ('B', 'Đặt cọc online (Thanh toán trước một phần)'),
+        ('C', 'Mua online hoàn toàn (Thanh toán 100%, Giao tận nơi)'),
+    ]
+    
+    TRANG_THAI_CHOICES = [
+        ('Pending', 'Pending (Đang chờ)'),
+        ('Deposit Paid', 'Deposit Paid (Đã đặt cọc)'),
+        ('Paid', 'Paid (Đã thanh toán)'),
+        ('Cancelled', 'Đã hủy'),
+    ]
+
+    # Liên kết với Xe và Người dùng
+    xe = models.ForeignKey(XeDien, on_delete=models.CASCADE)
+    # Khách vãng lai vẫn mua được nên user có thể null
+    khach_hang = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True) 
+    
+    # Thông tin khách hàng nhập vào form
+    ho_ten = models.CharField(max_length=100, verbose_name="Họ và tên")
+    so_dien_thoai = models.CharField(max_length=15, verbose_name="Số điện thoại")
+    email = models.EmailField(verbose_name="Email nhận thông báo")
+    dia_chi = models.TextField(verbose_name="Địa chỉ giao xe / Liên hệ")
+    
+    # Cấu hình đơn hàng
+    loai_don = models.CharField(max_length=1, choices=LOAI_DON_CHOICES, default='A')
+    trang_thai = models.CharField(max_length=20, choices=TRANG_THAI_CHOICES, default='Pending')
+    
+    # Tự động lưu ngày giờ đặt
+    ngay_dat = models.DateTimeField(auto_now_add=True)
+    tong_tien = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+
+    def __str__(self):
+        return f"Đơn #{self.id} - {self.ho_ten} - {self.xe.ten_xe}"

@@ -12,6 +12,12 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 
+import os
+from dotenv import load_dotenv
+
+# Lệnh này bảo Django đi tìm file .env để nạp dữ liệu bí mật vào
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -127,3 +133,14 @@ LOGIN_REDIRECT_URL = 'trang_chu'
 LOGOUT_REDIRECT_URL = 'login'
 
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# CẤU HÌNH GỬI EMAIL
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
+EMAIL_PORT = 2525
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+
+# ĐÃ SỬA: Lấy từ file .env thay vì viết thẳng ra đây
+EMAIL_HOST_USER = os.getenv('MAILTRAP_USER')
+EMAIL_HOST_PASSWORD = os.getenv('MAILTRAP_PASS')

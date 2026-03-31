@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 # Nhớ import Model XeDien vào form nhé
-from .models import XeDien 
+from .models import XeDien, DonHang
 
 class UserForm(forms.ModelForm):
     password = forms.CharField(
@@ -74,4 +74,16 @@ class XeDienForm(forms.ModelForm):
             'anh_phu_1': forms.FileInput(attrs={'class': 'form-control'}),
             'anh_phu_2': forms.FileInput(attrs={'class': 'form-control'}),
             'anh_phu_3': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+class DonHangForm(forms.ModelForm):
+    class Meta:
+        model = DonHang
+        fields = ['ho_ten', 'so_dien_thoai', 'email', 'dia_chi', 'loai_don']
+        widgets = {
+            'ho_ten': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nhập họ tên của bạn'}),
+            'so_dien_thoai': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ví dụ: 0901234567'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email để nhận xác nhận'}),
+            'dia_chi': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Nhập địa chỉ của bạn'}),
+            'loai_don': forms.Select(attrs={'class': 'form-select fw-bold text-success'}),
         }

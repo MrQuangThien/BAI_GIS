@@ -11,9 +11,11 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login, logout 
 from django.contrib import messages
 
+from django.core.mail import send_mail
+
 # --- QUAN TRỌNG: Import đúng nơi bạn khai báo ---
-from .models import TramSac, XeDien, CuaHang, XeDienForm 
-from .forms import RegisterForm, UserForm
+from .models import TramSac, XeDien, CuaHang, XeDienForm, DonHang
+from .forms import RegisterForm, UserForm, DonHangForm
 
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
@@ -59,10 +61,68 @@ def danh_muc_xe(request, loai_xe):
 # 3. View Xử lý form Đặt hàng / Đặt cọc
 def tao_don_hang(request, xe_id):
     xe = get_object_or_404(XeDien, id=xe_id)
-    # Lấy tham số type từ URL (ví dụ: type=preorder cho xe sắp về)
-    loai_don = request.GET.get('type', 'normal') 
     
-    return render(request, 'tao_don_hang.html', {'xe': xe, 'loai_don': loai_don})
+    # Nếu bấm từ nút "Đặt trước" (sản phẩm sắp về) thì mặc định chọn B
+    kieu_dat = request.GET.get('type')
+    loai_mac_dinh = 'B' if kieu_dat == 'preorder' else 'A'
+
+    if request.method == 'POST':
+        form = DonHangForm(request.POST)
+        if form.is_valid():
+            don_hang = form.save(commit=False)
+            don_hang.xe = xe # Gắn chiếc xe đang xem vào đơn hàng
+            
+            # Gắn user nếu họ đã đăng nhập
+            if request.user.is_authenticated:
+                don_hang.khach_hang = request.user
+
+            # XỬ LÝ LOGIC A, B, C THEO YÊU CẦU GIẢNG VIÊN
+            if don_hang.loai_don == 'A':
+                don_hang.trang_thai = 'Pending'
+                don_hang.tong_tien = 0 # Giữ chỗ 0đ
+            
+            elif don_hang.loai_don == 'B':
+                don_hang.trang_thai = 'Deposit Paid'
+                don_hang.tong_tien = xe.gia * 10 / 100 # Ví dụ: Đặt cọc 10% giá trị xe
+            
+            elif don_hang.loai_don == 'C':
+                don_hang.trang_thai = 'Paid'
+                don_hang.tong_tien = xe.gia # Mua đứt 100%
+
+            don_hang.save() # Lưu vào Database
+
+            # GỬI EMAIL THÔNG BÁO BẰNG MAILTRAP
+            tieu_de = f"[EV STORE] Xác nhận đơn hàng #{don_hang.id} - {xe.ten_xe}"
+            noi_dung = f"""
+            Chào {don_hang.ho_ten},
+            
+            Cảm ơn bạn đã tin tưởng EV STORE. Đơn hàng của bạn đã được ghi nhận!
+            - Xe đặt mua: {xe.ten_xe}
+            - Hình thức: {don_hang.get_loai_don_display()}
+            - Trạng thái hiện tại: {don_hang.trang_thai}
+            - Tổng tiền cần thanh toán: {don_hang.tong_tien} VNĐ
+            
+            Chúng tôi sẽ liên hệ với bạn qua số {don_hang.so_dien_thoai} trong thời gian sớm nhất.
+            """
+            
+            try:
+                send_mail(
+                    subject=tieu_de,
+                    message=noi_dung,
+                    from_email='no-reply@evstore.com',
+                    recipient_list=[don_hang.email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                print("Lỗi gửi mail: ", e) # In ra console nếu Mailtrap cấu hình sai
+
+            # Đặt xong thì quay về trang chủ (Sau này có thể làm trang Cám ơn riêng)
+            return redirect('trang_chu') 
+    else:
+        # Nếu mới vào trang, hiển thị form trống
+        form = DonHangForm(initial={'loai_don': loai_mac_dinh})
+
+    return render(request, 'tao_don_hang.html', {'form': form, 'xe': xe})
 
 # 2. Hàm hiển thị chi tiết 1 sản phẩm
 def chi_tiet_xe(request, xe_id):

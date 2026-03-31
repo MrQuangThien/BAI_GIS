@@ -15,17 +15,60 @@ from django.contrib import messages
 from .models import TramSac, XeDien, CuaHang, XeDienForm 
 from .forms import RegisterForm, UserForm
 
+from django.db.models import Q
+from django.shortcuts import render, get_object_or_404, redirect
+
 # ==========================================
 # 1. GIAO DIỆN TRANG CHỦ
 # ==========================================
+# 1. Hàm hiển thị danh sách sản phẩm ở trang chủ
+# CẬP NHẬT hàm trang chủ để lấy đúng xe Nổi bật và Sắp về
 def trang_chu(request):
+    xe_noi_bat = XeDien.objects.filter(noi_bat=True)
+    xe_sap_ve = XeDien.objects.filter(sap_ve=True)
     context = {
-        'so_tram_sac': TramSac.objects.filter(trang_thai=True).count(),
-        'tieu_de': 'EV Store - Xe Điện & Trạm Sạc',
+        'xe_noi_bat': xe_noi_bat,
+        'xe_sap_ve': xe_sap_ve,
     }
     return render(request, 'trang_chu.html', context)
 
+# -----------------------------------------
+# THÊM 3 HÀM MỚI NÀY VÀO DƯỚI CÙNG
+# -----------------------------------------
 
+# 1. View Xử lý Tìm kiếm
+def tim_kiem(request):
+    tu_khoa = request.GET.get('q', '')
+    if tu_khoa:
+        # Tìm xe có Tên hoặc Hãng sản xuất chứa từ khóa người dùng gõ
+        ket_qua = XeDien.objects.filter(
+            Q(ten_xe__icontains=tu_khoa) | Q(hang_san_xuat__icontains=tu_khoa)
+        )
+    else:
+        ket_qua = XeDien.objects.none()
+    
+    # Tạm thời trả về trang chủ nếu chưa có template tim_kiem.html
+    return render(request, 'tim_kiem.html', {'ket_qua': ket_qua, 'tu_khoa': tu_khoa})
+
+# 2. View Xử lý Danh mục
+def danh_muc_xe(request, loai_xe):
+    # Lọc xe theo loại (Tạm lấy tất cả, sau này bạn thêm trường loai_xe vào database thì filter sau)
+    danh_sach = XeDien.objects.all() 
+    return render(request, 'danh_muc.html', {'danh_sach': danh_sach, 'loai_xe': loai_xe})
+
+# 3. View Xử lý form Đặt hàng / Đặt cọc
+def tao_don_hang(request, xe_id):
+    xe = get_object_or_404(XeDien, id=xe_id)
+    # Lấy tham số type từ URL (ví dụ: type=preorder cho xe sắp về)
+    loai_don = request.GET.get('type', 'normal') 
+    
+    return render(request, 'tao_don_hang.html', {'xe': xe, 'loai_don': loai_don})
+
+# 2. Hàm hiển thị chi tiết 1 sản phẩm
+def chi_tiet_xe(request, xe_id):
+    # Tìm đúng con xe theo ID, không thấy thì báo lỗi 404
+    xe = get_object_or_404(XeDien, id=xe_id)
+    return render(request, 'chi_tiet_xe.html', {'xe': xe})
 # ==========================================
 # 2. GIAO DIỆN BẢN ĐỒ
 # ==========================================
@@ -211,17 +254,18 @@ def danh_sach_xe(request):
 @login_required
 @user_passes_test(is_staff)
 def them_xe(request):
-    form = XeDienForm(request.POST or None)
+    # NHỚ CÓ request.FILES Ở ĐÂY
+    form = XeDienForm(request.POST or None, request.FILES or None)
     if form.is_valid():
         form.save()
         return redirect('danh_sach_xe')
     return render(request, 'xe_form.html', {'form': form, 'title': 'Thêm Xe Mới'})
 
-@login_required
-@user_passes_test(is_staff)
+
 def sua_xe(request, pk):
     xe = get_object_or_404(XeDien, pk=pk)
-    form = XeDienForm(request.POST or None, instance=xe)
+    # NHỚ CÓ request.FILES Ở ĐÂY
+    form = XeDienForm(request.POST or None, request.FILES or None, instance=xe)
     if form.is_valid():
         form.save()
         return redirect('danh_sach_xe')

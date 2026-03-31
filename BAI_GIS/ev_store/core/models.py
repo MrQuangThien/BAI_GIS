@@ -21,6 +21,14 @@ class XeDien(models.Model):
     gia = models.BigIntegerField()
     trang_thai = models.BooleanField(default=True)
     cua_hang = models.ForeignKey(CuaHang, on_delete=models.CASCADE)
+    hinh_anh = models.ImageField(upload_to='xe_dien_images/', null=True, blank=True)
+    noi_bat = models.BooleanField(default=False, verbose_name="Sản phẩm nổi bật")
+    sap_ve = models.BooleanField(default=False, verbose_name="Sản phẩm sắp về")
+    mo_ta = models.TextField(verbose_name="Mô tả chi tiết", blank=True, null=True)
+    
+    anh_phu_1 = models.ImageField(upload_to='xe_dien_images/', blank=True, null=True, verbose_name="Ảnh phụ 1")
+    anh_phu_2 = models.ImageField(upload_to='xe_dien_images/', blank=True, null=True, verbose_name="Ảnh phụ 2")
+    anh_phu_3 = models.ImageField(upload_to='xe_dien_images/', blank=True, null=True, verbose_name="Ảnh phụ 3")
 
     def __str__(self):
         return self.ten_xe

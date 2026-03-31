@@ -1,0 +1,176 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ xe.ten_xe }} | EV STORE</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body { background: #f6f6f6; }
+        .navbar-brand { font-weight: bold; font-size: 22px; }
+        .product-image { max-height: 400px; object-fit: contain; background: #fff; padding: 20px; border-radius: 10px; }
+        .price-text { color: #dc3545; font-weight: bold; font-size: 2rem; }
+        
+        /* ĐÃ THÊM: CSS cho thanh ảnh nhỏ mượt mà hơn */
+        #thumbnail-gallery .img-thumbnail {
+            border: 2px solid #dee2e6;
+            transition: all 0.2s ease;
+            opacity: 0.6;
+            cursor: pointer;
+        }
+        #thumbnail-gallery .img-thumbnail:hover { 
+            opacity: 1; 
+        }
+        /* ĐÃ THÊM: Hiệu ứng viền xanh cho ảnh đang được chọn */
+        #thumbnail-gallery .img-thumbnail.selected-thumbnail {
+            border: 2px solid #198754 !important;
+            opacity: 1 !important;
+            box-shadow: 0 0 8px rgba(25, 135, 84, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'trang_chu' %}">
+                <i class="bi bi-lightning-charge-fill"></i> EV STORE
+            </a>
+            <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#menu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="menu">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'trang_chu' %}">Trang chủ</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="#">Chi tiết sản phẩm</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm sạc</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'trang_chu' %}" class="text-success text-decoration-none">Trang chủ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ xe.ten_xe }}</li>
+            </ol>
+        </nav>
+
+        <div class="row bg-white shadow-sm p-4 rounded mt-3">
+            
+            <div class="col-md-6 text-center border-end">
+                {% if xe.hinh_anh %}
+                    <img id="mainImage" src="{{ xe.hinh_anh.url }}" class="img-fluid product-image w-100 shadow-sm mb-3">
+                {% else %}
+                    <img id="mainImage" src="https://via.placeholder.com/500x400?text=Chưa+có+ảnh" class="img-fluid product-image w-100 shadow-sm mb-3">
+                {% endif %}
+
+                <div id="thumbnail-gallery" class="d-flex justify-content-center gap-2 overflow-auto py-2">
+                    {% if xe.hinh_anh %}
+                        <img src="{{ xe.hinh_anh.url }}" class="img-thumbnail selected-thumbnail" onclick="changeImage(this)" style="width: 80px; height: 60px; object-fit: cover;">
+                    {% endif %}
+                    {% if xe.anh_phu_1 %}
+                        <img src="{{ xe.anh_phu_1.url }}" class="img-thumbnail" onclick="changeImage(this)" style="width: 80px; height: 60px; object-fit: cover;">
+                    {% endif %}
+                    {% if xe.anh_phu_2 %}
+                        <img src="{{ xe.anh_phu_2.url }}" class="img-thumbnail" onclick="changeImage(this)" style="width: 80px; height: 60px; object-fit: cover;">
+                    {% endif %}
+                    {% if xe.anh_phu_3 %}
+                        <img src="{{ xe.anh_phu_3.url }}" class="img-thumbnail" onclick="changeImage(this)" style="width: 80px; height: 60px; object-fit: cover;">
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="col-md-6 ps-md-5 mt-4 mt-md-0">
+                <h1 class="fw-bold mb-2">{{ xe.ten_xe }}</h1>
+                <span class="badge bg-success fs-6 mb-3">{{ xe.hang_san_xuat }}</span>
+                
+                {% if xe.noi_bat %}
+                    <span class="badge bg-warning text-dark fs-6 mb-3 ms-2"><i class="bi bi-star-fill"></i> Nổi bật</span>
+                {% endif %}
+                {% if xe.sap_ve %}
+                    <span class="badge bg-info text-dark fs-6 mb-3 ms-2"><i class="bi bi-clock-history"></i> Sắp về</span>
+                {% endif %}
+                
+                <h2 class="price-text my-3">{{ xe.gia }} VNĐ</h2>
+                
+                <hr>
+                
+                <h5 class="fw-bold mt-4 mb-3">Thông số kỹ thuật:</h5>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Dung lượng pin:</span>
+                        <strong>{{ xe.dung_luong_pin }}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Tầm di chuyển:</span>
+                        <strong>{{ xe.tam_di_chuyen }}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Trạng thái:</span>
+                        {% if xe.trang_thai %}
+                            <strong class="text-success">Còn hàng</strong>
+                        {% else %}
+                            <strong class="text-danger">Hết hàng</strong>
+                        {% endif %}
+                    </li>
+                    {% if xe.cua_hang %}
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Cửa hàng phân phối:</span>
+                        <strong>{{ xe.cua_hang }}</strong>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <button class="btn btn-success btn-lg w-100 fw-bold shadow-sm">
+                    <i class="bi bi-cart-plus me-2"></i> Đặt mua ngay
+                </button>
+            </div>
+        </div>
+
+        <div class="row bg-white shadow-sm p-4 rounded mt-4">
+            <div class="col-12">
+                <h4 class="fw-bold border-bottom border-success pb-2 mb-3 text-success">
+                    <i class="bi bi-card-text me-2"></i>Mô tả chi tiết
+                </h4>
+                
+                <div class="text-secondary" style="line-height: 1.8;">
+                    {% if xe.mo_ta %}
+                        {{ xe.mo_ta|safe }}
+                    {% else %}
+                        <p class="fst-italic text-muted">Chưa có bài viết mô tả cho sản phẩm này.</p>
+                    {% endif %}
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+        <p class="mb-0">© 2026 EV STORE - Hệ thống kinh doanh xe điện</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function changeImage(element) {
+            // 1. Đổi ảnh lớn
+            document.getElementById('mainImage').src = element.src;
+            
+            // 2. Xóa viền xanh ở tất cả ảnh nhỏ
+            var thumbnails = document.getElementById('thumbnail-gallery').getElementsByClassName('img-thumbnail');
+            for (var i = 0; i < thumbnails.length; i++) {
+                thumbnails[i].classList.remove('selected-thumbnail');
+            }
+            
+            // 3. Thêm viền xanh vào ảnh vừa bấm
+            element.classList.add('selected-thumbnail');
+        }
+    </script>
+</body>
+</html>

@@ -20,11 +20,12 @@
     <div class="row">
         <div class="col-md-2 sidebar shadow-lg">
             <h4 class="text-center text-success fw-bold mb-4"><i class="bi bi-lightning-charge-fill"></i> EV STORE</h4>
-            <a href="/core/dashboard/"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
+            <a href="#" class="active"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
             <a href="/core/quan-ly-tram-sac/"><i class="bi bi-ev-station me-2"></i> Quản lý Trạm Sạc</a>
-            <a href="/core/danh_sach_xe" class="active"><i class="bi bi-car-front me-2"></i> Quản lý Xe Điện</a>
-            <a href="/core/users/"><i class="bi bi-person me-2"></i> Quản lý Người Dùng</a>
+            <a href="/core/danh_sach_xe/"><i class="bi bi-car-front me-2"></i> Quản lý Xe Điện</a>
+             <a href="/core/users/"><i class="bi bi-person me-2"></i> Quản lý Người Dùng</a>    
             <a href="/core/map/" target="_blank"><i class="bi bi-map me-2"></i> Xem Bản Đồ</a>
+            <a href="/" target="_blank"><i class="bi bi-basket"></i> Trang Chủ</a>
         </div>
 
         <div class="col-md-10 p-4">
@@ -36,7 +37,7 @@
                             <h5 class="mb-0 fw-bold"><i class="bi bi-pencil-square me-2"></i>{{ title }}</h5>
                         </div>
                         <div class="card-body p-4">
-                            <form method="POST">
+                            <form method="POST" enctype="multipart/form-data">
                                 {% csrf_token %}
                                 
                                 {% for field in form %}
@@ -68,5 +69,21 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Django mặc định đặt ID cho ô text area là 'id_mo_ta'
+            var moTaField = document.querySelector('#id_mo_ta');
+            
+            if (moTaField) {
+                ClassicEditor
+                    .create(moTaField)
+                    .catch(error => {
+                        console.error(error);
+                    });
+            }
+        });
+    </script>
 </body>
 </html>

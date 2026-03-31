@@ -87,3 +87,20 @@ class DonHangForm(forms.ModelForm):
             'dia_chi': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Nhập địa chỉ của bạn'}),
             'loai_don': forms.Select(attrs={'class': 'form-select fw-bold text-success'}),
         }
+
+class DonHangTaiQuayForm(forms.ModelForm):
+    class Meta:
+        model = DonHang
+        # Bao gồm cả trường so_tien_tra_truoc
+        fields = ['xe', 'ho_ten', 'so_dien_thoai', 'email', 'dia_chi', 'loai_don', 'tong_tien', 'so_tien_tra_truoc', 'trang_thai']
+        widgets = {
+            'xe': forms.Select(attrs={'class': 'form-select fw-bold text-success'}),
+            'ho_ten': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tên khách hàng'}),
+            'so_dien_thoai': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ví dụ: 0901234567'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Bỏ trống nếu không có'}),
+            'dia_chi': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'loai_don': forms.Select(attrs={'class': 'form-select fw-bold', 'id': 'id_loai_don'}),
+            'tong_tien': forms.NumberInput(attrs={'class': 'form-control text-danger fw-bold'}),
+            'so_tien_tra_truoc': forms.NumberInput(attrs={'class': 'form-control text-primary fw-bold'}),
+            'trang_thai': forms.Select(attrs={'class': 'form-select'}),
+        }

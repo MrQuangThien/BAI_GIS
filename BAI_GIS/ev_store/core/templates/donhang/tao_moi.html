@@ -1,0 +1,146 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo Đơn Tại Quầy | EV STORE</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f4f6f9; }
+        .sidebar { background-color: #212529; min-height: 100vh; color: white; padding-top: 20px; }
+        .sidebar a { color: #adb5bd; text-decoration: none; padding: 12px 20px; display: block; margin-bottom: 5px; transition: 0.3s; }
+        .sidebar a:hover, .sidebar a.active { background-color: #198754; color: white; border-radius: 5px; margin: 0 10px; }
+        .card { box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: none; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 sidebar shadow-lg">
+            <h4 class="text-center text-success fw-bold mb-4"><i class="bi bi-lightning-charge-fill"></i> EV STORE</h4>
+            
+            <a href="/core/dashboard/" class="{% if '/core/dashboard/' in request.path %}active{% endif %}">
+                <i class="bi bi-speedometer2 me-2"></i> Tổng quan
+            </a>
+            
+            <a href="/core/quan-ly-tram-sac/" class="{% if 'quan-ly-tram-sac' in request.path %}active{% endif %}">
+                <i class="bi bi-ev-station me-2"></i> Quản lý Trạm Sạc
+            </a>
+            
+            <a href="/core/danh_sach_xe/" class="{% if 'danh_sach_xe' in request.path or '/core/xe/' in request.path %}active{% endif %}">
+                <i class="bi bi-car-front me-2"></i> Quản lý Xe Điện
+            </a>
+            
+            <a href="{% url 'danh_sach_don_hang' %}" class="{% if 'don-hang' in request.path %}active{% endif %}">
+                <i class="bi bi-receipt-cutoff me-2"></i> Quản lý Đơn Hàng
+            </a>
+            
+            <a href="/core/users/" class="{% if 'users' in request.path %}active{% endif %}">
+                <i class="bi bi-person me-2"></i> Quản lý Người Dùng
+            </a>
+            
+            <a href="/core/map/" target="_blank">
+                <i class="bi bi-map me-2"></i> Xem Bản Đồ
+            </a>
+            
+            <a href="/" target="_blank">
+                <i class="bi bi-basket me-2"></i> Trang Chủ
+            </a>
+         </div>
+
+        <div class="col-md-10 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold text-dark"><i class="bi bi-cart-plus-fill me-2 text-success"></i>Tạo đơn hàng tại quầy</h3>
+                <a href="{% url 'danh_sach_don_hang' %}" class="btn btn-outline-secondary fw-bold">
+                    <i class="bi bi-arrow-left me-1"></i> Trở về danh sách
+                </a>
+            </div>
+
+            <div class="card p-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">1. Thông tin Xe & Khách hàng</h5>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-bold">Chọn xe bán ra:</label>
+                            {{ form.xe }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Họ và tên khách:</label>
+                            {{ form.ho_ten }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Số điện thoại:</label>
+                            {{ form.so_dien_thoai }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Email (nếu có):</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Địa chỉ:</label>
+                            {{ form.dia_chi }}
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold text-danger border-bottom pb-2 mb-3 mt-4">2. Thông tin Thanh toán</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Hình thức mua:</label>
+                            {{ form.loai_don }} </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Trạng thái thanh toán:</label>
+                            {{ form.trang_thai }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold text-danger">Tổng giá trị đơn hàng (VNĐ):</label>
+                            {{ form.tong_tien }}
+                        </div>
+
+                        <div class="col-md-6 mb-3" id="khu_vuc_tra_truoc" style="display: none;">
+                            <label class="form-label fw-bold text-primary">Khách đưa trước (VNĐ):</label>
+                            {{ form.so_tien_tra_truoc }}
+                        </div>
+                    </div>
+
+                    <div class="text-end mt-4">
+                        <button type="submit" class="btn btn-success btn-lg fw-bold px-5">
+                            <i class="bi bi-save me-1"></i> Xác nhận tạo đơn
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // SCRIPT ĐIỀU KHIỂN ẨN/HIỆN Ô TRẢ TRƯỚC
+    document.addEventListener("DOMContentLoaded", function() {
+        var loaiDonSelect = document.getElementById('id_loai_don');
+        var khuVucTraTruoc = document.getElementById('khu_vuc_tra_truoc');
+
+        function kiemTraHienThi() {
+            // Nếu là Mua trả góp (E) thì hiện ra
+            if (loaiDonSelect.value === 'E') {
+                khuVucTraTruoc.style.display = 'block';
+            } else {
+                khuVucTraTruoc.style.display = 'none';
+            }
+        }
+
+        // Chạy lần đầu khi load trang
+        kiemTraHienThi();
+
+        // Chạy mỗi khi nhân viên đổi lựa chọn
+        loaiDonSelect.addEventListener('change', kiemTraHienThi);
+    });
+</script>
+</body>
+</html>

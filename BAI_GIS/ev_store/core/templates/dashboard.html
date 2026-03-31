@@ -21,13 +21,34 @@
     <div class="row">
         <div class="col-md-2 sidebar shadow-lg">
             <h4 class="text-center text-success fw-bold mb-4"><i class="bi bi-lightning-charge-fill"></i> EV STORE</h4>
-            <a href="#" class="active"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
-            <a href="/core/quan-ly-tram-sac/"><i class="bi bi-ev-station me-2"></i> Quản lý Trạm Sạc</a>
-            <a href="/core/danh_sach_xe/"><i class="bi bi-car-front me-2"></i> Quản lý Xe Điện</a>
-             <a href="/core/users/"><i class="bi bi-person me-2"></i> Quản lý Người Dùng</a>
-
-            <a href="/core/map/" target="_blank"><i class="bi bi-map me-2"></i> Xem Bản Đồ</a>
-            <a href="/" target="_blank"><i class="bi bi-basket"></i> Trang Chủ</a>
+            
+            <a href="/core/dashboard/" class="{% if '/core/dashboard/' in request.path %}active{% endif %}">
+                <i class="bi bi-speedometer2 me-2"></i> Tổng quan
+            </a>
+            
+            <a href="/core/quan-ly-tram-sac/" class="{% if 'quan-ly-tram-sac' in request.path %}active{% endif %}">
+                <i class="bi bi-ev-station me-2"></i> Quản lý Trạm Sạc
+            </a>
+            
+            <a href="/core/danh_sach_xe/" class="{% if 'danh_sach_xe' in request.path or '/core/xe/' in request.path %}active{% endif %}">
+                <i class="bi bi-car-front me-2"></i> Quản lý Xe Điện
+            </a>
+            
+            <a href="{% url 'danh_sach_don_hang' %}" class="{% if 'don-hang' in request.path %}active{% endif %}">
+                <i class="bi bi-receipt-cutoff me-2"></i> Quản lý Đơn Hàng
+            </a>
+            
+            <a href="/core/users/" class="{% if 'users' in request.path %}active{% endif %}">
+                <i class="bi bi-person me-2"></i> Quản lý Người Dùng
+            </a>
+            
+            <a href="/core/map/" target="_blank">
+                <i class="bi bi-map me-2"></i> Xem Bản Đồ
+            </a>
+            
+            <a href="/" target="_blank">
+                <i class="bi bi-basket me-2"></i> Trang Chủ
+            </a>
         </div>
 
         <div class="col-md-10 p-4">

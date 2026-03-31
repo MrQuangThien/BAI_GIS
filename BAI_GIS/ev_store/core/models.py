@@ -2,7 +2,9 @@ from django.db import models
 from django import forms
 from django.contrib.auth.models import User
 
-# --- MODELS ---
+# ==========================================
+#                  MODELS
+# ==========================================
 
 class CuaHang(models.Model):
     ten_cua_hang = models.CharField(max_length=255)
@@ -41,8 +43,6 @@ class TramSac(models.Model):
     trang_thai = models.BooleanField(default=True)
     lat = models.FloatField()
     lon = models.FloatField()
-    # Thêm trường lưu link ảnh
-    # Đổi thành ImageField, ảnh tải lên sẽ tự chui vào thư mục media/tram_sac_images/
     hinh_anh = models.ImageField(upload_to='tram_sac_images/', null=True, blank=True)
 
     def __str__(self):
@@ -54,28 +54,15 @@ class PhienSac(models.Model):
     thoi_gian_ket_thuc = models.DateTimeField()
     dien_nang_tieu_thu = models.FloatField()
 
-# --- FORMS ---
-
-class XeDienForm(forms.ModelForm):
-    class Meta:
-        model = XeDien
-        fields = '__all__'
-        widgets = {
-            'ten_xe': forms.TextInput(attrs={'class': 'form-control'}),
-            'hang_san_xuat': forms.TextInput(attrs={'class': 'form-control'}),
-            'dung_luong_pin': forms.NumberInput(attrs={'class': 'form-control'}),
-            'tam_di_chuyen': forms.NumberInput(attrs={'class': 'form-control'}),
-            'gia': forms.NumberInput(attrs={'class': 'form-control'}),
-            'trang_thai': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'cua_hang': forms.Select(attrs={'class': 'form-select'}),
-        }
 
 class DonHang(models.Model):
     # Khai báo các lựa chọn cho Loại đơn và Trạng thái
     LOAI_DON_CHOICES = [
-        ('A', 'Đặt giữ xe (Không cần thanh toán, giữ 1-2 ngày)'),
-        ('B', 'Đặt cọc online (Thanh toán trước một phần)'),
-        ('C', 'Mua online hoàn toàn (Thanh toán 100%, Giao tận nơi)'),
+        ('A', 'Đặt giữ xe online'),
+        ('B', 'Đặt cọc online'),
+        ('C', 'Mua online hoàn toàn'),
+        ('D', 'Mua trực tiếp - Trả thẳng 100%'), # Dành cho khách mua tại quầy
+        ('E', 'Mua trực tiếp - Trả góp'),        # Dành cho khách mua tại quầy
     ]
     
     TRANG_THAI_CHOICES = [
@@ -93,16 +80,37 @@ class DonHang(models.Model):
     # Thông tin khách hàng nhập vào form
     ho_ten = models.CharField(max_length=100, verbose_name="Họ và tên")
     so_dien_thoai = models.CharField(max_length=15, verbose_name="Số điện thoại")
-    email = models.EmailField(verbose_name="Email nhận thông báo")
+    email = models.EmailField(verbose_name="Email nhận thông báo", blank=True, null=True) # Mở rộng thêm cho phép null nếu khách k có email
     dia_chi = models.TextField(verbose_name="Địa chỉ giao xe / Liên hệ")
     
     # Cấu hình đơn hàng
     loai_don = models.CharField(max_length=1, choices=LOAI_DON_CHOICES, default='A')
     trang_thai = models.CharField(max_length=20, choices=TRANG_THAI_CHOICES, default='Pending')
     
-    # Tự động lưu ngày giờ đặt
+    # Tự động lưu ngày giờ đặt và tiền bạc
     ngay_dat = models.DateTimeField(auto_now_add=True)
     tong_tien = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+    
+    # ---> ĐÃ THÊM: TRƯỜNG TIỀN TRẢ TRƯỚC BỊ THIẾU <---
+    so_tien_tra_truoc = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name="Số tiền trả trước")
 
     def __str__(self):
         return f"Đơn #{self.id} - {self.ho_ten} - {self.xe.ten_xe}"
+
+# ==========================================
+#                  FORMS
+# ==========================================
+
+class XeDienForm(forms.ModelForm):
+    class Meta:
+        model = XeDien
+        fields = '__all__'
+        widgets = {
+            'ten_xe': forms.TextInput(attrs={'class': 'form-control'}),
+            'hang_san_xuat': forms.TextInput(attrs={'class': 'form-control'}),
+            'dung_luong_pin': forms.NumberInput(attrs={'class': 'form-control'}),
+            'tam_di_chuyen': forms.NumberInput(attrs={'class': 'form-control'}),
+            'gia': forms.NumberInput(attrs={'class': 'form-control'}),
+            'trang_thai': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'cua_hang': forms.Select(attrs={'class': 'form-select'}),
+        }

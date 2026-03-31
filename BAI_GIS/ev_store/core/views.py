@@ -15,7 +15,7 @@ from django.core.mail import send_mail
 
 # --- QUAN TRỌNG: Import đúng nơi bạn khai báo ---
 from .models import TramSac, XeDien, CuaHang, XeDienForm, DonHang
-from .forms import RegisterForm, UserForm, DonHangForm
+from .forms import RegisterForm, UserForm, DonHangForm, DonHangTaiQuayForm
 
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
@@ -405,3 +405,50 @@ def dang_ky_view(request):
         form = RegisterForm()
         
     return render(request, 'register.html', {'form': form})
+
+@login_required
+def danh_sach_don_hang(request):
+    # Lấy tất cả đơn hàng, sắp xếp theo ngày đặt mới nhất lên đầu
+    danh_sach = DonHang.objects.all().order_by('-ngay_dat')
+    return render(request, 'donhang/danh_sach.html', {'danh_sach_don_hang': danh_sach})
+
+@login_required
+def chi_tiet_don_hang(request, don_id):
+    don_hang = get_object_or_404(DonHang, id=don_id)
+    
+    if request.method == 'POST':
+        trang_thai_moi = request.POST.get('trang_thai')
+        if trang_thai_moi:
+            don_hang.trang_thai = trang_thai_moi
+            don_hang.save()
+            
+            # ĐÃ THÊM: Báo cho Django biết là hãy tạo một thông báo thành công
+            messages.success(request, 'Cập nhật trạng thái đơn hàng thành công!')
+            
+            return redirect('chi_tiet_don_hang', don_id=don_hang.id)
+
+    context = {
+        'don_hang': don_hang,
+        'trang_thai_choices': DonHang.TRANG_THAI_CHOICES
+    }
+    return render(request, 'donhang/chi_tiet.html', context)
+
+@login_required
+def tao_don_hang_offline(request):
+    if request.method == 'POST':
+        form = DonHangTaiQuayForm(request.POST)
+        if form.is_valid():
+            don_hang = form.save(commit=False)
+            
+            # Logic: Nếu trả thẳng thì số tiền trả trước = 0
+            if don_hang.loai_don == 'D': 
+                don_hang.so_tien_tra_truoc = 0
+                
+            don_hang.save()
+            messages.success(request, f'Đã tạo đơn hàng thành công cho khách {don_hang.ho_ten}!')
+            return redirect('danh_sach_don_hang')
+    else:
+        # Mặc định khi mở form: Trả thẳng 100% (D) và Đã thanh toán (Paid)
+        form = DonHangTaiQuayForm(initial={'loai_don': 'D', 'trang_thai': 'Paid'})
+
+    return render(request, 'donhang/tao_moi.html', {'form': form})

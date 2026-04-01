@@ -48,4 +48,5 @@ urlpatterns = [
     path('quan-ly-don-hang/', views.danh_sach_don_hang, name='danh_sach_don_hang'),
     path('quan-ly-don-hang/<int:don_id>/', views.chi_tiet_don_hang, name='chi_tiet_don_hang'),
     path('quan-ly-don-hang/tao-don-tai-quay/', views.tao_don_hang_offline, name='tao_don_hang_offline'),
+    path('san-pham/', views.danh_sach_san_pham, name='danh_sach_san_pham'),
 ]

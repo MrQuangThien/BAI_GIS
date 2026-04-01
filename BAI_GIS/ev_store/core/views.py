@@ -28,9 +28,11 @@ from django.shortcuts import render, get_object_or_404, redirect
 def trang_chu(request):
     xe_noi_bat = XeDien.objects.filter(noi_bat=True)
     xe_sap_ve = XeDien.objects.filter(sap_ve=True)
+
     context = {
         'xe_noi_bat': xe_noi_bat,
         'xe_sap_ve': xe_sap_ve,
+
     }
     return render(request, 'trang_chu.html', context)
 
@@ -452,3 +454,22 @@ def tao_don_hang_offline(request):
         form = DonHangTaiQuayForm(initial={'loai_don': 'D', 'trang_thai': 'Paid'})
 
     return render(request, 'donhang/tao_moi.html', {'form': form})
+
+def danh_sach_san_pham(request):
+    # Lấy toàn bộ xe đang ở trạng thái kinh doanh
+    danh_sach = XeDien.objects.filter(trang_thai=True)
+    
+    # Lấy danh sách các Hãng xe không trùng lặp (để in ra thanh bộ lọc bên trái)
+    cac_hang_xe = XeDien.objects.values_list('hang_san_xuat', flat=True).distinct()
+    
+    # Kiểm tra xem khách có đang bấm lọc theo hãng nào không
+    hang_duoc_chon = request.GET.get('thuong_hieu')
+    if hang_duoc_chon:
+        danh_sach = danh_sach.filter(hang_san_xuat__iexact=hang_duoc_chon)
+        
+    context = {
+        'danh_sach_xe': danh_sach,
+        'cac_hang_xe': cac_hang_xe,
+        'hang_duoc_chon': hang_duoc_chon,
+    }
+    return render(request, 'san_pham.html', context)

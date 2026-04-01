@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +13,8 @@
     <style>
         body { background: #f6f6f6; }
         .navbar-brand { font-weight: bold; font-size: 22px; }
+        
+        /* Banner chính */
         .hero {
             height: 550px;
             background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
@@ -24,14 +27,37 @@
             text-align: center;
         }
         .hero h1 { font-size: 55px; font-weight: 700; }
-        .section-title { border-left: 5px solid #198754; padding-left: 12px; font-weight: bold; margin-bottom: 25px; }
-        .card-product-img { height: 220px; object-fit: cover; background: #fff; }
-        .brand-logo { height: 70px; object-fit: contain; transition: 0.3s; }
-        .brand-logo:hover { transform: scale(1.1); }
+
+        /* Tiêu đề các phần */
+        .section-title {
+            border-left: 5px solid #198754;
+            padding-left: 12px;
+            font-weight: bold;
+            margin-bottom: 25px;
+        }
+
+        /* Thẻ sản phẩm */
+        .card-product-img {
+            height: 220px;
+            object-fit: cover;
+            background: #fff;
+        }
+        .price-text {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
         .feature-icon { font-size: 40px; color: #198754; }
-        .price-text { color: #dc3545; font-weight: bold; font-size: 1.1rem; }
-        .category-card { transition: 0.3s; cursor: pointer; text-decoration: none; color: inherit; }
-        .category-card:hover { transform: translateY(-5px); border-color: #198754 !important; }
+        
+        /* Hover hiệu ứng cho xe */
+        .product-card { transition: 0.3s; }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+
+        /* Custom Footer */
+        footer a { color: #adb5bd; text-decoration: none; transition: 0.3s; }
+        footer a:hover { color: #198754; padding-left: 5px; }
+        footer .social-icons i { font-size: 1.5rem; margin-right: 15px; color: #adb5bd; transition: 0.3s; }
+        footer .social-icons i:hover { color: #fff; }
     </style>
 </head>
 
@@ -47,58 +73,10 @@
             </button>
             <div class="collapse navbar-collapse" id="menu">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link active" href="{% url 'trang_chu' %}">Trang chủ</a></li>
-                    <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-        Danh mục
-    </a>
-    <ul class="dropdown-menu shadow border-0 mt-2" aria-labelledby="navbarDropdown">
-        <li>
-            <a class="dropdown-item py-2" href="{% url 'danh_muc_xe' 'oto-dien' %}">
-                <i class="bi bi-car-front-fill text-success me-2"></i> Ô tô điện
-            </a>
-        </li>
-        <li>
-            <a class="dropdown-item py-2" href="{% url 'danh_muc_xe' 'xe-may-dien' %}">
-                <i class="bi bi-bicycle text-success me-2"></i> Xe máy điện
-            </a>
-        </li>
-        <li><hr class="dropdown-divider"></li>
-        <li>
-            <a class="dropdown-item text-center text-muted fw-bold" href="#danhmuc">
-                Xem tất cả danh mục
-            </a>
-        </li>
-    </ul>
-</li>
-<li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="navbarBrandDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-        Thương hiệu
-    </a>
-    <ul class="dropdown-menu shadow border-0 mt-2" aria-labelledby="navbarBrandDropdown">
-        <li>
-            <a class="dropdown-item py-2 fw-semibold" href="{% url 'tim_kiem' %}?q=vinfast">
-                VinFast
-            </a>
-        </li>
-        <li>
-            <a class="dropdown-item py-2 fw-semibold" href="{% url 'tim_kiem' %}?q=datbike">
-                Dat Bike
-            </a>
-        </li>
-        <li>
-            <a class="dropdown-item py-2 fw-semibold" href="{% url 'tim_kiem' %}?q=yadea">
-                Yadea
-            </a>
-        </li>
-        <li>
-            <a class="dropdown-item py-2 fw-semibold" href="{% url 'tim_kiem' %}?q=tesla">
-                Tesla
-            </a>
-        </li>
-    </ul>
-</li>
+                    <li class="nav-item"><a class="nav-link active fw-bold" href="{% url 'trang_chu' %}">Trang chủ</a></li>
+                    <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'danh_sach_san_pham' %}">Sản phẩm</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm sạc</a></li>
+                    
                     {% if user.is_authenticated and user.is_staff %}
                     <li class="nav-item">
                         <a class="nav-link text-warning fw-bold" href="{% url 'admin_dashboard' %}">
@@ -115,26 +93,26 @@
 
                 <div class="d-flex align-items-center">
                     {% if user.is_authenticated %}
-                        <div class="dropdown">
-                            <button class="btn btn-light dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle me-1"></i> {{ user.username }}
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow">
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Tài khoản</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form action="{% url 'logout' %}" method="post" style="display: inline;">
-                                        {% csrf_token %}
-                                        <button type="submit" class="dropdown-item text-danger fw-bold">
-                                            <i class="bi bi-box-arrow-right me-2"></i> Đăng xuất
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i> {{ user.username }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Tài khoản</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger fw-bold">
+                                        <i class="bi bi-box-arrow-right me-2"></i> Đăng xuất
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
                     {% else %}
-                        <a href="{% url 'login' %}" class="btn btn-success me-2 fw-bold shadow-sm">Đăng nhập</a>
-                        <a href="{% url 'register' %}" class="btn btn-outline-success fw-bold bg-white text-success">Đăng ký</a>
+                    <a href="{% url 'login' %}" class="btn btn-success me-2 fw-bold shadow-sm">Đăng nhập</a>
+                    <a href="{% url 'register' %}" class="btn btn-outline-success fw-bold bg-white text-success">Đăng ký</a>
                     {% endif %}
                 </div>
             </div>
@@ -145,87 +123,91 @@
         <div class="container">
             <h1>Tương Lai Của Xe Điện</h1>
             <p class="lead mt-3 mb-4">Khám phá hệ sinh thái xe điện hiện đại – tiết kiệm – thân thiện môi trường</p>
-            <a href="#noibat" class="btn btn-success btn-lg px-4">Khám phá ngay</a>
+            <a href="#noibat" class="btn btn-success btn-lg px-4 shadow">Khám phá ngay</a>
         </div>
     </section>
 
-    <div class="container my-5 text-center" id="danhmuc">
-        <h2 class="section-title text-start mb-4">Danh mục sản phẩm</h2>
-        <div class="row g-4 justify-content-center mb-5">
-            <div class="col-md-4">
-                <a href="{% url 'danh_muc_xe' 'oto-dien' %}" class="card category-card border-2 py-4 shadow-sm">
-                    <i class="bi bi-car-front-fill display-4 text-success mb-2"></i>
-                    <h4 class="fw-bold">Ô tô điện</h4>
-                </a>
+    <div class="container my-5 py-3">
+        <h2 class="section-title">Tại sao nên dùng xe điện?</h2>
+        <div class="row text-center mt-4">
+            <div class="col-md-3 mb-3">
+                <i class="bi bi-tree feature-icon"></i>
+                <h5 class="mt-3 fw-bold">Thân thiện môi trường</h5>
+                <p class="text-muted">Giảm thiểu tối đa lượng khí thải CO₂ ra môi trường.</p>
             </div>
-            <div class="col-md-4">
-                <a href="{% url 'danh_muc_xe' 'xe-may-dien' %}" class="card category-card border-2 py-4 shadow-sm">
-                    <i class="bi bi-bicycle display-4 text-success mb-2"></i>
-                    <h4 class="fw-bold">Xe máy điện</h4>
-                </a>
+            <div class="col-md-3 mb-3">
+                <i class="bi bi-cash feature-icon"></i>
+                <h5 class="mt-3 fw-bold">Tiết kiệm chi phí</h5>
+                <p class="text-muted">Chi phí sạc điện và bảo dưỡng rẻ hơn xăng/dầu rất nhiều.</p>
             </div>
-        </div>
-
-        <h3 class="text-secondary mt-4 mb-4">Thương hiệu đồng hành</h3>
-        <div class="d-flex justify-content-center gap-5 flex-wrap">
-            <a href="{% url 'tim_kiem' %}?q=vinfast"><img src="{% static 'core/images/logo-vinfast.jpg' %}" class="brand-logo"></a>
-            <a href="{% url 'tim_kiem' %}?q=datbike"><img src="{% static 'core/images/logo-datbike.png' %}" class="brand-logo"></a>
-            <a href="{% url 'tim_kiem' %}?q=yadea"><img src="{% static 'core/images/logo-yadea.png' %}" class="brand-logo"></a>
+            <div class="col-md-3 mb-3">
+                <i class="bi bi-lightning-charge feature-icon"></i>
+                <h5 class="mt-3 fw-bold">Sạc điện tiện lợi</h5>
+                <p class="text-muted">Mạng lưới trạm sạc phủ sóng rộng khắp toàn quốc.</p>
+            </div>
+            <div class="col-md-3 mb-3">
+                <i class="bi bi-cpu feature-icon"></i>
+                <h5 class="mt-3 fw-bold">Công nghệ thông minh</h5>
+                <p class="text-muted">Kết nối ứng dụng quản lý xe hiện đại trên điện thoại.</p>
+            </div>
         </div>
     </div>
 
     <div class="container my-5" id="noibat">
-        <h2 class="section-title">Sản phẩm nổi bật</h2>
+        <h2 class="section-title border-success">Sản phẩm nổi bật</h2>
         <div class="row g-4">
             {% for xe in xe_noi_bat %}
-            <div class="col-md-3">
-                <div class="card shadow-sm h-100 border-0">
+            <div class="col-md-3 col-sm-6">
+                <div class="card product-card shadow-sm h-100 border-0">
                     {% if xe.hinh_anh %}
-                        <img src="{{ xe.hinh_anh.url }}" class="card-img-top card-product-img" alt="{{ xe.ten_xe }}">
+                    <img src="{{ xe.hinh_anh.url }}" class="card-img-top card-product-img" alt="{{ xe.ten_xe }}">
                     {% else %}
-                        <img src="https://via.placeholder.com/300x200?text=No+Image" class="card-img-top card-product-img">
+                    <img src="https://via.placeholder.com/300x200?text=No+Image" class="card-img-top card-product-img">
                     {% endif %}
-                    
+
                     <div class="card-body text-center d-flex flex-column">
-                        <h5 class="fw-bold mb-1">{{ xe.ten_xe }}</h5>
+                        <h5 class="fw-bold mb-1 text-truncate" title="{{ xe.ten_xe }}">{{ xe.ten_xe }}</h5>
                         <p class="text-muted small mb-2">{{ xe.hang_san_xuat }}</p>
                         <p class="price-text mb-3">{{ xe.gia }} VNĐ</p>
-                        
+
                         <div class="mt-auto d-grid gap-2">
                             <a href="{% url 'chi_tiet_xe' xe.id %}" class="btn btn-outline-success">
                                 <i class="bi bi-eye"></i> Xem chi tiết
                             </a>
                             <a href="{% url 'tao_don_hang' xe.id %}" class="btn btn-success fw-bold">
-                                <i class="bi bi-file-earmark-text"></i> Đặt Hàng
+                                <i class="bi bi-cart-plus"></i> Đặt Hàng
                             </a>
                         </div>
                     </div>
                 </div>
             </div>
             {% empty %}
-            <div class="col-12 text-center"><p class="text-muted">Chưa có sản phẩm nổi bật.</p></div>
+            <div class="col-12 text-center py-4">
+                <i class="bi bi-inbox fs-1 text-muted mb-2 d-block"></i>
+                <p class="text-muted">Chưa có sản phẩm nổi bật nào.</p>
+            </div>
             {% endfor %}
         </div>
     </div>
 
-    <div class="container my-5" id="sapve">
+    <div class="container my-5 bg-white p-4 rounded shadow-sm border" id="sapve">
         <h2 class="section-title border-info text-info">Sản phẩm sắp về</h2>
-        <div class="row g-4">
+        <div class="row g-4 mt-1">
             {% for xe in xe_sap_ve %}
-            <div class="col-md-3">
-                <div class="card shadow-sm h-100 border-0 bg-light">
+            <div class="col-md-3 col-sm-6">
+                <div class="card product-card shadow-sm h-100 border-0 bg-light">
                     {% if xe.hinh_anh %}
-                        <img src="{{ xe.hinh_anh.url }}" class="card-img-top card-product-img" style="filter: brightness(0.9);" alt="{{ xe.ten_xe }}">
+                    <img src="{{ xe.hinh_anh.url }}" class="card-img-top card-product-img" style="filter: brightness(0.9);" alt="{{ xe.ten_xe }}">
                     {% else %}
-                        <img src="https://via.placeholder.com/300x200?text=Sắp+về" class="card-img-top card-product-img">
+                    <img src="https://via.placeholder.com/300x200?text=Sắp+về" class="card-img-top card-product-img">
                     {% endif %}
-                    
+
                     <div class="card-body text-center d-flex flex-column">
-                        <span class="badge bg-info text-dark align-self-center mb-2">Comming Soon</span>
-                        <h5 class="fw-bold mb-1">{{ xe.ten_xe }}</h5>
+                        <span class="badge bg-info text-dark align-self-center mb-2"><i class="bi bi-clock-history me-1"></i> Sắp ra mắt</span>
+                        <h5 class="fw-bold mb-1 text-truncate" title="{{ xe.ten_xe }}">{{ xe.ten_xe }}</h5>
                         <p class="text-muted small mb-2">{{ xe.hang_san_xuat }}</p>
                         <p class="price-text text-info mb-3">Dự kiến: {{ xe.gia }} VNĐ</p>
-                        
+
                         <div class="mt-auto d-grid gap-2">
                             <a href="{% url 'chi_tiet_xe' xe.id %}" class="btn btn-outline-info text-dark">
                                 <i class="bi bi-eye"></i> Xem chi tiết
@@ -238,25 +220,76 @@
                 </div>
             </div>
             {% empty %}
-            <div class="col-12 text-center"><p class="text-muted">Chưa có sản phẩm sắp về.</p></div>
+            <div class="col-12 text-center py-3">
+                <p class="text-muted">Chưa có sản phẩm sắp về.</p>
+            </div>
             {% endfor %}
         </div>
     </div>
 
-    <div class="container my-5">
-        <h2 class="section-title">Tại sao nên dùng xe điện?</h2>
-        <div class="row text-center">
-            <div class="col-md-3"><i class="bi bi-tree feature-icon"></i><h5 class="mt-3">Thân thiện môi trường</h5><p>Giảm khí thải CO₂</p></div>
-            <div class="col-md-3"><i class="bi bi-cash feature-icon"></i><h5 class="mt-3">Tiết kiệm chi phí</h5><p>Chi phí vận hành thấp</p></div>
-            <div class="col-md-3"><i class="bi bi-lightning-charge feature-icon"></i><h5 class="mt-3">Sạc nhanh</h5><p>Mạng lưới trạm sạc rộng</p></div>
-            <div class="col-md-3"><i class="bi bi-cpu feature-icon"></i><h5 class="mt-3">Công nghệ thông minh</h5><p>Kết nối ứng dụng hiện đại</p></div>
-        </div>
-    </div>
 
-    <footer class="bg-dark text-white text-center py-4 mt-5">
-        <p class="mb-0">© 2026 EV STORE - Hệ thống kinh doanh xe điện</p>
+    <footer class="bg-dark text-light pt-5 pb-3 mt-5">
+        <div class="container">
+            <div class="row text-md-left">
+                
+                <div class="col-md-3 col-lg-3 col-xl-3 mx-auto mt-3">
+                    <h5 class="text-uppercase mb-4 fw-bold text-success">
+                        <i class="bi bi-lightning-charge-fill me-2"></i>EV STORE
+                    </h5>
+                    <p class="text-muted text-justify">
+                        Đại lý phân phối xe điện chính hãng hàng đầu. Chúng tôi cam kết mang đến những sản phẩm chất lượng, thân thiện với môi trường cùng dịch vụ bảo hành tận tâm.
+                    </p>
+                </div>
+
+                <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mt-3">
+                    <h6 class="text-uppercase mb-4 fw-bold">Liên kết nhanh</h6>
+                    <p><a href="{% url 'trang_chu' %}">Trang chủ</a></p>
+                    <p><a href="{% url 'danh_sach_san_pham' %}">Sản phẩm</a></p>
+                    <p><a href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm sạc</a></p>
+                    <p><a href="#">Tin tức & Đánh giá</a></p>
+                </div>
+
+                <div class="col-md-3 col-lg-2 col-xl-2 mx-auto mt-3">
+                    <h6 class="text-uppercase mb-4 fw-bold">Hỗ trợ khách hàng</h6>
+                    <p><a href="#">Chính sách bảo hành</a></p>
+                    <p><a href="#">Hướng dẫn mua trả góp</a></p>
+                    <p><a href="#">Chính sách giao nhận xe</a></p>
+                    <p><a href="#">Câu hỏi thường gặp (FAQ)</a></p>
+                </div>
+
+                <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mt-3">
+                    <h6 class="text-uppercase mb-4 fw-bold">Liên hệ</h6>
+                    <p class="text-muted"><i class="bi bi-house-door-fill me-3 text-success"></i> Số 1, Đường Lê Duẩn, Quận 1, TP. HCM</p>
+                    <p class="text-muted"><i class="bi bi-envelope-fill me-3 text-success"></i> cskh@evstore.vn</p>
+                    <p class="text-muted"><i class="bi bi-telephone-fill me-3 text-success"></i> Hotline: 1900 1234</p>
+                    
+                    <div class="social-icons mt-4">
+                        <a href="#"><i class="bi bi-facebook"></i></a>
+                        <a href="#"><i class="bi bi-youtube"></i></a>
+                        <a href="#"><i class="bi bi-instagram"></i></a>
+                        <a href="#"><i class="bi bi-tiktok"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="mb-4 text-muted">
+
+            <div class="row align-items-center">
+                <div class="col-md-7 col-lg-8">
+                    <p class="text-muted mb-0">© 2026 Bản quyền thuộc về <strong class="text-success">EV STORE</strong>. Thiết kế cho đồ án tốt nghiệp.</p>
+                </div>
+                <div class="col-md-5 col-lg-4">
+                    <div class="text-center text-md-end">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" height="20" class="me-2 bg-white px-1 rounded">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" alt="Visa" height="20" class="me-2 bg-white px-1 rounded">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="MasterCard" height="20" class="bg-white px-1 rounded">
+                    </div>
+                </div>
+            </div>
+        </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

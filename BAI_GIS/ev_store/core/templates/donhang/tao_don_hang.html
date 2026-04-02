@@ -10,73 +10,124 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     
     <style>
-        body { background: #f6f6f6; }
-        .navbar-brand { font-weight: bold; font-size: 22px; }
-        .order-summary-img { width: 100%; height: 250px; object-fit: contain; background: white; border-radius: 8px; }
+        /* Ép body dàn trải toàn bộ chiều cao màn hình để đẩy Footer xuống đáy */
+        body { 
+            background: #f4f6f9; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .navbar-brand { font-weight: 800; font-size: 24px; letter-spacing: 1px; }
+        
+        /* Tùy chỉnh form nhập liệu */
+        .form-control, .form-select { 
+            padding: 12px 15px; 
+            border-radius: 8px; 
+            border: 1px solid #dee2e6; 
+            background-color: #fcfcfc;
+        }
+        .form-control:focus, .form-select:focus { 
+            border-color: #198754; 
+            background-color: #ffffff;
+            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15); 
+        }
+        
+        /* Tùy chỉnh nút bấm */
+        .checkout-btn { 
+            border-radius: 8px; 
+            padding: 12px 20px; 
+            font-size: 1.1rem; 
+            transition: all 0.3s ease; 
+        }
+        .checkout-btn:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 15px rgba(25, 135, 84, 0.3); 
+        }
+        
+        /* Tùy chỉnh ảnh và cột tóm tắt */
+        .order-summary-img { 
+            width: 100%; 
+            height: auto; 
+            max-height: 260px; 
+            object-fit: cover; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+        }
+        .receipt-card {
+            background-color: #f8fcf9;
+            border: 1px solid #e2f0e6 !important;
+        }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{% url 'trang_chu' %}">
-                <i class="bi bi-lightning-charge-fill"></i> EV STORE
+                <i class="bi bi-lightning-charge-fill text-warning"></i> EV STORE
             </a>
             <div class="collapse navbar-collapse" id="menu">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'trang_chu' %}">Trang chủ</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="#">Tiến hành đặt hàng</a></li>
+                    <li class="nav-item"><a class="nav-link fw-semibold" href="{% url 'trang_chu' %}">Trang chủ</a></li>
+                    <li class="nav-item"><a class="nav-link active fw-bold" href="#">Tiến hành đặt hàng</a></li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container my-5">
-        <h2 class="fw-bold mb-4 text-success"><i class="bi bi-cart-check-fill me-2"></i>Hoàn tất đơn hàng</h2>
+    <div class="container my-5 flex-grow-1">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="fw-bold text-success mb-1"><i class="bi bi-cart-check-fill me-2"></i>Hoàn tất đơn hàng</h2>
+                <p class="text-muted fs-6">Vui lòng điền thông tin chính xác để chúng tôi chuẩn bị xe cho bạn.</p>
+            </div>
+        </div>
         
-        <div class="row g-4">
+        <div class="row g-4 align-items-start">
             
-            <div class="col-md-7">
-                <div class="card shadow-sm border-0 rounded-3">
-                    <div class="card-header bg-white py-3 border-bottom">
-                        <h5 class="mb-0 fw-bold"><i class="bi bi-person-lines-fill me-2 text-success"></i>Thông tin liên hệ & Phương thức</h5>
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0 rounded-4">
+                    <div class="card-header bg-white py-3 border-bottom-0 pt-4">
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-person-vcard-fill me-2 text-success"></i>Thông tin liên hệ</h5>
                     </div>
-                    <div class="card-body p-4">
+                    <div class="card-body p-4 pt-0">
                         
                         <form method="POST">
                             {% csrf_token %}
                             
-                            <div class="row">
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label fw-semibold">{{ form.ho_ten.label }}</label>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold text-dark">{{ form.ho_ten.label }} <span class="text-danger">*</span></label>
                                     {{ form.ho_ten }}
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-semibold">{{ form.so_dien_thoai.label }}</label>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-dark">{{ form.so_dien_thoai.label }} <span class="text-danger">*</span></label>
                                     {{ form.so_dien_thoai }}
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-semibold">{{ form.email.label }}</label>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-dark">{{ form.email.label }}</label>
                                     {{ form.email }}
                                 </div>
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label fw-semibold">{{ form.dia_chi.label }}</label>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold text-dark">{{ form.dia_chi.label }} <span class="text-danger">*</span></label>
                                     {{ form.dia_chi }}
                                 </div>
                             </div>
 
-                            <hr class="text-muted my-4">
+                            <hr class="text-muted my-4 opacity-25">
 
-                            <h5 class="fw-bold mb-3">Hình thức đặt hàng</h5>
-                            <div class="mb-4 bg-light p-3 rounded border">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-credit-card-2-front-fill me-2 text-primary"></i>Hình thức thanh toán</h5>
+                            <div class="mb-4 bg-light p-4 rounded-4 border">
+                                <label class="form-label fw-bold text-muted mb-2">Vui lòng chọn phương thức phù hợp:</label>
                                 {{ form.loai_don }}
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center mt-4">
-                                <a href="{% url 'chi_tiet_xe' xe.id %}" class="text-decoration-none text-secondary fw-semibold">
-                                    <i class="bi bi-arrow-left me-1"></i> Quay lại xem xe
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-5">
+                                <a href="{% url 'chi_tiet_xe' xe.id %}" class="text-decoration-none text-secondary fw-semibold mb-3 mb-md-0 btn btn-light px-4 py-2 rounded-3 border">
+                                    <i class="bi bi-arrow-left me-1"></i> Quay lại
                                 </a>
-                                <button type="submit" class="btn btn-success btn-lg px-5 fw-bold shadow-sm">
+                                <button type="submit" class="btn btn-success checkout-btn shadow fw-bold w-75 w-md-auto">
                                     Xác nhận đặt hàng <i class="bi bi-chevron-right ms-1"></i>
                                 </button>
                             </div>
@@ -86,34 +137,49 @@
                 </div>
             </div>
 
-            <div class="col-md-5">
-                <div class="card shadow-sm border-0 bg-white rounded-3 sticky-top" style="top: 90px;">
-                    <div class="card-header bg-success text-white py-3">
-                        <h5 class="mb-0 fw-bold"><i class="bi bi-receipt me-2"></i>Tóm tắt sản phẩm</h5>
+            <div class="col-lg-5">
+                <div class="card shadow-sm border-0 rounded-4 receipt-card">
+                    <div class="card-header bg-transparent border-bottom border-success border-opacity-25 py-3 pt-4">
+                        <h5 class="mb-0 fw-bold text-success"><i class="bi bi-receipt-cutoff me-2"></i>Tóm tắt sản phẩm</h5>
                     </div>
                     <div class="card-body p-4">
                         
-                        <div class="text-center mb-3">
+                        <div class="text-center mb-4">
                             {% if xe.hinh_anh %}
-                                <img src="{{ xe.hinh_anh.url }}" class="order-summary-img img-thumbnail border-0">
+                                <img src="{{ xe.hinh_anh.url }}" class="order-summary-img border-0">
                             {% else %}
-                                <img src="https://via.placeholder.com/400x250?text=Chưa+có+ảnh" class="order-summary-img img-thumbnail border-0">
+                                <img src="https://via.placeholder.com/400x250?text=Chưa+có+ảnh" class="order-summary-img border-0">
                             {% endif %}
                         </div>
 
-                        <h4 class="fw-bold mb-1">{{ xe.ten_xe }}</h4>
-                        <p class="text-muted mb-3">{{ xe.hang_san_xuat }}</p>
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h4 class="fw-bold mb-1 text-dark">{{ xe.ten_xe }}</h4>
+                                <span class="badge bg-dark text-white">{{ xe.hang_san_xuat }}</span>
+                            </div>
+                        </div>
                         
-                        <hr>
+                        <hr class="border-success border-opacity-25 my-3">
                         
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-muted fw-semibold">Giá niêm yết:</span>
-                            <span class="fs-5 fw-bold">{{ xe.gia }} VNĐ</span>
+                            <span class="text-muted fw-semibold">Giá xe:</span>
+                            <span class="fw-bold">{{ xe.gia }} VNĐ</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted fw-semibold">Phí giao xe:</span>
+                            <span class="fw-bold text-success">Miễn phí</span>
                         </div>
 
-                        <div class="alert alert-warning mt-4 text-dark small" role="alert">
-                            <i class="bi bi-info-circle-fill me-1"></i>
-                            <strong>Lưu ý:</strong> Sau khi bấm Xác nhận, hệ thống sẽ gửi một Email chi tiết về lộ trình thanh toán dựa trên Hình thức bạn đã chọn đến địa chỉ Email của bạn.
+                        <div class="p-3 bg-white rounded-3 border shadow-sm mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-dark fs-5">Tạm tính:</span>
+                                <span class="fs-4 fw-bold text-danger">{{ xe.gia }} VNĐ</span>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning text-dark small mb-0 border-0 shadow-sm" role="alert">
+                            <i class="bi bi-shield-check text-success fs-5 float-start me-2"></i>
+                            <strong>An tâm giao dịch:</strong> Sau khi bấm Xác nhận, hệ thống sẽ gửi một Email chi tiết về lộ trình thanh toán (đặt cọc/trả thẳng) dựa trên Hình thức bạn đã chọn.
                         </div>
 
                     </div>
@@ -123,8 +189,8 @@
         </div>
     </div>
 
-    <footer class="bg-dark text-white text-center py-4 mt-5">
-        <p class="mb-0">© 2026 EV STORE - Hệ thống kinh doanh xe điện</p>
+    <footer class="bg-dark text-white text-center py-4 mt-auto">
+        <p class="mb-0 text-white-50">© 2026 EV STORE - Hệ thống kinh doanh xe điện hàng đầu</p>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

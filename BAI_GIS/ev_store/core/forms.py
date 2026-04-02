@@ -92,6 +92,24 @@ class DonHangForm(forms.ModelForm):
             'dia_chi': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Nhập địa chỉ của bạn'}),
             'loai_don': forms.Select(attrs={'class': 'form-select fw-bold text-success'}),
         }
+    def __init__(self, *args, **kwargs):
+        # Lấy thông tin chiếc xe được truyền vào từ view (nếu có)
+        self.xe = kwargs.pop('xe', None) 
+        super(DonHangForm, self).__init__(*args, **kwargs)
+        
+        # KIỂM TRA ĐIỀU KIỆN
+        if self.xe and self.xe.sap_ve:
+            # Nếu là xe SẮP VỀ -> Chỉ cho phép Đặt cọc (Pre-order)
+            self.fields['loai_don'].choices = [
+                ('B', 'Đặt cọc giữ chỗ trước (10% giá trị xe)'),
+            ]
+        else:
+            # Nếu là xe BÌNH THƯỜNG (Có sẵn) -> Hiện đủ 3 hình thức Online
+            self.fields['loai_don'].choices = [
+                ('A', 'Đặt giữ xe online (Thanh toán sau)'),
+                ('B', 'Đặt cọc online (10% giá trị xe)'),
+                ('C', 'Mua online hoàn toàn (Thanh toán 100%)'),
+            ]
 
 class DonHangTaiQuayForm(forms.ModelForm):
     class Meta:
@@ -109,3 +127,17 @@ class DonHangTaiQuayForm(forms.ModelForm):
             'so_tien_tra_truoc': forms.NumberInput(attrs={'class': 'form-control text-primary fw-bold'}),
             'trang_thai': forms.Select(attrs={'class': 'form-select'}),
         }
+    def __init__(self, *args, **kwargs):
+        super(DonHangTaiQuayForm, self).__init__(*args, **kwargs)
+        
+        # Ép danh sách lựa chọn của ô 'loai_don' chỉ còn các hình thức Offline
+        self.fields['loai_don'].choices = [
+            ('D', 'Thanh toán 100% nhận xe ngay'),
+            ('E', 'Đặt cọc tại quầy (Tiền mặt/Quẹt thẻ)'),
+        ]
+        
+        # Tiện thể ép luôn danh sách Trạng thái cho logic (Tại quầy thì chỉ có Đã cọc hoặc Đã thanh toán)
+        self.fields['trang_thai'].choices = [
+            ('Paid', 'Đã thanh toán đủ'),
+            ('Deposit Paid', 'Đã đặt cọc'),
+        ]

@@ -54,4 +54,9 @@ urlpatterns = [
     path('category/them/', views.them_danh_muc, name='them_danh_muc'),
     path('category/sua/<int:pk>/', views.sua_danh_muc, name='sua_danh_muc'),
     path('category/xoa/<int:pk>/', views.xoa_danh_muc, name='xoa_danh_muc'),
+
+    path('cua-hang/', views.quan_ly_cua_hang, name='quan_ly_cua_hang'),
+    path('cua-hang/them/', views.them_cua_hang, name='them_cua_hang'),
+    path('cua-hang/sua/<int:pk>/', views.sua_cua_hang, name='sua_cua_hang'),
+    path('cua-hang/xoa/<int:pk>/', views.xoa_cua_hang, name='xoa_cua_hang'),
 ]

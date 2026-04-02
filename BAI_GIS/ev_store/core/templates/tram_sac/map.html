@@ -115,9 +115,8 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link active" href="/core/map">Bản đồ trạm sạc</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm sạc</a></li>
                      <li class="nav-item"><a class="nav-link" href="/">Trang Chủ</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/core/dashboard/">Trang Quản Trị</a></li>
                 </ul>
                 <form class="d-flex me-3" role="search"
                     onsubmit="event.preventDefault(); timKiemDiaChi(document.getElementById('searchInput').value);">

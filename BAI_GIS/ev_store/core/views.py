@@ -226,17 +226,22 @@ def get_nearest_tram(request):
 # ==========================================
 # 4. QUẢN LÝ ĐƠN HÀNG
 # ==========================================
+# Tìm hàm tao_don_hang và cập nhật lại
 def tao_don_hang(request, xe_id):
     xe = get_object_or_404(XeDien, id=xe_id)
-    loai_mac_dinh = 'B' if request.GET.get('type') == 'preorder' else 'A'
+    # Xác định loại mặc định dựa vào tình trạng xe
+    loai_mac_dinh = 'B' if xe.sap_ve else 'A'
 
     if request.method == 'POST':
-        form = DonHangForm(request.POST)
+        # QUAN TRỌNG: Phải truyền xe=xe vào để Form biết đường xử lý
+        form = DonHangForm(request.POST, xe=xe) 
         if form.is_valid():
             don_hang = form.save(commit=False)
             don_hang.xe = xe
-            if request.user.is_authenticated: don_hang.khach_hang = request.user
+            if request.user.is_authenticated: 
+                don_hang.khach_hang = request.user
 
+            # Xử lý trạng thái và tổng tiền
             if don_hang.loai_don == 'A':
                 don_hang.trang_thai = 'Pending'
                 don_hang.tong_tien = 0
@@ -248,11 +253,14 @@ def tao_don_hang(request, xe_id):
                 don_hang.tong_tien = xe.gia 
 
             don_hang.save()
+            # Có thể thêm dòng thông báo ở đây
+            messages.success(request, "Đặt hàng thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.")
             return redirect('trang_chu') 
     else:
-        form = DonHangForm(initial={'loai_don': loai_mac_dinh})
+        # QUAN TRỌNG: Cũg phải truyền xe=xe vào đây
+        form = DonHangForm(initial={'loai_don': loai_mac_dinh}, xe=xe)
     
-    # Đã sửa đường dẫn: donhang/
+
     return render(request, 'donhang/tao_don_hang.html', {'form': form, 'xe': xe})
 
 @login_required
@@ -402,3 +410,47 @@ def danh_muc_xe(request, loai_xe):
     danh_sach = XeDien.objects.filter(trang_thai=True)
     # Đã sửa đường dẫn: xe/
     return render(request, 'xe/danh_muc.html', {'danh_sach': danh_sach, 'loai_xe': loai_xe})
+
+# ==========================================
+# 7. QUẢN LÝ CỬA HÀNG (CHI NHÁNH)
+# ==========================================
+@login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
+def quan_ly_cua_hang(request):
+    danh_sach_ch = CuaHang.objects.all().order_by('-id')
+    return render(request, 'cua_hang/quan_ly_cua_hang.html', {'danh_sach_ch': danh_sach_ch})
+
+@login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
+def them_cua_hang(request):
+    if request.method == 'POST':
+        ten = request.POST.get('ten_cua_hang')
+        dia_chi = request.POST.get('dia_chi')
+        so_dien_thoai = request.POST.get('so_dien_thoai')
+        if ten:
+            CuaHang.objects.create(ten_cua_hang=ten, dia_chi=dia_chi, so_dien_thoai=so_dien_thoai)
+            messages.success(request, f'Đã thêm chi nhánh "{ten}" thành công!')
+    return redirect('quan_ly_cua_hang')
+
+@login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
+def sua_cua_hang(request, pk):
+    ch = get_object_or_404(CuaHang, pk=pk)
+    if request.method == 'POST':
+        ch.ten_cua_hang = request.POST.get('ten_cua_hang')
+        ch.dia_chi = request.POST.get('dia_chi')
+        ch.so_dien_thoai = request.POST.get('so_dien_thoai')
+        ch.save()
+        messages.success(request, 'Cập nhật thông tin chi nhánh thành công!')
+    return redirect('quan_ly_cua_hang')
+
+@login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
+def xoa_cua_hang(request, pk):
+    ch = get_object_or_404(CuaHang, pk=pk)
+    if ch.xedien_set.exists():
+        messages.error(request, f'Không thể xóa "{ch.ten_cua_hang}" vì đang có xe lưu kho tại đây!')
+    else:
+        ch.delete()
+        messages.success(request, 'Đã xóa chi nhánh thành công!')
+    return redirect('quan_ly_cua_hang')

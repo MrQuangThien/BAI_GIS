@@ -1,0 +1,119 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Quản Lý Chi Nhánh | EV STORE{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-dark"><i class="bi bi-shop me-2 text-primary"></i>Danh sách Chi nhánh</h3>
+    <button class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addCuaHangModal">
+        <i class="bi bi-plus-lg me-1"></i> Thêm chi nhánh
+    </button>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} fw-bold alert-dismissible fade show">
+            <i class="bi bi-info-circle-fill me-2"></i>{{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="card shadow-sm border-0 rounded-3 p-4">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+            <tr>
+                <th width="5%">ID</th>
+                <th width="25%">Tên Chi Nhánh</th>
+                <th width="35%">Địa Chỉ</th>
+                <th width="15%">Hotline</th>
+                <th width="20%" class="text-center">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ch in danh_sach_ch %}
+            <tr>
+                <td class="fw-bold text-muted">#{{ ch.id }}</td>
+                <td class="fw-bold text-dark fs-6">{{ ch.ten_cua_hang }}</td>
+                <td>{{ ch.dia_chi }}</td>
+                <td><span class="badge bg-light text-dark border">{{ ch.so_dien_thoai }}</span></td>
+                <td class="text-center">
+                    <button class="btn btn-outline-primary btn-sm px-3 me-1" data-bs-toggle="modal" data-bs-target="#editCuaHangModal{{ ch.id }}">
+                        <i class="bi bi-pencil-square"></i> Sửa
+                    </button>
+                    <a href="{% url 'xoa_cua_hang' ch.id %}" class="btn btn-outline-danger btn-sm px-3" onclick="return confirm('Bạn có chắc chắn muốn xóa chi nhánh: {{ ch.ten_cua_hang }}?');">
+                        <i class="bi bi-trash"></i> Xóa
+                    </a>
+                </td>
+            </tr>
+
+            <div class="modal fade" id="editCuaHangModal{{ ch.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Sửa Chi Nhánh</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form action="{% url 'sua_cua_hang' ch.id %}" method="POST">
+                            {% csrf_token %}
+                            <div class="modal-body p-4">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-muted">Tên Chi Nhánh</label>
+                                    <input type="text" name="ten_cua_hang" class="form-control" value="{{ ch.ten_cua_hang }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-muted">Địa Chỉ</label>
+                                    <input type="text" name="dia_chi" class="form-control" value="{{ ch.dia_chi }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-muted">Số Điện Thoại</label>
+                                    <input type="text" name="so_dien_thoai" class="form-control" value="{{ ch.so_dien_thoai }}" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-primary fw-bold">Lưu Thay Đổi</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <tr><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Chưa có dữ liệu.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="addCuaHangModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Thêm Chi Nhánh Mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'them_cua_hang' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted">Tên Chi Nhánh</label>
+                        <input type="text" name="ten_cua_hang" class="form-control" placeholder="VD: EV Store Hà Nội" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted">Địa Chỉ</label>
+                        <input type="text" name="dia_chi" class="form-control" placeholder="Số nhà, đường, quận..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted">Số Điện Thoại</label>
+                        <input type="text" name="so_dien_thoai" class="form-control" placeholder="VD: 0901234567" required>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success fw-bold">Thêm Mới</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -358,9 +358,45 @@ def xoa_user(request, id):
 # 6. QUẢN LÝ DANH MỤC (CATEGORY)
 # ==========================================
 @login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
 def quan_ly_danh_muc(request):
-    # Giữ nguyên đường dẫn đã chuẩn: category/
-    return render(request, 'category/quan_ly_danh_muc.html', {'danh_sach_dm': DanhMuc.objects.all().order_by('-id')})
+    danh_sach_dm = DanhMuc.objects.all().order_by('-id')
+    return render(request, 'category/quan_ly_danh_muc.html', {'danh_sach_dm': danh_sach_dm})
+
+@login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
+def them_danh_muc(request):
+    if request.method == 'POST':
+        ten_dm = request.POST.get('ten_danh_muc')
+        if ten_dm:
+            DanhMuc.objects.create(ten_danh_muc=ten_dm)
+            messages.success(request, f'Đã thêm kiểu dáng "{ten_dm}" thành công!')
+    return redirect('quan_ly_danh_muc')
+
+@login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
+def sua_danh_muc(request, pk):
+    dm = get_object_or_404(DanhMuc, pk=pk)
+    if request.method == 'POST':
+        ten_dm = request.POST.get('ten_danh_muc')
+        if ten_dm:
+            dm.ten_danh_muc = ten_dm
+            dm.save()
+            messages.success(request, 'Cập nhật tên kiểu dáng thành công!')
+    return redirect('quan_ly_danh_muc')
+
+@login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
+def xoa_danh_muc(request, pk):
+    dm = get_object_or_404(DanhMuc, pk=pk)
+    # Kiểm tra xem có xe nào đang dùng danh mục này không
+    if dm.xedien_set.exists():
+        messages.error(request, f'Không thể xóa "{dm.ten_danh_muc}" vì đang có xe thuộc kiểu dáng này!')
+    else:
+        dm.delete()
+        messages.success(request, 'Đã xóa kiểu dáng xe khỏi hệ thống!')
+    return redirect('quan_ly_danh_muc')
+
 
 def danh_muc_xe(request, loai_xe):
     danh_sach = XeDien.objects.filter(trang_thai=True)

@@ -3,11 +3,98 @@
 {% block title %}Quản Lý Kiểu Dáng Xe | EV STORE{% endblock %}
 
 {% block content %}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold text-dark"><i class="bi bi-tags-fill me-2 text-success"></i>Danh sách Kiểu dáng xe</h3>
-        <a href="/admin/core/danhmuc/add/" target="_blank" class="btn btn-success fw-bold shadow-sm">
-            <i class="bi bi-plus-lg me-1"></i> Thêm mới
-        </a>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-dark"><i class="bi bi-tags-fill me-2 text-success"></i>Danh sách Kiểu dáng xe</h3>
+    <button class="btn btn-success fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addDanhMucModal">
+        <i class="bi bi-plus-lg me-1"></i> Thêm mới
+    </button>
+</div>
 
-    {% endblock %}
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} fw-bold alert-dismissible fade show">
+            <i class="bi bi-info-circle-fill me-2"></i>{{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="card shadow-sm border-0 rounded-3 p-4">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+            <tr>
+                <th width="10%">ID</th>
+                <th>Tên kiểu dáng (Phân khúc)</th>
+                <th width="20%" class="text-center">Số lượng xe</th>
+                <th width="20%" class="text-center">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dm in danh_sach_dm %}
+            <tr>
+                <td class="fw-bold text-muted">#{{ dm.id }}</td>
+                <td class="fw-bold text-primary fs-5">{{ dm.ten_danh_muc }}</td>
+                <td class="text-center">
+                    <span class="badge bg-secondary rounded-pill px-3 py-2">{{ dm.xedien_set.count }} xe</span>
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-outline-primary btn-sm px-3 me-1" data-bs-toggle="modal" data-bs-target="#editDanhMucModal{{ dm.id }}">
+                        <i class="bi bi-pencil-square"></i> Sửa
+                    </button>
+                    <a href="{% url 'xoa_danh_muc' dm.id %}" class="btn btn-outline-danger btn-sm px-3" onclick="return confirm('Bạn có chắc chắn muốn xóa kiểu dáng: {{ dm.ten_danh_muc }}?');">
+                        <i class="bi bi-trash"></i> Xóa
+                    </a>
+                </td>
+            </tr>
+
+            <div class="modal fade" id="editDanhMucModal{{ dm.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Sửa Kiểu Dáng</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form action="{% url 'sua_danh_muc' dm.id %}" method="POST">
+                            {% csrf_token %}
+                            <div class="modal-body p-4">
+                                <label class="form-label fw-bold text-muted">Tên kiểu dáng / Phân khúc</label>
+                                <input type="text" name="ten_danh_muc" class="form-control form-control-lg" value="{{ dm.ten_danh_muc }}" required>
+                            </div>
+                            <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-primary fw-bold">Lưu Thay Đổi</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            {% empty %}
+            <tr><td colspan="4" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Chưa có dữ liệu.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="addDanhMucModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Thêm Kiểu Dáng Mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'them_danh_muc' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <label class="form-label fw-bold text-muted">Tên kiểu dáng / Phân khúc</label>
+                    <input type="text" name="ten_danh_muc" class="form-control form-control-lg" placeholder="Ví dụ: SUV, Sedan, Bán tải..." required>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success fw-bold">Thêm Mới</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

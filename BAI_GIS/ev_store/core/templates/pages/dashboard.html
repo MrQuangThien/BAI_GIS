@@ -1,0 +1,82 @@
+{% extends 'base_admin.html' %} 
+
+{% block title %}Bảng Điều Khiển | EV STORE{% endblock %}
+
+{% block content %}
+    <h2 class="mb-4 fw-bold text-dark"><i class="bi bi-speedometer2 me-2 text-success"></i>Bảng Điều Khiển</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white p-3 border-0 rounded-3 shadow-sm h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-normal">Tổng Trạm Sạc</h5>
+                        <h2 class="fw-bold mb-0">{{ tong_so_tram }}</h2>
+                    </div>
+                    <i class="bi bi-ev-station display-4 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white p-3 border-0 rounded-3 shadow-sm h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-normal">Đang Hoạt Động</h5>
+                        <h2 class="fw-bold mb-0">{{ tram_hoat_dong }}</h2>
+                    </div>
+                    <i class="bi bi-check-circle display-4 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark p-3 border-0 rounded-3 shadow-sm h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-normal">Đang Bảo Trì</h5>
+                        <h2 class="fw-bold mb-0">{{ tram_bao_tri }}</h2>
+                    </div>
+                    <i class="bi bi-tools display-4 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-5 mb-4">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                    <h5 class="fw-bold text-success"><i class="bi bi-pie-chart-fill me-2"></i>Tỉ trọng Phân khúc xe</h5>
+                </div>
+                <div class="card-body" style="position: relative; height:300px;">
+                    <canvas id="bieuDoDanhMuc"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7 mb-4">
+            <div class="card shadow-sm border-0 h-100 p-3">
+                 <h5 class="fw-bold text-primary mb-3"><i class="bi bi-clock-history me-2"></i>Trạm mới cập nhật</h5>
+                 Trạm hoạt động ổn định...
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        {% if danh_muc_stats %}
+            const ctx = document.getElementById('bieuDoDanhMuc').getContext('2d');
+            const labels = [{% for dm in danh_muc_stats %}'{{ dm.ten_danh_muc }}',{% endfor %}];
+            const data = [{% for dm in danh_muc_stats %}{{ dm.so_luong_xe }},{% endfor %}];
+            const bgColors = ['#198754', '#0dcaf0', '#ffc107', '#dc3545', '#6610f2', '#fd7e14'];
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: labels, datasets: [{ data: data, backgroundColor: bgColors, borderWidth: 2 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        {% endif %}
+    });
+</script>
+{% endblock %}

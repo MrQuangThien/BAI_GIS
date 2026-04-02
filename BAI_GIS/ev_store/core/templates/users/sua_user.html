@@ -1,127 +1,42 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sửa Người Dùng | EV STORE</title>
-    
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    
-    <style>
-        body { background-color: #f4f6f9; }
-        /* Cấu hình Sidebar đồng bộ */
-        .sidebar { background-color: #212529; min-height: 100vh; color: white; padding-top: 20px; }
-        .sidebar a { color: #adb5bd; text-decoration: none; padding: 12px 20px; display: block; margin-bottom: 5px; transition: 0.3s; }
-        .sidebar a:hover, .sidebar a.active { background-color: #198754; color: white; border-radius: 5px; margin: 0 10px; }
-        
-        /* Chỉnh style cho thẻ label của form */
-        .form-label { font-weight: 600; color: #495057; }
-    </style>
-</head>
-<body>
+{% extends 'base_admin.html' %}
 
-<div class="container-fluid">
-    <div class="row">
-        
-        <div class="col-md-2 sidebar shadow-lg">
-            <h4 class="text-center text-success fw-bold mb-4"><i class="bi bi-lightning-charge-fill"></i> EV STORE</h4>
-            <a href="/core/dashboard/"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
-            <a href="/core/quan-ly-tram-sac/"><i class="bi bi-ev-station me-2"></i> Quản lý Trạm Sạc</a>
-            <a href="/core/danh_sach_xe/"><i class="bi bi-car-front me-2"></i> Quản lý Xe Điện</a>
-            <a href="/core/users/" class="active"><i class="bi bi-person me-2"></i> Quản lý Người Dùng</a>
-            <a href="/core/map/" target="_blank"><i class="bi bi-map me-2"></i> Xem Bản Đồ</a>
-            <a href="/" target="_blank"><i class="bi bi-basket me-2"></i> Trang Chủ</a>
-        </div>
+{% block title %}Cập Nhật Tài Khoản | EV STORE{% endblock %}
 
-        <div class="col-md-10 p-4">
-            
-            <div class="row justify-content-center mt-3">
-                <div class="col-md-8 col-lg-6">
-                    
-                    <div class="card shadow-sm border-0 rounded-3">
-                        <div class="card-header bg-success text-white py-3">
-                            <h5 class="mb-0 fw-bold"><i class="bi bi-person-plus-fill me-2"></i>Thay đổi thông tin</h5>
-                        </div>
-                        
-                        <div class="card-body p-4">
-                            <form method="post">
-                                {% csrf_token %}
-                                
-                                {% if form.errors and not form.non_field_errors %}
-                                    <div class="alert alert-danger py-2 small">Vui lòng kiểm tra lại thông tin bên dưới!</div>
-                                {% endif %}
-                                
-                                <div class="mb-3">
-                                    <label class="form-label"><i class="bi bi-person-badge me-1"></i>Username <span class="text-danger">*</span></label>
-                                    {{ form.username }}
-                                    {% if form.username.errors %}
-                                        <div class="text-danger small mt-1">{{ form.username.errors }}</div>
-                                    {% endif %}
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label"><i class="bi bi-envelope-at me-1"></i>Địa chỉ Email <span class="text-danger">*</span></label>
-                                    {{ form.email }}
-                                    {% if form.email.errors %}
-                                        <div class="text-danger small mt-1">{{ form.email.errors }}</div>
-                                    {% endif %}
-                                </div>
-
-                                <div class="mb-4">
-                                    <label class="form-label"><i class="bi bi-key me-1"></i>Mật khẩu <span class="text-danger">*</span></label>
-                                    {{ form.password }}
-                                    {% if form.password.errors %}
-                                        <div class="text-danger small mt-1">{{ form.password.errors }}</div>
-                                    {% endif %}
-                                </div>
-
-                                <hr class="text-muted">
-                                
-                                <h6 class="fw-bold mb-3 text-secondary">Phân quyền tài khoản</h6>
-
-                                <div class="form-check form-switch mb-3">
-                                    {{ form.is_staff }}
-                                    <label class="form-check-label fw-semibold" for="{{ form.is_staff.id_for_label }}">
-                                        Quyền Nhân viên (Staff)
-                                        <small class="d-block text-muted fw-normal">Cho phép vào trang Admin để quản lý xe và trạm sạc.</small>
-                                    </label>
-                                </div>
-
-                                <div class="form-check form-switch mb-4">
-                                    {{ form.is_superuser }}
-                                    <label class="form-check-label fw-semibold text-danger" for="{{ form.is_superuser.id_for_label }}">
-                                        Quyền Quản trị viên (Superuser)
-                                        <small class="d-block text-muted fw-normal">Có toàn quyền cao nhất trong hệ thống.</small>
-                                    </label>
-                                </div>
-
-                                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                                    <a href="{% url 'list_user' %}" class="btn btn-light border fw-bold text-secondary px-4">
-                                        <i class="bi bi-arrow-left-circle me-1"></i> Quay lại
-                                    </a>
-                                    <button type="submit" class="btn btn-success fw-bold px-4 shadow-sm">
-                                        <i class="bi bi-floppy me-1"></i> Lưu thay đối
-                                    </button>
-                                </div>
-                                
-                            </form>
-                        </div>
-                    </div> </div>
-            </div>
-
-        </div> </div>
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-dark"><i class="bi bi-person-gear me-2 text-primary"></i>Thông tin Tài khoản</h3>
+    <a href="{% url 'list_user' %}" class="btn btn-outline-secondary fw-bold"><i class="bi bi-arrow-left me-1"></i> Quay lại</a>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<div class="card shadow-sm border-0 rounded-3 p-4 w-75 mx-auto">
+    <form method="POST" id="userForm">
+        {% csrf_token %}
+        <div class="row g-3">
+            {% for field in form %}
+                <div class="col-md-12 mb-2">
+                    <label class="form-label fw-bold text-muted">{{ field.label }}</label>
+                    <div class="mt-1">
+                        {{ field }}
+                    </div>
+                    {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors }}</div>{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="text-end mt-4 pt-3 border-top">
+            <button type="submit" class="btn btn-primary px-5 fw-bold"><i class="bi bi-save me-1"></i> Lưu thông tin</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        var staffCheck = document.querySelector("input[name='is_staff']");
-        var adminCheck = document.querySelector("input[name='is_superuser']");
-        if(staffCheck) staffCheck.classList.add("form-check-input");
-        if(adminCheck) adminCheck.classList.add("form-check-input");
+        let textInputs = document.querySelectorAll('#userForm input[type="text"], #userForm input[type="email"], #userForm input[type="password"]');
+        textInputs.forEach(input => input.classList.add('form-control'));
+
+        let checkboxes = document.querySelectorAll('#userForm input[type="checkbox"]');
+        checkboxes.forEach(cb => cb.classList.add('form-check-input', 'border-secondary', 'fs-5'));
     });
 </script>
-</body>
-</html>
+{% endblock %}

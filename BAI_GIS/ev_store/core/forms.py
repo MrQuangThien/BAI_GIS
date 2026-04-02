@@ -3,20 +3,25 @@ from django.contrib.auth.models import User
 # Nhớ import Model XeDien vào form nhé
 from .models import XeDien, DonHang
 
+# Mở file core/forms.py ra và tìm class UserForm
+
 class UserForm(forms.ModelForm):
     password = forms.CharField(
         required=False, 
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Nhập mật khẩu mới'})
     )
-    is_staff = forms.BooleanField(required=False, label="Quyền Nhân viên (Quản lý trạm/xe)")
-    is_superuser = forms.BooleanField(required=False, label="Quyền Admin (Toàn quyền hệ thống)")
+    is_staff = forms.BooleanField(required=False, label="Quyền Nhân viên")
+    is_superuser = forms.BooleanField(required=False, label="Quyền Admin")
 
     class Meta:
         model = User
         fields = ['username', 'email', 'password', 'is_staff', 'is_superuser']
+        
+        # ĐÂY LÀ PHẦN QUAN TRỌNG NHẤT ĐỂ SỬA LỖI HIỂN THỊ
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tên người dùng'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Địa chỉ Email'}),
+            # Chú ý: password đã được khai báo ở trên
         }
 
 
@@ -50,23 +55,23 @@ class RegisterForm(forms.ModelForm):
 
 
 # ==========================================
-# ĐÂY LÀ PHẦN FORM XE ĐIỆN VỪA ĐƯỢC BỔ SUNG
+# ĐÂY LÀ PHẦN FORM XE ĐIỆN ĐÃ ĐƯỢC TỐI ƯU
 # ==========================================
 class XeDienForm(forms.ModelForm):
     class Meta:
         model = XeDien
-        # Bổ sung hinh_anh, noi_bat, sap_ve vào danh sách
-        fields = ['ten_xe', 'hang_san_xuat', 'dung_luong_pin', 'tam_di_chuyen', 'gia', 'trang_thai', 'cua_hang', 'hinh_anh', 'noi_bat', 'sap_ve']
+        # Dùng '__all__' để lấy TẤT CẢ các trường (kể cả danh_muc, mo_ta, anh_phu...)
+        fields = '__all__'
         
-        # Thêm class 'form-control' và 'form-check-input' để giao diện đẹp chuẩn Bootstrap
         widgets = {
             'ten_xe': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ví dụ: VinFast VF 8'}),
             'hang_san_xuat': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ví dụ: VinFast'}),
-            'dung_luong_pin': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ví dụ: 88 kWh'}),
-            'tam_di_chuyen': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ví dụ: 400 km'}),
+            'danh_muc': forms.Select(attrs={'class': 'form-select'}), # Đã bổ sung widget cho Danh mục
+            'dung_luong_pin': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Ví dụ: 88'}),
+            'tam_di_chuyen': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Ví dụ: 400'}),
             'gia': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Nhập giá bán (VNĐ)'}),
             'cua_hang': forms.Select(attrs={'class': 'form-select'}),
-            'hinh_anh': forms.FileInput(attrs={'class': 'form-control'}),
+            'hinh_anh': forms.FileInput(attrs={'class': 'form-control mb-2'}),
             'trang_thai': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'noi_bat': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'sap_ve': forms.CheckboxInput(attrs={'class': 'form-check-input'}),

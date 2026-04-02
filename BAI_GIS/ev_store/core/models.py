@@ -14,6 +14,12 @@ class CuaHang(models.Model):
 
     def __str__(self):
         return self.ten_cua_hang
+    
+class DanhMuc(models.Model):
+    ten_danh_muc = models.CharField(max_length=255, verbose_name="Tên danh mục")
+    
+    def __str__(self):
+        return self.ten_danh_muc
 
 class XeDien(models.Model):
     ten_xe = models.CharField(max_length=255)
@@ -23,6 +29,7 @@ class XeDien(models.Model):
     gia = models.BigIntegerField()
     trang_thai = models.BooleanField(default=True)
     cua_hang = models.ForeignKey(CuaHang, on_delete=models.CASCADE)
+    danh_muc = models.ForeignKey(DanhMuc, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Danh mục sản phẩm")
     hinh_anh = models.ImageField(upload_to='xe_dien_images/', null=True, blank=True)
     noi_bat = models.BooleanField(default=False, verbose_name="Sản phẩm nổi bật")
     sap_ve = models.BooleanField(default=False, verbose_name="Sản phẩm sắp về")

@@ -48,3 +48,5 @@ class DonHangAdmin(admin.ModelAdmin):
     
     # Số dòng trên mỗi trang
     list_per_page = 20
+
+admin.site.register(DanhMuc)

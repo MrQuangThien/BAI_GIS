@@ -1,175 +1,45 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="vi">
+{% extends 'base_admin.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Đơn Hàng | EV STORE</title>
+{% block title %}Quản Lý Đơn Hàng | EV STORE{% endblock %}
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-
-    <style>
-        body {
-            background-color: #f4f6f9;
-        }
-
-        .sidebar {
-            background-color: #212529;
-            min-height: 100vh;
-            color: white;
-            padding-top: 20px;
-        }
-
-        .sidebar a {
-            color: #adb5bd;
-            text-decoration: none;
-            padding: 12px 20px;
-            display: block;
-            margin-bottom: 5px;
-            transition: 0.3s;
-        }
-
-        .sidebar a:hover,
-        .sidebar a.active {
-            background-color: #198754;
-            color: white;
-            border-radius: 5px;
-            margin: 0 10px;
-        }
-
-        .table-wrapper {
-            background: #fff;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-    </style>
-</head>
-
-<body>
-
-    <div class="container-fluid">
-        <div class="row">
-
-            <div class="col-md-2 sidebar shadow-lg">
-                <h4 class="text-center text-success fw-bold mb-4"><i class="bi bi-lightning-charge-fill"></i> EV STORE
-                </h4>
-
-                <a href="/core/dashboard/" class="{% if '/core/dashboard/' in request.path %}active{% endif %}">
-                    <i class="bi bi-speedometer2 me-2"></i> Tổng quan
-                </a>
-
-                <a href="/core/quan-ly-tram-sac/" class="{% if 'quan-ly-tram-sac' in request.path %}active{% endif %}">
-                    <i class="bi bi-ev-station me-2"></i> Quản lý Trạm Sạc
-                </a>
-
-                <a href="/core/danh_sach_xe/"
-                    class="{% if 'danh_sach_xe' in request.path or '/core/xe/' in request.path %}active{% endif %}">
-                    <i class="bi bi-car-front me-2"></i> Quản lý Xe Điện
-                </a>
-
-                <a href="{% url 'danh_sach_don_hang' %}" class="{% if 'don-hang' in request.path %}active{% endif %}">
-                    <i class="bi bi-receipt-cutoff me-2"></i> Quản lý Đơn Hàng
-                </a>
-
-                <a href="/core/users/" class="{% if 'users' in request.path %}active{% endif %}">
-                    <i class="bi bi-person me-2"></i> Quản lý Người Dùng
-                </a>
-
-                <a href="/core/map/" target="_blank">
-                    <i class="bi bi-map me-2"></i> Xem Bản Đồ
-                </a>
-
-                <a href="/" target="_blank">
-                    <i class="bi bi-basket me-2"></i> Trang Chủ
-                </a>
-            </div>
-
-            <div class="col-md-10 p-4">
-
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3 class="fw-bold text-dark"><i class="bi bi-cart-check-fill me-2 text-success"></i>Danh sách đơn
-                        hàng</h3>
-
-                    <a href="{% url 'tao_don_hang_offline' %}" class="btn btn-success fw-bold shadow-sm">
-                        <i class="bi bi-plus-lg me-1"></i> Tạo đơn tại quầy
-                    </a>
-                </div>
-
-                <div class="table-wrapper">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-dark">
-                            <tr>
-                                <th class="text-center">Mã ĐH</th>
-                                <th>Khách hàng</th>
-                                <th>Xe đặt mua</th>
-                                <th>Hình thức</th>
-                                <th class="text-center">Trạng thái</th>
-                                <th class="text-end">Tổng tiền</th>
-                                <th class="text-center">Ngày đặt</th>
-                                <th class="text-center">Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for don in danh_sach_don_hang %}
-                            <tr>
-                                <td class="text-center fw-bold text-success">#{{ don.id }}</td>
-                                <td>
-    <div class="fw-bold">{{ don.ho_ten }}</div>
-    <small class="text-muted"><i class="bi bi-telephone-fill me-1"></i>{{ don.so_dien_thoai }}</small>
-</td>
-                                <td class="fw-semibold text-primary">{{ don.xe.ten_xe }}</td>
-                                <td>
-                                    {% if don.loai_don == 'A' %}
-                                    <span class="badge bg-secondary">Giữ chỗ</span>
-                                    {% elif don.loai_don == 'B' %}
-                                    <span class="badge bg-warning text-dark">Đặt cọc</span>
-                                    {% else %}
-                                    <span class="badge bg-success">Mua online</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-center">
-                                    {% if don.trang_thai == 'Pending' %}
-                                    <span
-                                        class="badge border border-warning text-warning bg-light rounded-pill px-3">Pending</span>
-                                    {% elif don.trang_thai == 'Deposit Paid' %}
-                                    <span class="badge border border-info text-info bg-light rounded-pill px-3">Deposit
-                                        Paid</span>
-                                    {% elif don.trang_thai == 'Paid' %}
-                                    <span
-                                        class="badge border border-success text-success bg-light rounded-pill px-3">Paid</span>
-                                    {% else %}
-                                    <span class="badge bg-danger rounded-pill px-3">Cancelled</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-end fw-bold text-danger">{{ don.tong_tien }}đ</td>
-                                <td class="text-center small text-muted">{{ don.ngay_dat|date:"d/m/Y H:i" }}</td>
-                                <td class="text-center">
-                                    <a href="{% url 'chi_tiet_don_hang' don.id %}"
-                                        class="btn btn-outline-primary btn-sm" title="Xem chi tiết">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="8" class="text-center py-5 text-muted">
-                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                    Chưa có đơn hàng nào trong hệ thống.
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-            </div>
-        </div>
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-dark"><i class="bi bi-receipt-cutoff me-2 text-warning"></i>Danh Sách Đơn Hàng</h3>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
-</html>
+<div class="card shadow-sm border-0 rounded-3 p-3">
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Mã Đơn</th>
+                <th>Khách Hàng</th>
+                <th>Sản Phẩm</th>
+                <th>Loại Đơn</th>
+                <th>Trạng Thái</th>
+                <th class="text-center">Chi Tiết</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for don in danh_sach_don_hang %}
+            <tr>
+                <td class="fw-bold">#DH{{ don.id }}</td>
+                <td>
+                    <div class="fw-bold">{{ don.ho_ten }}</div>
+                    <small class="text-muted">{{ don.so_dien_thoai }}</small>
+                </td>
+                <td class="text-success fw-bold">{{ don.xe.ten_xe }}</td>
+                <td><span class="badge bg-info text-dark">{{ don.get_loai_don_display }}</span></td>
+                <td>
+                    {% if don.trang_thai == 'Pending' %} <span class="badge bg-secondary">Chờ duyệt</span>
+                    {% elif don.trang_thai == 'Paid' %} <span class="badge bg-success">Đã thanh toán</span>
+                    {% else %} <span class="badge bg-primary">{{ don.trang_thai }}</span> {% endif %}
+                </td>
+                <td class="text-center">
+                    <a href="{% url 'chi_tiet_don_hang' don.id %}" class="btn btn-sm btn-outline-dark"><i class="bi bi-eye"></i> Xem</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -20,12 +20,34 @@ from django.urls import include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from django.contrib.auth import views as auth_views
+
 from core.views import trang_chu   # ← ĐÚNG
 
 urlpatterns = [
     path('', trang_chu, name='trang_chu'),
-    path('admin/', admin.site.urls),
+    path('he-thong-ev/', admin.site.urls),
     path('core/', include('core.urls')),
+
+    # 1. Trang nhập email để nhận link reset
+    path('password-reset/', 
+         auth_views.PasswordResetView.as_view(template_name='registration/password_reset_form.html'), 
+         name='password_reset'),
+
+    # 2. Thông báo đã gửi email thành công
+    path('password-reset/done/', 
+         auth_views.PasswordResetDoneView.as_view(template_name='registration/password_reset_done.html'), 
+         name='password_reset_done'),
+
+    # 3. Trang nhập mật khẩu mới (Link từ email trỏ về đây)
+    path('password-reset-confirm/<uidb64>/<token>/', 
+         auth_views.PasswordResetConfirmView.as_view(template_name='registration/password_reset_confirm.html'), 
+         name='password_reset_confirm'),
+
+    # 4. Thông báo đổi mật khẩu thành công hoàn toàn
+    path('password-reset-complete/', 
+         auth_views.PasswordResetCompleteView.as_view(template_name='registration/password_reset_complete.html'), 
+         name='password_reset_complete'),
 
 ]
 

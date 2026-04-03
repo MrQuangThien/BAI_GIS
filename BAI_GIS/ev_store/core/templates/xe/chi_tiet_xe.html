@@ -5,29 +5,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ xe.ten_xe }} | EV STORE</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+    
     <style>
-        body { background: #f6f6f6; }
+        body { 
+            background: #f4f6f9; 
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
         .navbar-brand { font-weight: bold; font-size: 22px; }
-        .product-image { max-height: 400px; object-fit: contain; background: #fff; padding: 20px; border-radius: 10px; }
-        .price-text { color: #dc3545; font-weight: bold; font-size: 2rem; }
+        .price-text { color: #198754; font-weight: bold; font-size: 2.2rem; }
         
-        /* ĐÃ THÊM: CSS cho thanh ảnh nhỏ mượt mà hơn */
-        #thumbnail-gallery .img-thumbnail {
-            border: 2px solid #dee2e6;
-            transition: all 0.2s ease;
-            opacity: 0.6;
-            cursor: pointer;
+        /* CSS CHO SWIPER SLIDER */
+        .mySwiper2 { 
+            height: 450px; /* Chiều cao khung ảnh chính */
+            width: 100%; 
+            border-radius: 10px; 
+            background: #ffffff; 
+            margin-bottom: 10px;
         }
-        #thumbnail-gallery .img-thumbnail:hover { 
+        .mySwiper2 img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; /* Giữ tỷ lệ gốc của ảnh */
+            padding: 10px;
+        }
+        
+        /* Thay đổi nút mũi tên cho đẹp hơn */
+        .swiper-button-next, .swiper-button-prev {
+            background-color: rgba(255, 255, 255, 0.8);
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .swiper-button-next:after, .swiper-button-prev:after {
+            font-size: 18px !important;
+            font-weight: bold;
+        }
+
+        /* CSS cho thanh Thumbnail nhỏ ở dưới */
+        .mySwiper { 
+            height: 85px; 
+            box-sizing: border-box; 
+            padding: 10px 0; 
+        }
+        .mySwiper .swiper-slide { 
+            width: 25%; 
+            height: 100%; 
+            opacity: 0.5; 
+            cursor: pointer; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .mySwiper .swiper-slide-thumb-active { 
             opacity: 1; 
+            border-color: #198754; 
+            box-shadow: 0 4px 8px rgba(25, 135, 84, 0.2);
         }
-        /* ĐÃ THÊM: Hiệu ứng viền xanh cho ảnh đang được chọn */
-        #thumbnail-gallery .img-thumbnail.selected-thumbnail {
-            border: 2px solid #198754 !important;
-            opacity: 1 !important;
-            box-shadow: 0 0 8px rgba(25, 135, 84, 0.3);
+        .mySwiper .swiper-slide img { 
+            display: block; 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
         }
     </style>
 </head>
@@ -36,111 +83,126 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{% url 'trang_chu' %}">
-                <i class="bi bi-lightning-charge-fill"></i> EV STORE
+                <i class="bi bi-lightning-charge-fill text-warning"></i> EV STORE
             </a>
             <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#menu">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="menu">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'trang_chu' %}">Trang chủ</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="#">Chi tiết sản phẩm</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm sạc</a></li>
+                    <li class="nav-item"><a class="nav-link fw-semibold" href="{% url 'trang_chu' %}">Trang chủ</a></li>
+                    <li class="nav-item"><a class="nav-link active fw-bold" href="#">Chi tiết sản phẩm</a></li>
+                    <li class="nav-item"><a class="nav-link fw-semibold" href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm sạc</a></li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container my-5">
+    <div class="container my-5 flex-grow-1">
         
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'trang_chu' %}" class="text-success text-decoration-none">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'trang_chu' %}" class="text-success text-decoration-none fw-semibold">Trang chủ</a></li>
                 <li class="breadcrumb-item active" aria-current="page">{{ xe.ten_xe }}</li>
             </ol>
         </nav>
 
-        <div class="row bg-white shadow-sm p-4 rounded mt-3">
+        <div class="row bg-white shadow-sm p-4 rounded-4 mt-3">
             
-            <div class="col-md-6 text-center border-end">
-                {% if xe.hinh_anh %}
-                    <img id="mainImage" src="{{ xe.hinh_anh.url }}" class="img-fluid product-image w-100 shadow-sm mb-3">
-                {% else %}
-                    <img id="mainImage" src="https://via.placeholder.com/500x400?text=Chưa+có+ảnh" class="img-fluid product-image w-100 shadow-sm mb-3">
-                {% endif %}
-
-                <div id="thumbnail-gallery" class="d-flex justify-content-center gap-2 overflow-auto py-2">
-                    {% if xe.hinh_anh %}
-                        <img src="{{ xe.hinh_anh.url }}" class="img-thumbnail selected-thumbnail" onclick="changeImage(this)" style="width: 80px; height: 60px; object-fit: cover;">
-                    {% endif %}
-                    {% if xe.anh_phu_1 %}
-                        <img src="{{ xe.anh_phu_1.url }}" class="img-thumbnail" onclick="changeImage(this)" style="width: 80px; height: 60px; object-fit: cover;">
-                    {% endif %}
-                    {% if xe.anh_phu_2 %}
-                        <img src="{{ xe.anh_phu_2.url }}" class="img-thumbnail" onclick="changeImage(this)" style="width: 80px; height: 60px; object-fit: cover;">
-                    {% endif %}
-                    {% if xe.anh_phu_3 %}
-                        <img src="{{ xe.anh_phu_3.url }}" class="img-thumbnail" onclick="changeImage(this)" style="width: 80px; height: 60px; object-fit: cover;">
-                    {% endif %}
+            <div class="col-md-6 text-center border-end pe-md-4">
+                
+                <div style="--swiper-navigation-color: #198754; --swiper-pagination-color: #198754;">
+                    <div class="swiper mySwiper2 shadow-sm border">
+                        <div class="swiper-wrapper">
+                            {% if xe.hinh_anh %}
+                                <div class="swiper-slide"><img src="{{ xe.hinh_anh.url }}" alt="{{ xe.ten_xe }}" /></div>
+                            {% else %}
+                                <div class="swiper-slide"><img src="https://via.placeholder.com/500x400?text=Chưa+có+ảnh" /></div>
+                            {% endif %}
+                            
+                            {% if xe.anh_phu_1 %}<div class="swiper-slide"><img src="{{ xe.anh_phu_1.url }}" alt="Ảnh phụ 1" /></div>{% endif %}
+                            {% if xe.anh_phu_2 %}<div class="swiper-slide"><img src="{{ xe.anh_phu_2.url }}" alt="Ảnh phụ 2" /></div>{% endif %}
+                            {% if xe.anh_phu_3 %}<div class="swiper-slide"><img src="{{ xe.anh_phu_3.url }}" alt="Ảnh phụ 3" /></div>{% endif %}
+                        </div>
+                        <div class="swiper-button-next"></div>
+                        <div class="swiper-button-prev"></div>
+                    </div>
+                    
+                    <div class="swiper mySwiper">
+                        <div class="swiper-wrapper">
+                            {% if xe.hinh_anh %}
+                                <div class="swiper-slide"><img src="{{ xe.hinh_anh.url }}" /></div>
+                            {% else %}
+                                <div class="swiper-slide"><img src="https://via.placeholder.com/500x400?text=Chưa+có+ảnh" /></div>
+                            {% endif %}
+                            
+                            {% if xe.anh_phu_1 %}<div class="swiper-slide"><img src="{{ xe.anh_phu_1.url }}" /></div>{% endif %}
+                            {% if xe.anh_phu_2 %}<div class="swiper-slide"><img src="{{ xe.anh_phu_2.url }}" /></div>{% endif %}
+                            {% if xe.anh_phu_3 %}<div class="swiper-slide"><img src="{{ xe.anh_phu_3.url }}" /></div>{% endif %}
+                        </div>
+                    </div>
                 </div>
+
             </div>
             
-            <div class="col-md-6 ps-md-5 mt-4 mt-md-0">
-                <h1 class="fw-bold mb-2">{{ xe.ten_xe }}</h1>
-                <span class="badge bg-success fs-6 mb-3">{{ xe.hang_san_xuat }}</span>
+            <div class="col-md-6 ps-md-4 mt-4 mt-md-0 d-flex flex-column">
+                <h1 class="fw-bold mb-2 text-dark">{{ xe.ten_xe }}</h1>
                 
-                {% if xe.noi_bat %}
-                    <span class="badge bg-warning text-dark fs-6 mb-3 ms-2"><i class="bi bi-star-fill"></i> Nổi bật</span>
-                {% endif %}
-                {% if xe.sap_ve %}
-                    <span class="badge bg-info text-dark fs-6 mb-3 ms-2"><i class="bi bi-clock-history"></i> Sắp về</span>
-                {% endif %}
+                <div class="d-flex align-items-center mb-3 flex-wrap gap-2">
+                    <span class="badge bg-dark fs-6 px-3 py-2">{{ xe.hang_san_xuat }}</span>
+                    {% if xe.noi_bat %}
+                        <span class="badge bg-warning text-dark fs-6 px-3 py-2 shadow-sm"><i class="bi bi-star-fill text-danger me-1"></i> Nổi bật</span>
+                    {% endif %}
+                    {% if xe.sap_ve %}
+                        <span class="badge bg-info text-dark fs-6 px-3 py-2 shadow-sm"><i class="bi bi-clock-history me-1"></i> Sắp về</span>
+                    {% endif %}
+                </div>
                 
-                <h2 class="price-text my-3">{{ xe.gia }} VNĐ</h2>
+                <h2 class="price-text my-3 border-bottom pb-3">{{ xe.gia }} VNĐ</h2>
                 
-                <hr>
-                
-                <h5 class="fw-bold mt-4 mb-3">Thông số kỹ thuật:</h5>
+                <h5 class="fw-bold mt-2 mb-3 text-secondary"><i class="bi bi-gear-fill me-2"></i>Thông số kỹ thuật:</h5>
                 <ul class="list-group list-group-flush mb-4">
-                    <li class="list-group-item d-flex justify-content-between px-0">
+                    <li class="list-group-item d-flex justify-content-between px-0 bg-transparent">
                         <span class="text-muted">Dung lượng pin:</span>
-                        <strong>{{ xe.dung_luong_pin }}</strong>
+                        <strong class="text-dark">{{ xe.dung_luong_pin }} Ah</strong>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between px-0">
+                    <li class="list-group-item d-flex justify-content-between px-0 bg-transparent">
                         <span class="text-muted">Tầm di chuyển:</span>
-                        <strong>{{ xe.tam_di_chuyen }}</strong>
+                        <strong class="text-dark">{{ xe.tam_di_chuyen }} km</strong>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between px-0">
+                    <li class="list-group-item d-flex justify-content-between px-0 bg-transparent">
                         <span class="text-muted">Trạng thái:</span>
                         {% if xe.trang_thai %}
-                            <strong class="text-success">Còn hàng</strong>
+                            <strong class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Còn hàng</strong>
                         {% else %}
-                            <strong class="text-danger">Hết hàng</strong>
+                            <strong class="text-danger"><i class="bi bi-x-circle-fill me-1"></i> Hết hàng</strong>
                         {% endif %}
                     </li>
                     {% if xe.cua_hang %}
-                    <li class="list-group-item d-flex justify-content-between px-0">
+                    <li class="list-group-item d-flex justify-content-between px-0 bg-transparent">
                         <span class="text-muted">Cửa hàng phân phối:</span>
-                        <strong>{{ xe.cua_hang }}</strong>
+                        <strong class="text-primary"><i class="bi bi-shop me-1"></i> {{ xe.cua_hang }}</strong>
                     </li>
                     {% endif %}
                 </ul>
                 
-               {% if xe.sap_ve %}
-    <a href="{% url 'tao_don_hang' xe.id %}" class="btn btn-info btn-lg w-100 fw-bold text-dark shadow-sm mt-3">
-        <i class="bi bi-clock-history me-2"></i> Đặt cọc giữ chỗ
-    </a>
-{% else %}
-    <a href="{% url 'tao_don_hang' xe.id %}" class="btn btn-success btn-lg w-100 fw-bold shadow-sm mt-3">
-        <i class="bi bi-cart-plus-fill me-2"></i> Đặt mua ngay
-    </a>
-{% endif %}
+                <div class="mt-auto">
+                    {% if xe.sap_ve %}
+                        <a href="{% url 'tao_don_hang' xe.id %}" class="btn btn-info btn-lg w-100 fw-bold text-dark shadow-sm py-3">
+                            <i class="bi bi-clock-history me-2"></i> ĐẶT CỌC GIỮ CHỖ
+                        </a>
+                    {% else %}
+                        <a href="{% url 'tao_don_hang' xe.id %}" class="btn btn-success btn-lg w-100 fw-bold shadow-sm py-3">
+                            <i class="bi bi-cart-plus-fill me-2"></i> ĐẶT MUA NGAY
+                        </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
-        <div class="row bg-white shadow-sm p-4 rounded mt-4">
+        <div class="row bg-white shadow-sm p-4 rounded-4 mt-4 mb-3">
             <div class="col-12">
-                <h4 class="fw-bold border-bottom border-success pb-2 mb-3 text-success">
+                <h4 class="fw-bold border-bottom border-success pb-3 mb-4 text-success">
                     <i class="bi bi-card-text me-2"></i>Mô tả chi tiết
                 </h4>
                 
@@ -148,35 +210,44 @@
                     {% if xe.mo_ta %}
                         {{ xe.mo_ta|safe }}
                     {% else %}
-                        <p class="fst-italic text-muted">Chưa có bài viết mô tả cho sản phẩm này.</p>
+                        <p class="fst-italic text-muted text-center py-4 bg-light rounded"><i class="bi bi-journal-x fs-2 d-block mb-2 text-black-50"></i> Chưa có bài viết mô tả cho sản phẩm này.</p>
                     {% endif %}
                 </div>
-                
             </div>
         </div>
         
     </div>
 
-    <footer class="bg-dark text-white text-center py-4 mt-5">
-        <p class="mb-0">© 2026 EV STORE - Hệ thống kinh doanh xe điện</p>
+    <footer class="bg-dark text-white text-center py-4 mt-auto">
+        <p class="mb-0 text-white-50">© 2026 EV STORE - Hệ thống kinh doanh xe điện hàng đầu</p>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
     <script>
-        function changeImage(element) {
-            // 1. Đổi ảnh lớn
-            document.getElementById('mainImage').src = element.src;
-            
-            // 2. Xóa viền xanh ở tất cả ảnh nhỏ
-            var thumbnails = document.getElementById('thumbnail-gallery').getElementsByClassName('img-thumbnail');
-            for (var i = 0; i < thumbnails.length; i++) {
-                thumbnails[i].classList.remove('selected-thumbnail');
-            }
-            
-            // 3. Thêm viền xanh vào ảnh vừa bấm
-            element.classList.add('selected-thumbnail');
-        }
+        // Cấu hình Thumbnail Slider (Ảnh nhỏ)
+        var swiper = new Swiper(".mySwiper", {
+            spaceBetween: 10,
+            slidesPerView: 4, // Số lượng ảnh nhỏ hiển thị cùng lúc
+            freeMode: true,
+            watchSlidesProgress: true,
+        });
+        
+        // Cấu hình Main Image Slider (Ảnh lớn)
+        var swiper2 = new Swiper(".mySwiper2", {
+            spaceBetween: 10,
+            navigation: {
+                nextEl: ".swiper-button-next",
+                prevEl: ".swiper-button-prev",
+            },
+            thumbs: {
+                swiper: swiper, // Liên kết với Thumbnail Slider ở trên
+            },
+            // Thêm hiệu ứng fade nếu muốn mượt hơn thay vì trượt
+            effect: "fade", 
+            fadeEffect: { crossFade: true }
+        });
     </script>
 </body>
 </html>

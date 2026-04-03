@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mất tín hiệu định vị | EV STORE GIS</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            /* 1. HIỆU ỨNG LƯỚI TỌA ĐỘ BẢN ĐỒ (GIS GRID LINE) */
+            background-image: 
+                linear-gradient(#e5e7eb 1px, transparent 1px),
+                linear-gradient(90deg, #e5e7eb 1px, transparent 1px);
+            background-size: 30px 30px;
+            
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+        }
+
+        .error-container {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+            max-width: 600px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* 2. HIỆU ỨNG GHIM BẢN ĐỒ BAY LƠ LỬNG */
+        .gis-icon {
+            font-size: 4.5rem;
+            color: #dc3545; /* Màu đỏ cảnh báo */
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+            text-shadow: 0 10px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .error-code {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #212529;
+            letter-spacing: 3px;
+            margin-top: -15px;
+            margin-bottom: 10px;
+        }
+
+        /* Nút phụ phong cách Bản đồ */
+        .btn-gis {
+            background-color: #e0f8f1;
+            color: #198754;
+            border: 1px solid #198754;
+            transition: all 0.3s ease;
+        }
+        .btn-gis:hover {
+            background-color: #198754;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container px-4">
+        <div class="error-container mx-auto">
+            
+            <div class="gis-icon">
+                <i class="bi bi-geo-alt-fill"></i>
+            </div>
+            
+            <div class="error-code">LỖI 404</div>
+
+            <h3 class="fw-bold text-success mb-3">Mất tín hiệu GPS!</h3>
+
+            <p class="text-muted fs-6 mb-4 px-md-3" style="line-height: 1.7;">
+                Chiếc xe điện của bạn có vẻ đã đi chệch khỏi bản đồ. <strong>Tọa độ (URL)</strong> bạn đang tìm kiếm không tồn tại trên hệ thống GIS của chúng tôi, hoặc trạm sạc này đã được tháo dỡ.
+            </p>
+
+            <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 mt-2">
+                <a href="{% url 'trang_chu' %}" class="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm">
+                    <i class="bi bi-house-door-fill me-2"></i> Định vị lại Trang Chủ
+                </a>
+                <a href="{% url 'ban_do_tram_sac' %}" class="btn btn-gis fw-bold px-4 py-2 rounded-pill shadow-sm">
+                    <i class="bi bi-map-fill me-2"></i> Mở Bản Đồ Trạm Sạc
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

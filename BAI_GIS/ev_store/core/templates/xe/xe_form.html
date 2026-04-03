@@ -28,11 +28,21 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        if (document.getElementById('id_mo_ta')) {
-            CKEDITOR.replace('id_mo_ta', { height: 200, removeButtons: 'PasteFromWord' });
+        // Tìm ô nhập liệu có ID là id_mo_ta (do Django tự sinh ra)
+        const moTaTextarea = document.querySelector('#id_mo_ta');
+        if (moTaTextarea) {
+            ClassicEditor
+                .create(moTaTextarea)
+                .then(editor => {
+                    // Chỉnh chiều cao cho khung soạn thảo
+                    editor.ui.view.editable.element.style.minHeight = '250px';
+                })
+                .catch(error => {
+                    console.error(error);
+                });
         }
     });
 </script>

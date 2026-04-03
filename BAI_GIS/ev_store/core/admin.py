@@ -2,6 +2,8 @@
 from django.contrib import admin
 from .models import *
 
+from django.contrib.auth.models import User, Group
+from django.contrib.auth.admin import UserAdmin
 
 @admin.register(TramSac)
 class TramSacAdmin(admin.ModelAdmin):
@@ -50,3 +52,36 @@ class DonHangAdmin(admin.ModelAdmin):
     list_per_page = 20
 
 admin.site.register(DanhMuc)
+
+# 1. Gỡ bỏ menu User và Group mặc định của Django cho đỡ rối mắt
+admin.site.unregister(User)
+admin.site.unregister(Group) 
+
+# 2. Đăng ký menu Quản lý Nhân Viên
+@admin.register(NhanVien)
+class NhanVienAdmin(UserAdmin):
+    # Ghi đè hàm lấy dữ liệu: Chỉ lấy những người có quyền Staff
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(is_staff=True)
+        
+    # (Tùy chọn) Đặt mặc định khi tạo mới Nhân viên thì tự auto tick is_staff
+    def save_model(self, request, obj, form, change):
+        if not obj.pk: # Nếu là tạo mới
+            obj.is_staff = True
+        super().save_model(request, obj, form, change)
+
+# 3. Đăng ký menu Quản lý Khách Hàng
+@admin.register(KhachHang)
+class KhachHangAdmin(UserAdmin):
+    # Ghi đè hàm lấy dữ liệu: Chỉ lấy những người KHÔNG có quyền Staff
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(is_staff=False)
+        
+    # Bỏ bớt các quyền phân quyền phức tạp đi vì khách hàng không cần
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('Thông tin cá nhân', {'fields': ('first_name', 'last_name', 'email')}),
+        ('Ngày tháng', {'fields': ('date_joined', 'last_login')}),
+    )

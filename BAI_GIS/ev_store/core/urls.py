@@ -59,4 +59,10 @@ urlpatterns = [
     path('cua-hang/them/', views.them_cua_hang, name='them_cua_hang'),
     path('cua-hang/sua/<int:pk>/', views.sua_cua_hang, name='sua_cua_hang'),
     path('cua-hang/xoa/<int:pk>/', views.xoa_cua_hang, name='xoa_cua_hang'),
+
+    path('tai-khoan/', views.tai_khoan, name='tai_khoan'),
+    path('tai-khoan/don-hang/<int:don_hang_id>/', views.chi_tiet_don_hang_khach, name='chi_tiet_don_hang_khach'),
+
+    path('quan-ly-khach-hang/', views.ql_khach_hang, name='ql_khach_hang'),
+    path('quan-ly-nhan-vien/', views.ql_nhan_vien, name='ql_nhan_vien'),
 ]

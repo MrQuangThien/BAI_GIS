@@ -67,20 +67,27 @@
                 <a href="{% url 'danh_sach_don_hang' %}" class="{% if 'don-hang' in request.path %}active{% endif %}">
                     <i class="bi bi-receipt-cutoff me-2"></i> Quản lý Đơn Hàng
                 </a>
-                <a href="/core/users/" class="{% if 'users' in request.path %}active{% endif %}">
-                    <i class="bi bi-person me-2"></i> Quản lý Người Dùng
+                <a href="{% url 'ql_khach_hang' %}"
+                    class="nav-link text-white {% if request.resolver_match.url_name == 'ql_khach_hang' %}bg-success rounded{% endif %}">
+                    <i class="bi bi-people me-2"></i> Quản lý Khách Hàng
                 </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a href="{% url 'ql_nhan_vien' %}"
+                        class="nav-link text-white {% if request.resolver_match.url_name == 'ql_nhan_vien' %}bg-success rounded{% endif %}">
+                        <i class="bi bi-person-vcard me-2"></i> Quản lý Nhân Viên
+                    </a>
 
-                <a href="{% url 'quan_ly_cua_hang' %}" class="{% if 'cua-hang' in request.path %}active{% endif %}">
-                    <i class="bi bi-shop"></i> Quản lý cửa hàng 
-                </a>
+                    <a href="{% url 'quan_ly_cua_hang' %}" class="{% if 'cua-hang' in request.path %}active{% endif %}">
+                        <i class="bi bi-shop"></i> Quản lý cửa hàng
+                    </a>
 
-                <a href="/core/map/" target="_blank">
-                    <i class="bi bi-map me-2"></i> Xem Bản Đồ (GIS)
-                </a>
-                <a href="/" target="_blank">
-                    <i class="bi bi-basket me-2"></i> Trang Chủ
-                </a>
+                    <a href="/core/map/" target="_blank">
+                        <i class="bi bi-map me-2"></i> Xem Bản Đồ (GIS)
+                    </a>
+                    <a href="/" target="_blank">
+                        <i class="bi bi-basket me-2"></i> Trang Chủ
+                    </a>
             </div>
 
             <div class="col-md-10 p-4">

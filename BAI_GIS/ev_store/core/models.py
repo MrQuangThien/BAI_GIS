@@ -121,3 +121,15 @@ class XeDienForm(forms.ModelForm):
             'trang_thai': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'cua_hang': forms.Select(attrs={'class': 'form-select'}),
         }
+        
+class NhanVien(User):
+    class Meta:
+        proxy = True # Khai báo đây là model ảo, không tạo thêm bảng trong DB
+        verbose_name = 'Nhân viên cửa hàng'
+        verbose_name_plural = 'Quản lý Nhân viên'
+
+class KhachHang(User):
+    class Meta:
+        proxy = True # Khai báo đây là model ảo
+        verbose_name = 'Khách hàng'
+        verbose_name_plural = 'Quản lý Khách hàng'

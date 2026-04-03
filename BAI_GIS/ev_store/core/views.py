@@ -298,6 +298,17 @@ def tao_don_hang_offline(request):
     # Giữ nguyên đường dẫn đã chuẩn: donhang/
     return render(request, 'donhang/tao_moi.html', {'form': form})
 
+# Trang xem chi tiết đơn hàng dành riêng cho Khách Hàng
+@login_required(login_url='login')
+def chi_tiet_don_hang_khach(request, don_hang_id):
+    # Lấy đơn hàng dựa trên ID VÀ bắt buộc phải của user đang đăng nhập (Bảo mật cao)
+    don_hang = get_object_or_404(DonHang, id=don_hang_id, khach_hang=request.user)
+    
+    context = {
+        'don_hang': don_hang
+    }
+    return render(request, 'donhang/chi_tiet_khach.html', context)
+
 
 # ==========================================
 # 5. QUẢN LÝ USER VÀ AUTHENTICATION
@@ -454,3 +465,40 @@ def xoa_cua_hang(request, pk):
         ch.delete()
         messages.success(request, 'Đã xóa chi nhánh thành công!')
     return redirect('quan_ly_cua_hang')
+
+# ==========================================
+# TRANG TÀI KHOẢN KHÁCH HÀNG
+# ==========================================
+@login_required(login_url='login')
+def tai_khoan(request):
+    # Lấy danh sách đơn hàng của user đang đăng nhập, sắp xếp mới nhất lên đầu
+    don_hang_list = DonHang.objects.filter(khach_hang=request.user).order_by('-ngay_dat')
+    
+    context = {
+        'don_hang_list': don_hang_list
+    }
+    return render(request, 'users/tai_khoan.html', context)
+
+@login_required(login_url='login')
+def ql_khach_hang(request):
+    danh_sach = User.objects.filter(is_staff=False).order_by('-date_joined')
+    context = {
+        'danh_sach': danh_sach, 
+        'title': 'Quản lý Khách Hàng',
+        'icon': 'bi-people',
+        'show_add_button': False # Khóa nút thêm
+    }
+    # Trỏ về file CÓ SẴN của bạn
+    return render(request, 'users/list_user.html', context)
+
+@login_required(login_url='login')
+def ql_nhan_vien(request):
+    danh_sach = User.objects.filter(is_staff=True).order_by('-date_joined')
+    context = {
+        'danh_sach': danh_sach, 
+        'title': 'Quản lý Nhân Viên',
+        'icon': 'bi-person-vcard',
+        'show_add_button': True # Mở nút thêm
+    }
+    # Trỏ về file CÓ SẴN của bạn
+    return render(request, 'users/list_user.html', context)

@@ -4,46 +4,133 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold text-dark"><i class="bi bi-pencil-square me-2 text-success"></i>{{ title }}</h3>
-    <a href="{% url 'danh_sach_xe' %}" class="btn btn-outline-secondary fw-bold"><i class="bi bi-arrow-left me-1"></i> Quay lại</a>
+    <h2 class="fw-bold text-dark">
+        <i class="bi bi-pencil-square me-2 text-success"></i>{{ title }}
+    </h2>
+    <a href="{% url 'danh_sach_xe' %}" class="btn btn-outline-dark fw-bold shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại
+    </a>
 </div>
 
-<div class="card shadow-sm border-0 rounded-3 p-4">
+<div class="card shadow-lg border-0 rounded-4 p-4">
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-        <div class="row g-3">
-            {% for field in form %}
-                <div class="{% if field.name == 'mo_ta' %}col-12{% else %}col-md-6{% endif %} mb-2">
-                    <label class="form-label fw-bold text-muted">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors }}</div>{% endif %}
-                </div>
-            {% endfor %}
+
+        <div class="row g-4 mb-3">
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-success">Tên xe</label>
+                {{ form.ten_xe }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-success">Hãng sản xuất</label>
+                {{ form.hang_san_xuat }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-success">Danh mục</label>
+                {{ form.danh_muc }}
+            </div>
         </div>
+
+        <div class="row g-4 mb-3">
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-success">Dung lượng pin (Ah)</label>
+                {{ form.dung_luong_pin }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-success">Tầm di chuyển (km)</label>
+                {{ form.tam_di_chuyen }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-success">Giá bán (VNĐ)</label>
+                {{ form.gia }}
+            </div>
+        </div>
+
+        <div class="row g-4 mb-3">
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-success">Cửa hàng phân phối</label>
+                {{ form.cua_hang }}
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-success">Trạng thái kho</label>
+                <div class="form-check form-switch mt-2">
+                    {{ form.trang_thai }}
+                    <label class="form-check-label text-primary fw-bold">Đang mở bán</label>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-success">Gắn nhãn (Badge)</label>
+                <div class="form-check text-warning fw-bold mb-1">
+                    {{ form.noi_bat }}
+                    <label class="form-check-label"><i class="bi bi-star-fill me-1"></i>Sản phẩm nổi bật</label>
+                </div>
+                <div class="form-check text-info fw-bold">
+                    {{ form.sap_ve }}
+                    <label class="form-check-label"><i class="bi bi-clock-history me-1"></i>Sắp về (Pre-order)</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-light border-0 p-3 mb-4 rounded-3">
+            <h6 class="fw-bold text-success mb-3"><i class="bi bi-images me-2"></i>Quản lý Hình ảnh</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold text-dark">Ảnh chính</label>
+                    {{ form.hinh_anh }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-secondary">Ảnh phụ 1</label>
+                    {{ form.anh_phu_1 }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-secondary">Ảnh phụ 2</label>
+                    {{ form.anh_phu_2 }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-secondary">Ảnh phụ 3</label>
+                    {{ form.anh_phu_3 }}
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold text-success"><i class="bi bi-file-earmark-richtext me-2"></i>Mô tả chi tiết</label>
+            {{ form.mo_ta }}
+        </div>
+
         <div class="text-end mt-4 pt-3 border-top">
-            <button type="submit" class="btn btn-success px-5 fw-bold"><i class="bi bi-save me-1"></i> Lưu thông tin</button>
+            <button type="submit" class="btn btn-success px-5 py-2 fw-bold shadow-sm">
+                <i class="bi bi-save me-1"></i> Lưu thông tin xe
+            </button>
         </div>
     </form>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<style>
+    /* Chỉnh chiều cao tối thiểu cho khung soạn thảo CKEditor */
+    .ck-editor__editable_inline {
+        min-height: 300px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+</style>
+
 <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Tìm ô nhập liệu có ID là id_mo_ta (do Django tự sinh ra)
+        // ID mặc định của trường mo_ta do Django sinh ra là #id_mo_ta
         const moTaTextarea = document.querySelector('#id_mo_ta');
         if (moTaTextarea) {
             ClassicEditor
-                .create(moTaTextarea)
-                .then(editor => {
-                    // Chỉnh chiều cao cho khung soạn thảo
-                    editor.ui.view.editable.element.style.minHeight = '250px';
+                .create(moTaTextarea, {
+                    toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'undo', 'redo' ]
                 })
                 .catch(error => {
-                    console.error(error);
+                    console.error("Lỗi khởi tạo CKEditor:", error);
                 });
         }
     });
 </script>
+
 {% endblock %}

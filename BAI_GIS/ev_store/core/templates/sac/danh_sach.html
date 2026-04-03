@@ -1,0 +1,142 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Phiên Sạc Của Tôi{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold text-success">
+                    <i class="bi bi-battery-charging"></i> Phiên Sạc Của Bạn
+                </h2>
+                <a href="{% url 'ban_do_tram_sac' %}" class="btn btn-outline-success">
+                    <i class="bi bi-map"></i> Tìm trạm sạc gần đây
+                </a>
+            </div>
+
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-body p-4 p-md-5">
+                    
+                    {% if phien %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-success">
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th>Trạm Sạc</th>
+                                        <th>Địa Chỉ</th>
+                                        <th>Thời Gian Bắt Đầu</th>
+                                        <th>Thời Gian Kết Thúc</th>
+                                        <th>Trạng Thái</th>
+                                        <th class="text-end">Điện Năng Tiêu Thụ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in phien %}
+                                    <tr>
+                                        <td class="fw-bold text-muted">{{ forloop.counter }}</td>
+                                        <td>
+                                            <strong>{{ p.tram_sac.ten_tram }}</strong>
+                                        </td>
+                                        <td class="text-muted small">
+                                            {{ p.tram_sac.dia_chi|truncatewords:10 }}
+                                        </td>
+                                        <td>
+                                            <i class="bi bi-clock-history text-primary"></i> 
+                                            {{ p.thoi_gian_bat_dau|date:"d/m/Y H:i" }}
+                                        </td>
+                                        <td>
+                                            {% if p.thoi_gian_ket_thuc %}
+                                                {{ p.thoi_gian_ket_thuc|date:"d/m/Y H:i" }}
+                                            {% else %}
+                                                <span class="badge bg-warning">Đang sạc...</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if p.trang_thai == 'Hoan thanh' %}
+                                                <span class="badge bg-success px-3 py-2">
+                                                    <i class="bi bi-check-circle"></i> Hoàn thành
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-primary px-3 py-2">
+                                                    <i class="bi bi-battery-charging"></i> Đang sạc
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end fw-bold">
+                                            {% if p.dien_nang_tieu_thu %}
+                                                {{ p.dien_nang_tieu_thu|floatformat:2 }} kWh
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <!-- Khi không có phiên sạc nào -->
+                        <div class="text-center py-5">
+                            <i class="bi bi-battery-charging fs-1 text-muted mb-3"></i>
+                            <h4 class="text-muted">Bạn chưa có phiên sạc nào</h4>
+                            <p class="text-muted">Hãy đến trạm sạc gần nhất để bắt đầu sạc xe!</p>
+                            <a href="{% url 'ban_do_tram_sac' %}" class="btn btn-success btn-lg mt-3">
+                                <i class="bi bi-map me-2"></i> Xem bản đồ trạm sạc
+                            </a>
+                        </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* CSS tùy chỉnh cho trang Phiên Sạc */
+    .table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+    }
+
+    .table td {
+        vertical-align: middle;
+        padding: 16px 12px;
+    }
+
+    .badge {
+        font-size: 0.95rem;
+        padding: 8px 14px;
+        border-radius: 50px;
+    }
+
+    .card {
+        border: none;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f8fff9;
+    }
+
+    .text-success {
+        color: #198754 !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .table td, .table th {
+            padding: 12px 8px;
+            font-size: 0.95rem;
+        }
+    }
+</style>
+{% endblock %}

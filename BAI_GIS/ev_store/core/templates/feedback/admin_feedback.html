@@ -1,0 +1,83 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Danh sách Feedback{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4 text-center">
+        <i class="fas fa-comments text-primary"></i> 
+        Danh sách Feedback
+    </h2>
+
+    <div class="card shadow">
+        <div class="card-body p-0">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th width="20%">User</th>
+                        <th>Nội dung</th>
+                        <th width="18%">Thời gian</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fb in feedbacks %}
+                    <tr>
+                        <td>
+                            <strong>{{ fb.user.username }}</strong>
+                        </td>
+                        <td>{{ fb.noi_dung }}</td>
+                        <td>
+                           <small class="text-muted">
+    {{ fb.ngay_tao|date:"d/m/Y H:i" }}
+</small>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center py-5 text-muted">
+                            <i class="fas fa-comment-dots fa-2x mb-2"></i><br>
+                            Chưa có feedback nào
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- CSS tùy chỉnh -->
+<style>
+    .table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.95rem;
+        padding: 16px;
+    }
+
+    .table td {
+        padding: 14px 16px;
+        vertical-align: middle;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f1f3f5;
+    }
+
+    .card {
+        border-radius: 10px;
+        overflow: hidden;
+        border: none;
+    }
+
+    h2 {
+        font-weight: 700;
+        color: #333;
+    }
+
+    .text-muted {
+        font-size: 0.95rem;
+    }
+</style>
+
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Nhập Kho - {{ kho.xe.ten_xe }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                
+                <!-- Header -->
+                <div class="card-header bg-warning text-dark py-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-truck-loading fs-3 me-3"></i>
+                        <div>
+                            <h4 class="mb-0 fw-bold">Nhập thêm xe vào kho</h4>
+                            <small class="opacity-75">Cập nhật số lượng tồn kho</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Body -->
+                <div class="card-body p-5">
+                    
+                    <!-- Thông tin xe hiện tại -->
+                    <div class="bg-light p-4 rounded-3 mb-5">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong class="text-muted d-block mb-1">Tên xe:</strong>
+                                <h5 class="fw-bold mb-0">{{ kho.xe.ten_xe }}</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <strong class="text-muted d-block mb-1">Cửa hàng:</strong>
+                                <h5 class="fw-bold mb-0">{{ kho.cua_hang.ten_cua_hang }}</h5>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <!-- Số lượng hiện tại -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-muted">SỐ LƯỢNG HIỆN TẠI</label>
+                            <div class="border border-success rounded-3 p-4 text-center bg-white">
+                                <h2 class="text-success mb-0 fw-bold display-5">
+                                    {{ kho.so_luong }} <span class="fs-4 fw-normal">chiếc</span>
+                                </h2>
+                            </div>
+                        </div>
+
+                        <!-- Nhập số lượng mới -->
+                        <div class="mb-5">
+                            <label for="so_luong_nhap" class="form-label fw-bold">
+                                Số lượng muốn nhập thêm <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <input type="number" 
+                                       name="so_luong_nhap" 
+                                       id="so_luong_nhap" 
+                                       class="form-control text-center fw-bold" 
+                                       min="1" 
+                                       value="1" 
+                                       required>
+                                <span class="input-group-text fw-semibold">chiếc</span>
+                            </div>
+                            <small class="text-muted">Nhập số lượng xe muốn bổ sung vào kho</small>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex gap-3 justify-content-end">
+                            <a href="{% url 'quan_ly_kho' %}" 
+                               class="btn btn-secondary btn-lg px-5">
+                                <i class="fas fa-arrow-left"></i> Quay lại
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg px-5 shadow-sm">
+                                <i class="fas fa-save me-2"></i> Xác nhận nhập kho
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Footer -->
+                <div class="card-footer bg-light text-center text-muted py-3">
+                    Sau khi nhập kho, số lượng sẽ được cập nhật ngay lập tức.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* CSS tùy chỉnh cho trang Nhập Kho */
+    .card {
+        border: none;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #ffc107, #fd7e14);
+    }
+
+    .form-label {
+        font-size: 1.05rem;
+        color: #495057;
+    }
+
+    .input-group-lg .form-control {
+        font-size: 1.5rem;
+        font-weight: 700;
+        height: 65px;
+    }
+
+    .input-group-text {
+        font-size: 1.2rem;
+        font-weight: 600;
+        background-color: #f8f9fa;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #198754, #146c43);
+        border: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(25, 135, 84, 0.35);
+    }
+
+    .bg-light {
+        border-left: 5px solid #198754;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 30px 20px;
+        }
+        h2.display-5 {
+            font-size: 2.5rem;
+        }
+    }
+</style>
+{% endblock %}

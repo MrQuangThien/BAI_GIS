@@ -1,0 +1,146 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Thêm Xe Vào Kho{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            
+            <!-- Card chính -->
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                
+                <!-- Header -->
+                <div class="card-header bg-success text-white py-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-box-seam fs-3 me-3"></i>
+                        <div>
+                            <h4 class="mb-0 fw-bold">Thêm Xe Mới Vào Kho</h4>
+                            <small class="opacity-75">Nhập thông tin xe và số lượng tồn kho</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Body -->
+                <div class="card-body p-5">
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                {{ form.xe.label_tag }}
+                                {{ form.xe }}
+                                {% if form.xe.help_text %}
+                                    <small class="text-muted">{{ form.xe.help_text }}</small>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                {{ form.cua_hang.label_tag }}
+                                {{ form.cua_hang }}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form.so_luong.label_tag }}
+                            <div class="input-group">
+                                {{ form.so_luong }}
+                                <span class="input-group-text">chiếc</span>
+                            </div>
+                        </div>
+
+                        <!-- Hiển thị lỗi form -->
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <p class="mb-1">• {{ error }}</p>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Buttons -->
+                        <div class="d-flex justify-content-end gap-3 mt-5">
+                            <a href="{% url 'quan_ly_kho' %}" 
+                               class="btn btn-secondary btn-lg px-5">
+                                <i class="bi bi-arrow-left"></i> Hủy
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg px-5 shadow-sm">
+                                <i class="bi bi-save-fill"></i> Lưu vào kho
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Footer card -->
+                <div class="card-footer bg-light text-muted small py-3 text-center">
+                    Sau khi lưu, xe sẽ được hiển thị trong danh sách kho hàng.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* CSS tùy chỉnh cho form thêm kho */
+    .card {
+        border: none;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #198754, #146c43);
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 12px 16px;
+        border: 2px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #198754;
+        box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+        border: 2px solid #e0e0e0;
+        border-left: none;
+        border-radius: 0 10px 10px 0;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #198754, #146c43);
+        border: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(25, 135, 84, 0.3);
+    }
+
+    .alert {
+        border-radius: 12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 30px 20px;
+        }
+    }
+</style>
+{% endblock %}

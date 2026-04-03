@@ -1,0 +1,120 @@
+<style>
+.feedback-box {
+    max-width: 650px;
+    margin: 60px auto;
+    background: #fff;
+    padding: 35px;
+    border-radius: 15px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.feedback-title {
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 25px;
+    color: #198754;
+}
+
+/* input đẹp hơn */
+.feedback-box input,
+.feedback-box textarea,
+.feedback-box select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    transition: all 0.3s;
+    font-size: 15px;
+}
+
+.feedback-box input:focus,
+.feedback-box textarea:focus {
+    border-color: #198754;
+    outline: none;
+    box-shadow: 0 0 8px rgba(25, 135, 84, 0.3);
+}
+
+/* button group */
+.feedback-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* gửi */
+.btn-feedback {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: #198754;
+    color: white;
+    font-weight: bold;
+    border-radius: 10px;
+    transition: 0.3s;
+}
+
+.btn-feedback:hover {
+    background: #157347;
+}
+
+/* quay về */
+.btn-back {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #198754;
+    background: white;
+    color: #198754;
+    font-weight: bold;
+    border-radius: 10px;
+    text-align: center;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.btn-back:hover {
+    background: #198754;
+    color: white;
+}
+
+/* alert đẹp */
+.alert-custom {
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    background: #d1e7dd;
+    color: #0f5132;
+    font-weight: 500;
+}
+</style>
+
+
+<div class="feedback-box">
+    <h2 class="feedback-title">💬 Gửi feedback</h2>
+
+    <!-- hiển thị message -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert-custom">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            {{ form.as_p }}
+        </div>
+
+        <div class="feedback-actions">
+            <button type="submit" class="btn-feedback">
+                🚀 Gửi ngay
+            </button>
+
+            <a href="{% url 'trang_chu' %}" class="btn-back">
+                ⬅ Trang chủ
+            </a>
+        </div>
+    </form>
+</div>

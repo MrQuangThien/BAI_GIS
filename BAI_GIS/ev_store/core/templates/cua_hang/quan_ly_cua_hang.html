@@ -3,6 +3,11 @@
 {% block title %}Quản Lý Chi Nhánh | EV STORE{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .mini-map { height: 250px; width: 100%; border-radius: 8px; border: 1px solid #dee2e6; }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="fw-bold text-dark"><i class="bi bi-shop me-2 text-primary"></i>Danh sách Chi nhánh</h3>
     <button class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addCuaHangModal">
@@ -24,16 +29,24 @@
         <thead class="table-dark">
             <tr>
                 <th width="5%">ID</th>
-                <th width="25%">Tên Chi Nhánh</th>
-                <th width="35%">Địa Chỉ</th>
-                <th width="15%">Hotline</th>
-                <th width="20%" class="text-center">Hành động</th>
+                <th width="8%">Ảnh</th>
+                <th width="20%">Tên Chi Nhánh</th>
+                <th width="30%">Địa Chỉ</th>
+                <th width="12%">Hotline</th>
+                <th width="25%" class="text-center">Hành động</th>
             </tr>
         </thead>
         <tbody>
             {% for ch in danh_sach_ch %}
             <tr>
                 <td class="fw-bold text-muted">#{{ ch.id }}</td>
+                <td>
+                    {% if ch.hinh_anh %}
+                        <img src="{{ ch.hinh_anh.url }}" alt="{{ ch.ten_cua_hang }}" width="50" height="50" style="object-fit: cover; border-radius: 8px;">
+                    {% else %}
+                        <span class="badge bg-secondary">No img</span>
+                    {% endif %}
+                </td>
                 <td class="fw-bold text-dark fs-6">{{ ch.ten_cua_hang }}</td>
                 <td>{{ ch.dia_chi }}</td>
                 <td><span class="badge bg-light text-dark border">{{ ch.so_dien_thoai }}</span></td>
@@ -47,27 +60,56 @@
                 </td>
             </tr>
 
-            <div class="modal fade" id="editCuaHangModal{{ ch.id }}" tabindex="-1">
-                <div class="modal-dialog">
+            <div class="modal fade edit-modal" id="editCuaHangModal{{ ch.id }}" data-ch-id="{{ ch.id }}" data-lat="{{ ch.lat|default:'10.7769' }}" data-lon="{{ ch.lon|default:'106.7009' }}" tabindex="-1">
+                <div class="modal-dialog modal-lg">
                     <div class="modal-content border-0 shadow">
                         <div class="modal-header bg-primary text-white">
                             <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Sửa Chi Nhánh</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
-                        <form action="{% url 'sua_cua_hang' ch.id %}" method="POST">
+                        <form action="{% url 'sua_cua_hang' ch.id %}" method="POST" enctype="multipart/form-data">
                             {% csrf_token %}
                             <div class="modal-body p-4">
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold text-muted">Tên Chi Nhánh</label>
-                                    <input type="text" name="ten_cua_hang" class="form-control" value="{{ ch.ten_cua_hang }}" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold text-muted">Địa Chỉ</label>
-                                    <input type="text" name="dia_chi" class="form-control" value="{{ ch.dia_chi }}" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold text-muted">Số Điện Thoại</label>
-                                    <input type="text" name="so_dien_thoai" class="form-control" value="{{ ch.so_dien_thoai }}" required>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold text-muted">Tên Chi Nhánh</label>
+                                            <input type="text" name="ten_cua_hang" class="form-control" value="{{ ch.ten_cua_hang }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold text-muted">Địa Chỉ</label>
+                                            <input type="text" name="dia_chi" class="form-control" value="{{ ch.dia_chi }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold text-muted">Số Điện Thoại</label>
+                                            <input type="text" name="so_dien_thoai" class="form-control" value="{{ ch.so_dien_thoai }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold text-muted">Cập nhật Ảnh (Bỏ trống nếu giữ nguyên)</label>
+                                            <input type="file" name="hinh_anh" class="form-control" accept="image/*">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-muted">Tọa độ trên Bản đồ</label>
+                                        <p class="small text-primary mb-1"><i class="bi bi-cursor-fill"></i> Click vào bản đồ để đổi vị trí</p>
+                                        
+                                        <div class="input-group input-group-sm mb-2 shadow-sm">
+                                            <input type="text" id="searchEdit{{ ch.id }}" class="form-control" placeholder="Tìm địa chỉ nhanh..." onkeydown="if(event.key === 'Enter'){ event.preventDefault(); searchLocation('searchEdit{{ ch.id }}', 'edit', '{{ ch.id }}'); }">
+                                            <button class="btn btn-primary" type="button" onclick="searchLocation('searchEdit{{ ch.id }}', 'edit', '{{ ch.id }}')"><i class="bi bi-search"></i></button>
+                                        </div>
+
+                                        <div id="mapEdit{{ ch.id }}" class="mini-map mb-2"></div>
+                                        
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <input type="text" id="latEdit{{ ch.id }}" name="lat" class="form-control form-control-sm bg-light text-center fw-bold" value="{{ ch.lat }}" placeholder="Vĩ độ (Lat)" readonly required>
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="text" id="lonEdit{{ ch.id }}" name="lon" class="form-control form-control-sm bg-light text-center fw-bold" value="{{ ch.lon }}" placeholder="Kinh độ (Lon)" readonly required>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="modal-footer bg-light">
@@ -79,33 +121,62 @@
                 </div>
             </div>
             {% empty %}
-            <tr><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Chưa có dữ liệu.</td></tr>
+            <tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Chưa có dữ liệu.</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
 <div class="modal fade" id="addCuaHangModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Thêm Chi Nhánh Mới</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{% url 'them_cua_hang' %}" method="POST">
+            <form action="{% url 'them_cua_hang' %}" method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-muted">Tên Chi Nhánh</label>
-                        <input type="text" name="ten_cua_hang" class="form-control" placeholder="VD: EV Store Hà Nội" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-muted">Địa Chỉ</label>
-                        <input type="text" name="dia_chi" class="form-control" placeholder="Số nhà, đường, quận..." required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-muted">Số Điện Thoại</label>
-                        <input type="text" name="so_dien_thoai" class="form-control" placeholder="VD: 0901234567" required>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Tên Chi Nhánh</label>
+                                <input type="text" name="ten_cua_hang" class="form-control" placeholder="VD: EV Store Hà Nội" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Địa Chỉ</label>
+                                <input type="text" name="dia_chi" class="form-control" placeholder="Số nhà, đường, quận..." required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Số Điện Thoại</label>
+                                <input type="text" name="so_dien_thoai" class="form-control" placeholder="VD: 0901234567" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Hình ảnh minh họa</label>
+                                <input type="file" name="hinh_anh" class="form-control" accept="image/*">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted">Xác định tọa độ</label>
+                            <p class="small text-danger mb-1"><i class="bi bi-cursor-fill"></i> Click vào bản đồ để ghim vị trí</p>
+                            
+                            <div class="input-group input-group-sm mb-2 shadow-sm">
+                                <input type="text" id="searchAdd" class="form-control" placeholder="Nhập địa chỉ để tìm nhanh..." onkeydown="if(event.key === 'Enter'){ event.preventDefault(); searchLocation('searchAdd', 'add'); }">
+                                <button class="btn btn-success" type="button" onclick="searchLocation('searchAdd', 'add')"><i class="bi bi-search"></i></button>
+                            </div>
+
+                            <div id="mapAdd" class="mini-map mb-2"></div>
+                            
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="text" id="latAdd" name="lat" class="form-control form-control-sm bg-light text-center fw-bold" placeholder="Vĩ độ (Lat)" readonly required>
+                                </div>
+                                <div class="col-6">
+                                    <input type="text" id="lonAdd" name="lon" class="form-control form-control-sm bg-light text-center fw-bold" placeholder="Kinh độ (Lon)" readonly required>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -116,4 +187,113 @@
         </div>
     </div>
 </div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Đưa các biến bản đồ ra Global Scope để hàm searchLocation có thể sử dụng
+    let mapAdd = null;
+    let markerAdd = null;
+    let editMaps = {};
+    let editMarkers = {};
+
+    // HÀM TÌM KIẾM ĐỊA CHỈ VÀ BAY BẢN ĐỒ TỚI ĐÓ
+    async function searchLocation(inputId, type, id = null) {
+        let query = document.getElementById(inputId).value;
+        if (!query) return;
+
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=vn`);
+            const data = await res.json();
+
+            if (data.length > 0) {
+                let lat = parseFloat(data[0].lat);
+                let lon = parseFloat(data[0].lon);
+                let latLng = [lat, lon];
+
+                if (type === 'add') {
+                    if (mapAdd) {
+                        mapAdd.setView(latLng, 15);
+                        if (markerAdd) markerAdd.setLatLng(latLng);
+                        else markerAdd = L.marker(latLng).addTo(mapAdd);
+                        
+                        document.getElementById('latAdd').value = lat.toFixed(6);
+                        document.getElementById('lonAdd').value = lon.toFixed(6);
+                    }
+                } else if (type === 'edit' && id) {
+                    let eMap = editMaps[id];
+                    if (eMap) {
+                        eMap.setView(latLng, 15);
+                        if (editMarkers[id]) editMarkers[id].setLatLng(latLng);
+                        else editMarkers[id] = L.marker(latLng).addTo(eMap);
+                        
+                        document.getElementById('latEdit' + id).value = lat.toFixed(6);
+                        document.getElementById('lonEdit' + id).value = lon.toFixed(6);
+                    }
+                }
+            } else {
+                alert("Không tìm thấy địa chỉ này! Vui lòng gõ rõ tên Tỉnh/Thành phố.");
+            }
+        } catch (error) {
+            console.error("Lỗi tìm kiếm:", error);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // --- 1. XỬ LÝ BẢN ĐỒ Ở FORM THÊM MỚI ---
+        const addModal = document.getElementById('addCuaHangModal');
+        addModal.addEventListener('shown.bs.modal', function () {
+            if (!mapAdd) {
+                mapAdd = L.map('mapAdd').setView([10.7769, 106.7009], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapAdd);
+                
+                mapAdd.on('click', function(e) {
+                    let lat = e.latlng.lat.toFixed(6);
+                    let lon = e.latlng.lng.toFixed(6);
+                    
+                    document.getElementById('latAdd').value = lat;
+                    document.getElementById('lonAdd').value = lon;
+                    
+                    if (markerAdd) markerAdd.setLatLng(e.latlng);
+                    else markerAdd = L.marker(e.latlng).addTo(mapAdd);
+                });
+            } else {
+                mapAdd.invalidateSize();
+            }
+        });
+
+        // --- 2. XỬ LÝ BẢN ĐỒ Ở CÁC FORM SỬA ---
+        document.querySelectorAll('.edit-modal').forEach(function(modal) {
+            modal.addEventListener('shown.bs.modal', function () {
+                let id = this.getAttribute('data-ch-id');
+                let latInput = document.getElementById('latEdit' + id);
+                let lonInput = document.getElementById('lonEdit' + id);
+                
+                let lat = parseFloat(this.getAttribute('data-lat')) || 10.7769;
+                let lon = parseFloat(this.getAttribute('data-lon')) || 106.7009;
+
+                if (!editMaps[id]) {
+                    editMaps[id] = L.map('mapEdit' + id).setView([lat, lon], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(editMaps[id]);
+
+                    if (latInput.value && lonInput.value) {
+                        editMarkers[id] = L.marker([lat, lon]).addTo(editMaps[id]);
+                    }
+
+                    editMaps[id].on('click', function(e) {
+                        let newLat = e.latlng.lat.toFixed(6);
+                        let newLon = e.latlng.lng.toFixed(6);
+                        
+                        latInput.value = newLat;
+                        lonInput.value = newLon;
+                        
+                        if (editMarkers[id]) editMarkers[id].setLatLng(e.latlng);
+                        else editMarkers[id] = L.marker(e.latlng).addTo(editMaps[id]);
+                    });
+                } else {
+                    editMaps[id].invalidateSize();
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

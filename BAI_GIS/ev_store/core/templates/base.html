@@ -1,0 +1,227 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}EV STORE - Hệ thống kinh doanh xe điện{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        body {
+            background: #f6f6f6;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 22px;
+        }
+
+        /* Custom Footer */
+        footer a {
+            color: #adb5bd;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        footer a:hover {
+            color: #198754;
+            padding-left: 5px;
+        }
+
+        footer .social-icons i {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            color: #adb5bd;
+            transition: 0.3s;
+        }
+
+        footer .social-icons i:hover {
+            color: #fff;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'trang_chu' %}">
+                <i class="bi bi-lightning-charge-fill text-warning"></i> EV STORE
+            </a>
+            <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#menu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="menu">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'trang_chu' %}">Trang chủ</a></li>
+                    <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'danh_sach_san_pham' %}">Sản phẩm</a>
+                    </li>
+                    <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm
+                            sạc</a></li>
+
+                    {% if user.is_authenticated and user.is_staff %}
+                    <li class="nav-item ms-2">
+                        <a class="nav-link text-warning fw-bold bg-dark bg-opacity-25 rounded px-3"
+                            href="{% url 'admin_dashboard' %}">
+                            <i class="bi bi-speedometer2"></i> Quản trị
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <form class="d-flex me-3" action="{% url 'tim_kiem' %}" method="GET">
+                    <input class="form-control me-2 rounded-pill px-3" type="search" name="q"
+                        placeholder="Tìm tên xe, hãng..." required>
+                    <button class="btn btn-light rounded-circle" type="submit"><i class="bi bi-search"></i></button>
+                </form>
+
+                <div class="d-flex align-items-center">
+                    {% if user.is_authenticated %}
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle fw-bold rounded-pill px-3" type="button"
+                            data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1 text-success"></i> {{ user.username }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                            <li>
+                                <a class="dropdown-item py-2" href="{% url 'tai_khoan' %}">
+                                    <i class="bi bi-person-lines-fill me-2 text-primary"></i> Thông tin cá nhân
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item py-2" href="{% url 'user_sac' %}">
+                                    <i class="bi bi-clock-history me-2 text-success"></i> Lịch sử sạc
+                                </a>
+                            </li>
+
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+
+                            <li>
+                                <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger fw-bold py-2">
+                                        <i class="bi bi-box-arrow-right me-2"></i> Đăng xuất
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-success me-2 fw-bold shadow-sm border border-light">Đăng
+                        nhập</a>
+                    <a href="{% url 'register' %}" class="btn btn-light fw-bold text-success shadow-sm">Đăng ký</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% if messages %}
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1100; margin-top: 60px;">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show shadow-lg border-0"
+            role="alert">
+            <i
+                class="bi {% if message.tags == 'error' %}bi-exclamation-triangle{% else %}bi-check-circle{% endif %} me-2 fs-5 align-middle"></i>
+            <strong>{{ message }}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main style="min-height: 70vh;">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="bg-dark text-light pt-5 pb-3 mt-5">
+        <div class="container">
+            <div class="row text-md-left">
+                <div class="col-md-3 col-lg-3 col-xl-3 mx-auto mt-3">
+                    <h5 class="text-uppercase mb-4 fw-bold text-success">
+                        <i class="bi bi-lightning-charge-fill me-2 text-warning"></i>EV STORE
+                    </h5>
+                    <p class="text-muted text-justify">
+                        Đại lý phân phối xe điện chính hãng hàng đầu. Chúng tôi cam kết mang đến những sản phẩm chất
+                        lượng, thân thiện với môi trường cùng dịch vụ bảo hành tận tâm.
+                    </p>
+                </div>
+
+                <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mt-3">
+                    <h6 class="text-uppercase mb-4 fw-bold">Liên kết nhanh</h6>
+                    <p><a href="{% url 'trang_chu' %}">Trang chủ</a></p>
+                    <p><a href="{% url 'danh_sach_san_pham' %}">Sản phẩm</a></p>
+                    <p><a href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm sạc</a></p>
+                    <p><a href="{% url 'gui_feedback' %}">Góp ý & Đánh giá</a></p>
+                </div>
+
+                <div class="col-md-3 col-lg-2 col-xl-2 mx-auto mt-3">
+                    <h6 class="text-uppercase mb-4 fw-bold">Hỗ trợ khách hàng</h6>
+                    <p><a href="#">Chính sách bảo hành</a></p>
+                    <p><a href="#">Hướng dẫn mua trả góp</a></p>
+                    <p><a href="#">Chính sách giao nhận xe</a></p>
+                    <p><a href="#">Câu hỏi thường gặp (FAQ)</a></p>
+                </div>
+
+                <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mt-3">
+                    <h6 class="text-uppercase mb-4 fw-bold">Liên hệ</h6>
+                    <p class="text-muted"><i class="bi bi-house-door-fill me-3 text-success"></i> Số 1, Đường Lê Duẩn,
+                        Quận 1, TP. HCM</p>
+                    <p class="text-muted"><i class="bi bi-envelope-fill me-3 text-success"></i> cskh@evstore.vn</p>
+                    <p class="text-muted"><i class="bi bi-telephone-fill me-3 text-success"></i> Hotline: 1900 1234</p>
+
+                    <div class="social-icons mt-4">
+                        <a href="#"><i class="bi bi-facebook"></i></a>
+                        <a href="#"><i class="bi bi-youtube"></i></a>
+                        <a href="#"><i class="bi bi-instagram"></i></a>
+                        <a href="#"><i class="bi bi-tiktok"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="mb-4 border-secondary">
+
+            <div class="row align-items-center">
+                <div class="col-md-7 col-lg-8">
+                    <p class="text-muted mb-0">© 2026 Bản quyền thuộc về <strong class="text-success">EV STORE</strong>.
+                        Thiết kế cho đồ án tốt nghiệp.</p>
+                </div>
+                <div class="col-md-5 col-lg-4">
+                    <div class="text-center text-md-end">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal"
+                            height="20" class="me-2 bg-white px-1 rounded">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" alt="Visa" height="20"
+                            class="me-2 bg-white px-1 rounded">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg"
+                            alt="MasterCard" height="20" class="bg-white px-1 rounded">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            setTimeout(function () {
+                let alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function (alert) {
+                    let bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 4000);
+        });
+    </script>
+</body>
+
+</html>

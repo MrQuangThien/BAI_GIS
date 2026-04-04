@@ -1,0 +1,127 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Tạo Phiếu Nhập Kho | EV STORE{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold text-dark"><i class="bi bi-box-arrow-in-down me-2 text-success"></i> Tạo Phiếu Nhập Lô Hàng</h3>
+        <a href="{% url 'quan_ly_kho' %}" class="btn btn-outline-secondary fw-bold shadow-sm">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại Kho
+        </a>
+    </div>
+
+    <form method="POST" id="nhapKhoForm">
+        {% csrf_token %}
+        
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-success text-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2"></i>Thông Tin Lô Hàng</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold text-muted">Nhập vào Chi nhánh/Cửa hàng</label>
+                        {{ form.cua_hang }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold text-muted">Ghi chú (Tùy chọn)</label>
+                        {{ form.ghi_chu }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-list-check me-2"></i>Chi Tiết Nhập Xe</h5>
+                <button type="button" id="add-form" class="btn btn-sm btn-warning fw-bold text-dark">
+                    <i class="bi bi-plus-circle me-1"></i> Thêm xe khác
+                </button>
+            </div>
+            
+            <div class="card-body p-4">
+                {{ formset.management_form }}
+                
+                <div id="formset-container">
+                    {% for f in formset %}
+                    <div class="row align-items-end form-row border-bottom pb-3 mb-3">
+                        {{ f.id }}
+                        <div class="col-md-7">
+                            <label class="form-label fw-bold text-muted">Chọn dòng Xe Điện</label>
+                            {{ f.xe }}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold text-muted">Số lượng nhập</label>
+                            <div class="input-group">
+                                {{ f.so_luong }}
+                                <span class="input-group-text bg-light fw-bold text-secondary">chiếc</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            {% if formset.can_delete %}
+                                <div class="form-check d-none">{{ f.DELETE }}</div> <button type="button" class="btn btn-outline-danger fw-bold btn-remove">
+                                    <i class="bi bi-trash"></i> Xóa
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="text-end mt-4">
+                    <button type="submit" class="btn btn-success btn-lg px-5 fw-bold shadow-sm">
+                        <i class="bi bi-save-fill me-2"></i> Lưu Phiếu Nhập Kho
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const container = document.getElementById("formset-container");
+        const addButton = document.getElementById("add-form");
+        const totalForms = document.getElementById("id_chi_tiet-TOTAL_FORMS");
+
+        // Sự kiện: Bấm nút "Thêm xe khác"
+        addButton.addEventListener("click", function() {
+            let formRows = container.getElementsByClassName("form-row");
+            let formNum = formRows.length; // Số thứ tự hiện tại
+            let newRow = formRows[0].cloneNode(true); // Copy dòng đầu tiên
+            
+            // Xóa sạch giá trị của dòng mới copy
+            newRow.querySelectorAll("input, select").forEach(function(input) {
+                input.name = input.name.replace("-0-", "-" + formNum + "-");
+                input.id = input.id.replace("-0-", "-" + formNum + "-");
+                if (input.type === "number") input.value = 1;
+                else if (input.type === "checkbox") input.checked = false;
+                else input.value = "";
+            });
+            
+            container.appendChild(newRow);
+            totalForms.value = parseInt(totalForms.value) + 1; // Cập nhật tổng số dòng
+        });
+
+        // Sự kiện: Bấm nút "Xóa"
+        container.addEventListener("click", function(e) {
+            if (e.target.classList.contains("btn-remove") || e.target.closest(".btn-remove")) {
+                let row = e.target.closest(".form-row");
+                // Checkbox ẩn của Django để báo xóa
+                let deleteCheckbox = row.querySelector("input[type='checkbox'][name$='-DELETE']");
+                if (deleteCheckbox) {
+                    deleteCheckbox.checked = true;
+                    row.style.display = "none"; // Ẩn khỏi màn hình
+                } else {
+                    row.remove(); // Nếu chưa lưu vào DB thì xóa DOM luôn
+                    totalForms.value = parseInt(totalForms.value) - 1;
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

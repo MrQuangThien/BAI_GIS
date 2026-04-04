@@ -11,66 +11,107 @@
 </div>
 
 {% if messages %}
-    {% for message in messages %}
-        <div class="alert alert-success fw-bold alert-dismissible fade show">
-            <i class="bi bi-check-circle-fill me-2"></i>{{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    {% endfor %}
+{% for message in messages %}
+<div class="alert alert-success fw-bold alert-dismissible fade show shadow-sm">
+    <i class="bi bi-check-circle-fill me-2"></i>{{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
 {% endif %}
 
 <div class="card shadow-sm border-0 rounded-3 p-3">
-    <table class="table table-hover align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th>Mã Đơn</th>
-                <th>Khách Hàng</th>
-                <th>Sản Phẩm</th>
-                <th>Loại Đơn</th>
-                <th>Trạng Thái</th>
-                <th class="text-center">Chi Tiết</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for don in danh_sach_don_hang %}
-            <tr class="{% if don.xe.sap_ve %}table-warning{% endif %}">
-                <td class="fw-bold">#DH{{ don.id }}</td>
-                <td>
-                    <div class="fw-bold">{{ don.ho_ten }}</div>
-                    <small class="text-muted">{{ don.so_dien_thoai }}</small>
-                </td>
-                
-                <td>
-                    <div class="text-success fw-bold">{{ don.xe.ten_xe }}</div>
-                    {% if don.xe.sap_ve %}
-                        <span class="badge bg-warning text-dark mt-1 border border-warning shadow-sm" style="font-size: 0.75rem;">
-                            <i class="bi bi-clock-history"></i> Xe sắp về (Pre-order)
-                        </span>
-                    {% else %}
-                        <span class="badge bg-light text-secondary mt-1 border" style="font-size: 0.75rem;">
-                            <i class="bi bi-car-front"></i> Xe có sẵn
-                        </span>
-                    {% endif %}
-                </td>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th width="8%">Mã Đơn</th>
+                    <th width="15%">Khách Hàng</th>
+                    <th width="15%">Nhân viên tạo</th>
+                    <th width="20%">Sản Phẩm</th>
+                    <th width="15%">Loại Đơn</th>
+                    <th width="12%">Tổng tiền</th>
+                    <th width="10%">Trạng Thái</th>
+                    <th width="5%" class="text-center">Chi Tiết</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for don in danh_sach_don_hang %}
+                <tr class="{% if don.xe.sap_ve %}table-warning{% endif %}">
+                    
+                    <td class="fw-bold text-muted">#DH{{ don.id }}</td>
+                    
+                    <td>
+                        <div class="fw-bold text-dark">{{ don.ho_ten }}</div>
+                        <small class="text-muted"><i class="bi bi-telephone-fill me-1"></i>{{ don.so_dien_thoai }}</small>
+                    </td>
 
-                <td>
-                    <span class="badge bg-info text-dark shadow-sm">{{ don.get_loai_don_display }}</span>
-                </td>
-                <td>
-                    {% if don.trang_thai == 'Pending' %} 
-                        <span class="badge bg-secondary shadow-sm">Chờ duyệt</span>
-                    {% elif don.trang_thai == 'Paid' %} 
-                        <span class="badge bg-success shadow-sm">Đã thanh toán</span>
-                    {% else %} 
-                        <span class="badge bg-primary shadow-sm">{{ don.trang_thai }}</span> 
-                    {% endif %}
-                </td>
-                <td class="text-center">
-                    <a href="{% url 'chi_tiet_don_hang' don.id %}" class="btn btn-sm btn-outline-dark bg-white"><i class="bi bi-eye"></i> Xem</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    <td>
+                        {% if don.nhan_vien_tao %}
+                            <span class="badge bg-light text-dark border shadow-sm px-2 py-1">
+                                <i class="bi bi-person-badge text-primary me-1"></i> 
+                               {{ don.nhan_vien_tao.get_full_name|default:don.nhan_vien_tao.username }}
+                            </span>
+                        {% else %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success shadow-sm px-2 py-1">
+                                <i class="bi bi-globe me-1"></i> Khách tự đặt Web
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <div class="text-success fw-bold fs-6">{{ don.xe.ten_xe }}</div>
+                        {% if don.xe.sap_ve %}
+                            <span class="badge bg-warning text-dark mt-1 border border-warning shadow-sm" style="font-size: 0.75rem;">
+                                <i class="bi bi-clock-history me-1"></i> Xe sắp về (Pre-order)
+                            </span>
+                        {% else %}
+                            <span class="badge bg-light text-secondary mt-1 border" style="font-size: 0.75rem;">
+                                <i class="bi bi-car-front me-1"></i> Xe có sẵn
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <span class="badge bg-info bg-opacity-10 text-dark border border-info shadow-sm text-wrap text-start lh-base">
+                            {{ don.get_loai_don_display }}
+                        </span>
+                    </td>
+                    
+                    <td class="text-danger fw-bold fs-6">
+                        {{ don.tong_tien|floatformat:"0g" }} <span class="small text-muted fw-normal">đ</span>
+                    </td>
+
+                    <td>
+                        {% if don.trang_thai == 'Pending' %}
+                            <span class="badge bg-secondary shadow-sm px-2 py-1"><i class="bi bi-hourglass-split me-1"></i>Chờ duyệt</span>
+                        {% elif don.trang_thai == 'Paid' %}
+                            <span class="badge bg-success shadow-sm px-2 py-1"><i class="bi bi-check2-circle me-1"></i>Đã thanh toán</span>
+                        {% elif don.trang_thai == 'Deposit Paid' %}
+                            <span class="badge bg-primary shadow-sm px-2 py-1"><i class="bi bi-cash-coin me-1"></i>Đã đặt cọc</span>
+                        {% elif don.trang_thai == 'Cancelled' %}
+                            <span class="badge bg-danger shadow-sm px-2 py-1"><i class="bi bi-x-circle me-1"></i>Đã hủy</span>
+                        {% else %}
+                            <span class="badge bg-dark shadow-sm px-2 py-1">{{ don.trang_thai }}</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td class="text-center">
+                        <a href="{% url 'chi_tiet_don_hang' don.id %}" class="btn btn-sm btn-outline-dark bg-white shadow-sm" title="Xem chi tiết">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="bi bi-receipt fs-1 d-block mb-3 opacity-50"></i>
+                        <h5>Chưa có đơn hàng nào</h5>
+                        <p class="mb-0">Các đơn hàng mới sẽ hiển thị tại đây.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

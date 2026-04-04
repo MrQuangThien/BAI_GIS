@@ -1,0 +1,197 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gửi Phản Hồi | EV STORE</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+    <style>
+        body {
+            background: #f4f6f9;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 22px;
+        }
+
+        .feedback-box {
+            max-width: 650px;
+            margin: 60px auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+            border-top: 5px solid #198754;
+        }
+
+        .feedback-title {
+            text-align: center;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: #198754;
+        }
+
+        .feedback-box input,
+        .feedback-box textarea,
+        .feedback-box select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            font-size: 15px;
+            background-color: #f8f9fa;
+        }
+
+        .feedback-box input:focus,
+        .feedback-box textarea:focus,
+        .feedback-box select:focus {
+            border-color: #198754;
+            background-color: #fff;
+            outline: none;
+            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+        }
+
+        .feedback-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .btn-feedback {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            background: #198754;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            border-radius: 10px;
+            transition: 0.3s;
+        }
+
+        .btn-feedback:hover {
+            background: #157347;
+            transform: translateY(-2px);
+        }
+
+        .btn-back {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #198754;
+            background: white;
+            color: #198754;
+            font-weight: bold;
+            font-size: 16px;
+            border-radius: 10px;
+            text-align: center;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .btn-back:hover {
+            background: #f8f9fa;
+            color: #157347;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'trang_chu' %}">
+                <i class="bi bi-lightning-charge-fill text-warning"></i> EV STORE
+            </a>
+        </div>
+    </nav>
+
+    <div class="container flex-grow-1">
+        <div class="feedback-box">
+
+
+                {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show shadow-sm rounded-3"
+                    role="alert">
+                    <i
+                        class="bi {% if message.tags == 'error' %}bi-exclamation-triangle-fill{% else %}bi-check-circle-fill{% endif %} me-2"></i>
+                    <strong>{{ message }}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+                <h2 class="feedback-title"><i class="bi bi-chat-quote-fill me-2"></i>Góp ý & Đánh giá</h2>
+                
+                <p class="text-center text-muted mb-4">Trải nghiệm của bạn là thước đo chất lượng của EV STORE.</p>
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="form-group fw-semibold text-secondary">
+                        {{ form.as_p }}
+                    </div>
+
+                    <div class="feedback-actions">
+                        <button type="submit" class="btn-feedback shadow-sm">
+                            <i class="bi bi-send-fill me-1"></i> Gửi ngay
+                        </button>
+
+                        <a href="{% url 'trang_chu' %}" class="btn-back shadow-sm">
+                            <i class="bi bi-house-door-fill me-1"></i> Trang chủ
+                        </a>
+                    </div>
+                </form>
+        </div>
+
+        <footer class="bg-dark text-white text-center py-4 mt-auto">
+            <p class="mb-0 text-white-50">© 2026 EV STORE - Hệ thống kinh doanh xe điện hàng đầu</p>
+        </footer>
+
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script>
+            $(document).ready(function () {
+                // Tìm cái ô chọn xe (mặc định Django đặt id là id_xe) và biến nó thành Select2
+                $('#id_xe').select2({
+                    placeholder: "Gõ tên xe để tìm nhanh...",
+                    allowClear: true,
+                    width: '100%' // Đảm bảo độ rộng bằng với form của bạn
+                });
+
+                // Chỉnh lại CSS một chút cho Select2 đồng bộ với form Bootstrap của bạn
+                $('.select2-selection').css({
+                    'height': '48px',
+                    'padding': '8px',
+                    'border-radius': '10px',
+                    'border': '1px solid #dee2e6'
+                });
+                $('.select2-selection__arrow').css('top', '10px');
+            });
+        </script>
+
+        <script>
+            setTimeout(function () {
+                let alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function (alert) {
+                    let bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 4000);
+        </script>
+
+</body>
+
+</html>

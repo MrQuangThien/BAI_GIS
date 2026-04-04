@@ -1,0 +1,103 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Quản Lý Kho Hàng | EV STORE{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-dark">
+        <i class="bi bi-box-seam me-2 text-success"></i> Quản Lý Kho Hàng
+    </h3>
+    <a href="{% url 'them_kho' %}" class="btn btn-success btn-lg fw-bold shadow-sm">
+        <i class="bi bi-truck me-2"></i> Tạo Phiếu Nhập Lô Hàng
+    </a>
+</div>
+
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-success fw-bold alert-dismissible fade show shadow-sm">
+    <i class="bi bi-check-circle-fill me-2"></i>{{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+<div class="card shadow-sm border-0 rounded-3 p-3">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th width="5%">STT</th>
+                    <th width="10%">Ảnh</th>
+                    <th>Tên Xe Điện</th>
+                    <th>Cửa Hàng (Chi nhánh)</th>
+                    <th width="15%">Tồn Kho</th>
+                    <th width="15%">Trạng Thái</th>
+                    <th width="20%">Cập Nhật Cuối</th>
+                    </tr>
+            </thead>
+            <tbody>
+                {% for item in kho %}
+                <tr>
+                    <td class="fw-bold text-muted">{{ forloop.counter }}</td>
+                    <td>
+                        {% if item.xe.hinh_anh %}
+                            <img src="{{ item.xe.hinh_anh.url }}" alt="{{ item.xe.ten_xe }}" width="60" height="40" class="img-thumbnail rounded shadow-sm" style="object-fit: cover;">
+                        {% else %}
+                            <span class="text-muted small fst-italic">Trống</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-bold text-dark text-start">
+                        {{ item.xe.ten_xe }} <br>
+                        <small class="text-muted fw-normal">{{ item.xe.hang_san_xuat }}</small>
+                    </td>
+                    <td>{{ item.cua_hang.ten_cua_hang }}</td>
+                    <td>
+                        <span class="stock-quantity {% if item.so_luong > 0 %}stock-available{% else %}stock-out{% endif %}">
+                            {{ item.so_luong }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if item.so_luong > 0 %}
+                            <span class="badge bg-success shadow-sm"><i class="bi bi-check-circle me-1"></i> Còn hàng</span>
+                        {% else %}
+                            <span class="badge bg-danger shadow-sm"><i class="bi bi-x-circle me-1"></i> Hết hàng</span>
+                        {% endif %}
+                    </td>
+                    <td class="small text-muted">{{ item.ngay_cap_nhat|date:"H:i - d/m/Y" }}</td>
+                    </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                        <h5>Chưa có dữ liệu kho hàng nào.</h5>
+                        <p class="mb-0">Hãy bấm "Tạo Phiếu Nhập Lô Hàng" để nhập xe về kho!</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.stock-quantity {
+    font-size: 1.2rem;
+    font-weight: 800;
+    padding: 5px 15px;
+    border-radius: 8px;
+    display: inline-block;
+    min-width: 60px;
+}
+.stock-available {
+    background-color: #d1e7dd;
+    color: #0f5132;
+    border: 2px solid #198754;
+}
+.stock-out {
+    background-color: #f8d7da;
+    color: #842029;
+    border: 2px solid #dc3545;
+}
+</style>
+{% endblock %}

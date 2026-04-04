@@ -20,15 +20,17 @@
             min-height: 100vh;
             color: white;
             padding-top: 20px;
+            padding-bottom: 20px;
         }
 
         .sidebar a {
             color: #adb5bd;
             text-decoration: none;
-            padding: 12px 20px;
+            padding: 10px 20px;
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             transition: 0.3s;
+            font-size: 0.95rem;
         }
 
         .sidebar a:hover,
@@ -37,6 +39,16 @@
             color: white;
             border-radius: 5px;
             margin: 0 10px;
+        }
+
+        .sidebar-heading {
+            font-size: 0.75rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: bold;
+            padding: 10px 20px 5px;
+            margin-top: 15px;
+            letter-spacing: 0.5px;
         }
     </style>
 
@@ -47,47 +59,86 @@
 
     <div class="container-fluid">
         <div class="row">
-            <div class="col-md-2 sidebar shadow-lg">
-                <h4 class="text-center text-success fw-bold mb-4"><i class="bi bi-lightning-charge-fill"></i> EV STORE
+            <div class="col-md-2 sidebar shadow-lg p-0">
+                <h4 class="text-center text-success fw-bold mb-4 mt-3">
+                    <i class="bi bi-lightning-charge-fill text-warning"></i> EV STORE
                 </h4>
 
-                <a href="/core/dashboard/" class="{% if '/core/dashboard/' in request.path %}active{% endif %}">
+                
+                <a href="{% url 'admin_dashboard' %}"
+                    class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
                     <i class="bi bi-speedometer2 me-2"></i> Tổng quan
                 </a>
-                <a href="/core/quan-ly-tram-sac/" class="{% if 'quan-ly-tram-sac' in request.path %}active{% endif %}">
-                    <i class="bi bi-ev-station me-2"></i> Quản lý Trạm Sạc
-                </a>
-                <a href="/core/danh_sach_xe/" class="{% if 'xe' in request.path %}active{% endif %}">
+
+                <div class="sidebar-heading">Sản phẩm & Chi nhánh</div>
+                
+                {% if request.user.is_superuser or request.user.userprofile.vai_tro == 'admin' or request.user.userprofile.vai_tro == 'quan_ly' %}
+                <a href="{% url 'danh_sach_xe' %}"
+                    class="{% if request.resolver_match.url_name == 'danh_sach_xe' or request.resolver_match.url_name == 'them_xe' or request.resolver_match.url_name == 'sua_xe' %}active{% endif %}">
                     <i class="bi bi-car-front me-2"></i> Quản lý Xe Điện
                 </a>
                 <a href="{% url 'quan_ly_danh_muc' %}"
-                    class="{% if 'quan-ly-danh-muc' in request.path %}active{% endif %}">
+                    class="{% if request.resolver_match.url_name == 'quan_ly_danh_muc' %}active{% endif %}">
                     <i class="bi bi-tags me-2"></i> Quản lý Kiểu Dáng
                 </a>
-                <a href="{% url 'danh_sach_don_hang' %}" class="{% if 'don-hang' in request.path %}active{% endif %}">
+                <a href="{% url 'quan_ly_cua_hang' %}"
+                    class="{% if request.resolver_match.url_name == 'quan_ly_cua_hang' %}active{% endif %}">
+                    <i class="bi bi-shop me-2"></i> Quản lý Cửa Hàng
+                </a>
+                {% endif %}
+                
+                <a href="{% url 'quan_ly_kho' %}"
+                    class="{% if request.resolver_match.url_name == 'quan_ly_kho' %}active{% endif %}">
+                    <i class="bi bi-box-seam me-2"></i> Quản lý Kho Hàng
+                </a>
+
+                <div class="sidebar-heading">Kinh doanh & Vận hành</div>
+                
+                <a href="{% url 'danh_sach_don_hang' %}"
+                    class="{% if request.resolver_match.url_name == 'danh_sach_don_hang' or request.resolver_match.url_name == 'tao_don_hang_offline' or request.resolver_match.url_name == 'chi_tiet_don_hang' %}active{% endif %}">
                     <i class="bi bi-receipt-cutoff me-2"></i> Quản lý Đơn Hàng
                 </a>
+                
+                {% if request.user.is_superuser or request.user.userprofile.vai_tro == 'admin' or request.user.userprofile.vai_tro == 'quan_ly' %}
                 <a href="{% url 'ql_khach_hang' %}"
-                    class="nav-link text-white {% if request.resolver_match.url_name == 'ql_khach_hang' %}bg-success rounded{% endif %}">
+                    class="{% if request.resolver_match.url_name == 'ql_khach_hang' %}active{% endif %}">
                     <i class="bi bi-people me-2"></i> Quản lý Khách Hàng
                 </a>
-                </li>
-                <li class="nav-item mb-1">
-                    <a href="{% url 'ql_nhan_vien' %}"
-                        class="nav-link text-white {% if request.resolver_match.url_name == 'ql_nhan_vien' %}bg-success rounded{% endif %}">
-                        <i class="bi bi-person-vcard me-2"></i> Quản lý Nhân Viên
-                    </a>
+                <a href="{% url 'quan_ly_feedback' %}"
+                    class="{% if request.resolver_match.url_name == 'quan_ly_feedback' %}active{% endif %}">
+                    <i class="bi bi-chat-dots me-2"></i> Quản lý Feedback
+                </a>
+                {% endif %}
 
-                    <a href="{% url 'quan_ly_cua_hang' %}" class="{% if 'cua-hang' in request.path %}active{% endif %}">
-                        <i class="bi bi-shop"></i> Quản lý cửa hàng
-                    </a>
+                {% if request.user.is_superuser or request.user.userprofile.vai_tro == 'admin' or request.user.userprofile.vai_tro == 'quan_ly' %}
+                <a href="{% url 'ql_nhan_vien' %}"
+                    class="{% if request.resolver_match.url_name == 'ql_nhan_vien' or request.resolver_match.url_name == 'them_user' or request.resolver_match.url_name == 'sua_user' %}active{% endif %}">
+                    <i class="bi bi-person-vcard me-2"></i> Quản lý Nhân Viên
+                </a>
+                {% endif %}
 
-                    <a href="/core/map/" target="_blank">
-                        <i class="bi bi-map me-2"></i> Xem Bản Đồ (GIS)
-                    </a>
-                    <a href="/" target="_blank">
-                        <i class="bi bi-basket me-2"></i> Trang Chủ
-                    </a>
+                <div class="sidebar-heading">Hạ tầng Trạm Sạc</div>
+                
+                {% if request.user.is_superuser or request.user.userprofile.vai_tro == 'admin' or request.user.userprofile.vai_tro == 'quan_ly' %}
+                <a href="{% url 'quan_ly_tram_sac' %}"
+                    class="{% if request.resolver_match.url_name == 'quan_ly_tram_sac' %}active{% endif %}">
+                    <i class="bi bi-ev-station me-2"></i> Quản lý Trạm Sạc
+                </a>
+                <a href="{% url 'danh_sach_phien_sac' %}"
+                    class="{% if request.resolver_match.url_name == 'danh_sach_phien_sac' %}active{% endif %}">
+                    <i class="bi bi-battery-charging me-2"></i> Quản lý Phiên Sạc
+                </a>
+                {% endif %}
+
+                <a href="{% url 'ban_do_tram_sac' %}" target="_blank">
+                    <i class="bi bi-map me-2"></i> Xem Bản Đồ (GIS)
+                </a>
+
+                <hr class="border-secondary mx-3 mt-4 mb-3">
+
+                <a href="{% url 'trang_chu' %}" target="_blank" class="text-warning fw-bold">
+                    <i class="bi bi-house-door me-2"></i> Ra Trang Web
+                </a>
             </div>
 
             <div class="col-md-10 p-4">
@@ -99,6 +150,16 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+    <script>
+    // Tự động ẩn thông báo sau 1 giây
+    setTimeout(function() {
+        let alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            let bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 1000);
+    </script>
     {% block extra_js %}{% endblock %}
 
 </body>

@@ -6,8 +6,8 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 <style>
-    /* Chỉnh lại một chút cho form đẹp hơn */
     .select2-selection__rendered { font-weight: bold; color: #198754 !important; }
+    #id_tong_tien, #id_so_tien_tra_truoc { background-color: #e9ecef; } /* Làm mờ ô tiền vì nó tự nhập */
 </style>
 {% endblock %}
 
@@ -18,7 +18,7 @@
 </div>
 
 <div class="card shadow-sm border-0 rounded-3 p-4 w-75 mx-auto">
-    <form method="POST">
+    <form method="POST" id="orderForm">
         {% csrf_token %}
         <div class="row g-3">
             {% for field in form %}
@@ -42,13 +42,52 @@
 
 <script>
     $(document).ready(function() {
-        // Django tự động đặt id cho trường 'xe' là 'id_xe'
-        // Mình gọi nó ra và biến hình nó bằng Select2
+        // 1. Khởi tạo dữ liệu giá xe từ Django
+        // Chúng ta tạo một object JS chứa ID xe và giá tương ứng
+        const xePrices = {
+            {% for x in form.fields.xe.queryset %}
+                "{{ x.id }}": {{ x.gia }},
+            {% endfor %}
+        };
+
+        // 2. Cấu hình Select2 cho ô chọn xe
         $('#id_xe').select2({
-            theme: 'bootstrap-5', // Dùng theme Bootstrap 5 cho đồng bộ giao diện
-            placeholder: "🔍 Gõ để tìm kiếm tên xe (VD: VF 8, VF 9...)",
+            theme: 'bootstrap-5',
+            placeholder: "🔍 Gõ để tìm kiếm tên xe...",
             allowClear: true,
-            width: '100%' // Đảm bảo ô chọn full chiều rộng
+            width: '100%'
+        });
+
+        // 3. Hàm xử lý tính toán tiền
+        function updatePrices() {
+            const xeId = $('#id_xe').val();
+            const loaiDon = $('#id_loai_don').val(); // 'D' là 100%, 'E' là cọc
+            
+            if (xeId && xePrices[xeId]) {
+                const giaGoc = xePrices[xeId];
+                
+                // Gán tổng tiền (Luôn là giá gốc của xe)
+                $('#id_tong_tien').val(giaGoc);
+
+                if (loaiDon === 'D') {
+                    // Thanh toán 100% -> Trả trước = Tổng tiền
+                    $('#id_so_tien_tra_truoc').val(giaGoc);
+                    $('#id_trang_thai').val('Paid');
+                } else if (loaiDon === 'E') {
+                    // Đặt cọc tại quầy -> Trả trước 10% (Hoặc con số bạn muốn)
+                    const coc = giaGoc * 0.1; 
+                    $('#id_so_tien_tra_truoc').val(coc);
+                    $('#id_trang_thai').val('Deposit Paid');
+                }
+            } else {
+                $('#id_tong_tien').val(0);
+                $('#id_so_tien_tra_truoc').val(0);
+            }
+        }
+
+        // 4. Lắng nghe sự kiện thay đổi
+        $('#id_xe, #id_loai_don').on('change', function() {
+            updatePrices();
         });
     });
 </script>

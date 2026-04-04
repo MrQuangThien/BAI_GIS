@@ -16,54 +16,94 @@
 </div>
 
 <div class="card shadow-sm border-0 rounded-3 p-3">
-    <table class="table table-hover align-middle mb-0">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>Tên Đăng Nhập</th>
-                <th>Họ Tên</th>
-                <th>Email</th>
-                <th>Quyền Hạn</th>
-                <th class="text-center">Hành Động</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for u in danh_sach %}
-            <tr>
-                <td class="fw-bold text-muted">#{{ u.id }}</td>
-                <td class="fw-bold text-dark">{{ u.username }}</td>
-                <td>{{ u.last_name }} {{ u.first_name }}</td>
-                <td>{{ u.email|default:"<span class='text-muted fst-italic'>Chưa cập nhật</span>"|safe }}</td>
-                <td>
-                    {% if u.is_superuser %} 
-                        <span class="badge bg-danger shadow-sm">Admin / Giám Đốc</span>
-                    {% elif u.is_staff %} 
-                        <span class="badge bg-primary shadow-sm">Nhân Viên</span>
-                    {% else %} 
-                        <span class="badge bg-secondary shadow-sm">Khách Hàng</span> 
-                    {% endif %}
-                </td>
-                <td class="text-center">
-                    <a href="{% url 'sua_user' u.id %}" class="btn btn-outline-dark btn-sm bg-white shadow-sm" title="Sửa tài khoản">
-                        <i class="bi bi-pencil-square"></i>
-                    </a>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th width="5%">ID</th>
+                    <th width="15%">Tên Đăng Nhập</th>
                     
-                    {% if request.user.id != u.id %} 
-                    <a href="{% url 'xoa_user' u.id %}" class="btn btn-outline-danger btn-sm bg-white shadow-sm ms-1" title="Xóa tài khoản" onclick="return confirm('Bạn có chắc chắn muốn xóa tài khoản {{ u.username }} này không?');">
-                        <i class="bi bi-trash"></i>
-                    </a>
+                    {% if show_add_button %}
+                        <th width="20%">Họ Tên Nhân Viên</th>
+                    {% else %}
+                        <th width="20%">Email Liên Hệ</th>
                     {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6" class="text-center py-4 text-muted">
-                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                    Chưa có tài khoản nào trong danh sách này.
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    
+                    <th width="15%" class="text-center">Quyền Hạn</th>
+                    <th width="15%" class="text-center">Trạng Thái</th>
+                    
+                    {% if show_add_button %}
+                    <th width="15%" class="text-center">Hành Động</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in danh_sach %}
+                <tr>
+                    <td class="fw-bold text-muted">#{{ u.id }}</td>
+                    <td class="fw-bold text-dark">{{ u.username }}</td>
+                    
+                    {% if show_add_button %}
+                        <td>
+                            {% if u.last_name or u.first_name %}
+                                {{ u.last_name }} {{ u.first_name }}
+                            {% else %}
+                                <span class="text-muted fst-italic small">Chưa cập nhật tên</span>
+                            {% endif %}
+                        </td>
+                    {% else %}
+                        <td>{{ u.email|default:"<span class='text-muted fst-italic small'>Chưa cập nhật</span>"|safe }}</td>
+                    {% endif %}
+
+                    <td class="text-center">
+                        {% if u.is_superuser or u.userprofile.vai_tro == 'admin' %} 
+                            <span class="badge bg-danger shadow-sm px-3 py-2">Admin</span>
+                        {% elif u.userprofile.vai_tro == 'quan_ly' %} 
+                            <span class="badge bg-warning text-dark shadow-sm px-3 py-2">Quản lý</span>
+                        {% elif u.userprofile.vai_tro == 'nhan_vien' or u.is_staff %} 
+                            <span class="badge bg-primary shadow-sm px-3 py-2">Nhân viên</span>
+                        {% else %} 
+                            <span class="badge bg-secondary shadow-sm px-3 py-2">Khách hàng</span> 
+                        {% endif %}
+                    </td>
+                    
+                    <td class="text-center">
+                        {% if u.is_active %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1 w-75">
+                                <i class="bi bi-check-circle-fill me-1"></i> Hoạt động
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1 w-75">
+                                <i class="bi bi-lock-fill me-1"></i> Đã khóa
+                            </span>
+                        {% endif %}
+                    </td>
+                    
+                    {% if show_add_button %}
+                    <td class="text-center">
+                        <a href="{% url 'sua_user' u.id %}" class="btn btn-outline-dark btn-sm bg-white shadow-sm" title="Sửa thông tin">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                        
+                        {% if request.user.id != u.id %} 
+                        <a href="{% url 'xoa_user' u.id %}" class="btn btn-outline-danger btn-sm bg-white shadow-sm ms-1" title="Xóa tài khoản" onclick="return confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa tài khoản {{ u.username }} này không? Hành động này không thể hoàn tác.');">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                        <h5>Danh sách trống</h5>
+                        <p class="mb-0">Chưa có tài khoản nào trong mục này.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

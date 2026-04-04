@@ -1,0 +1,61 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Chi Tiết Đơn Hàng | EV STORE{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-dark"><i class="bi bi-file-earmark-text-fill me-2 text-warning"></i>Chi tiết Đơn hàng #DH{{ don_hang.id }}</h3>
+    <a href="{% url 'danh_sach_don_hang' %}" class="btn btn-outline-secondary fw-bold"><i class="bi bi-arrow-left me-1"></i> Quay lại</a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-success fw-bold"><i class="bi bi-check-circle me-2"></i>{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white fw-bold text-primary">Thông Tin Khách Hàng</div>
+            <div class="card-body">
+                <p><strong>Họ tên:</strong> {{ don_hang.ho_ten }}</p>
+                <p><strong>SĐT:</strong> {{ don_hang.so_dien_thoai }}</p>
+                <p><strong>Email:</strong> {{ don_hang.email }}</p>
+                <p><strong>Địa chỉ:</strong> {{ don_hang.dia_chi }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white fw-bold text-success">Thông Tin Sản Phẩm</div>
+            <div class="card-body">
+                <p><strong>Xe đặt mua:</strong> {{ don_hang.xe.ten_xe }}</p>
+                <p><strong>Hình thức:</strong> {{ don_hang.get_loai_don_display }}</p>
+                <p><strong>Ngày đặt:</strong> {{ don_hang.ngay_dat|date:"d/m/Y H:i" }}</p>
+                <p><strong>Cần thanh toán:</strong> <span class="text-danger fw-bold">{{ don_hang.tong_tien }} VNĐ</span></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-12 mt-3">
+        <div class="card shadow-sm border-0 bg-light">
+            <div class="card-body">
+                <form method="POST" class="d-flex align-items-end">
+                    {% csrf_token %}
+                    <div class="flex-grow-1 me-3">
+                        <label class="form-label fw-bold">Cập Nhật Trạng Thái Đơn Hàng</label>
+                        <select name="trang_thai" class="form-select border-warning">
+                            {% for key, value in trang_thai_choices %}
+                                <option value="{{ key }}" {% if don_hang.trang_thai == key %}selected{% endif %}>{{ value }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-warning fw-bold">Cập Nhật Ngay</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Quản Lý Đơn Hàng | EV STORE{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-dark"><i class="bi bi-receipt-cutoff me-2 text-warning"></i>Danh Sách Đơn Hàng</h3>
+    <a href="{% url 'tao_don_hang_offline' %}" class="btn btn-warning fw-bold shadow-sm text-dark">
+        <i class="bi bi-plus-circle text-dark me-1"></i> Tạo Đơn Tại Quầy
+    </a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-success fw-bold alert-dismissible fade show">
+            <i class="bi bi-check-circle-fill me-2"></i>{{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="card shadow-sm border-0 rounded-3 p-3">
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Mã Đơn</th>
+                <th>Khách Hàng</th>
+                <th>Sản Phẩm</th>
+                <th>Loại Đơn</th>
+                <th>Trạng Thái</th>
+                <th class="text-center">Chi Tiết</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for don in danh_sach_don_hang %}
+            <tr class="{% if don.xe.sap_ve %}table-warning{% endif %}">
+                <td class="fw-bold">#DH{{ don.id }}</td>
+                <td>
+                    <div class="fw-bold">{{ don.ho_ten }}</div>
+                    <small class="text-muted">{{ don.so_dien_thoai }}</small>
+                </td>
+                
+                <td>
+                    <div class="text-success fw-bold">{{ don.xe.ten_xe }}</div>
+                    {% if don.xe.sap_ve %}
+                        <span class="badge bg-warning text-dark mt-1 border border-warning shadow-sm" style="font-size: 0.75rem;">
+                            <i class="bi bi-clock-history"></i> Xe sắp về (Pre-order)
+                        </span>
+                    {% else %}
+                        <span class="badge bg-light text-secondary mt-1 border" style="font-size: 0.75rem;">
+                            <i class="bi bi-car-front"></i> Xe có sẵn
+                        </span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <span class="badge bg-info text-dark shadow-sm">{{ don.get_loai_don_display }}</span>
+                </td>
+                <td>
+                    {% if don.trang_thai == 'Pending' %} 
+                        <span class="badge bg-secondary shadow-sm">Chờ duyệt</span>
+                    {% elif don.trang_thai == 'Paid' %} 
+                        <span class="badge bg-success shadow-sm">Đã thanh toán</span>
+                    {% else %} 
+                        <span class="badge bg-primary shadow-sm">{{ don.trang_thai }}</span> 
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    <a href="{% url 'chi_tiet_don_hang' don.id %}" class="btn btn-sm btn-outline-dark bg-white"><i class="bi bi-eye"></i> Xem</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

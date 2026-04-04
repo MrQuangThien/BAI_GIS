@@ -1,0 +1,45 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Quản Lý Người Dùng | EV STORE{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-dark"><i class="bi bi-people-fill me-2 text-primary"></i>Danh Sách Người Dùng</h3>
+    <a href="{% url 'them_user' %}" class="btn btn-primary fw-bold shadow-sm">
+        <i class="bi bi-person-plus-fill me-1"></i> Thêm Tài Khoản
+    </a>
+</div>
+
+<div class="card shadow-sm border-0 rounded-3 p-3">
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Tên Đăng Nhập</th>
+                <th>Email</th>
+                <th>Quyền Hạn</th>
+                <th class="text-center">Hành Động</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td class="fw-bold">#{{ u.id }}</td>
+                <td class="fw-bold text-primary">{{ u.username }}</td>
+                <td>{{ u.email }}</td>
+                <td>
+                    {% if u.is_superuser %} <span class="badge bg-danger">Admin</span>
+                    {% elif u.is_staff %} <span class="badge bg-warning text-dark">Nhân Viên</span>
+                    {% else %} <span class="badge bg-secondary">Khách Hàng</span> {% endif %}
+                </td>
+                <td class="text-center">
+                    <a href="{% url 'sua_user' u.id %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i> Sửa</a>
+                    {% if request.user.id != u.id %} <a href="{% url 'xoa_user' u.id %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Xóa tài khoản này?');"><i class="bi bi-trash"></i></a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

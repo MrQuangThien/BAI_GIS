@@ -74,14 +74,6 @@
                 <a href="{% url 'quan_ly_cua_hang' %}" class="{% if 'cua-hang' in request.path %}active{% endif %}">
                     <i class="bi bi-shop"></i> Quản lý cửa hàng 
                 </a>
-                 
-              <a href="{% url 'quan_ly_feedback' %}" class="{% if 'feedback' in request.path %}active{% endif %}">
-                    <i class="bi bi-chat-dots me-2"></i> Quản lý Feedback
-            <a href="{% url 'quan_ly_kho' %}" class="{% if 'kho-hang' in request.path %}active{% endif %}">
-                    <i class="bi bi-box-seam me-2"></i> Quản lý Kho Hàng
-            <a href="{% url 'danh_sach_phien_sac' %}" class="{% if 'phien-sac' in request.path %}active{% endif %}">
-                    <i class="bi bi-battery-charging me-2"></i> Quản lý Phiên Sạc
-             
 
                 <a href="/core/map/" target="_blank">
                     <i class="bi bi-map me-2"></i> Xem Bản Đồ (GIS)

@@ -141,34 +141,3 @@ class DonHangTaiQuayForm(forms.ModelForm):
             ('Paid', 'Đã thanh toán đủ'),
             ('Deposit Paid', 'Đã đặt cọc'),
         ]
-
-from .models import KhoHang, PhienSac, UserProfile, Feedback
-
-# forms.py
-class KhoHangForm(forms.ModelForm):
-    class Meta:
-        model = KhoHang
-        fields = ['xe', 'cua_hang', 'so_luong']
-        widgets = {
-            'xe': forms.Select(attrs={'class': 'form-select'}),
-            'cua_hang': forms.Select(attrs={'class': 'form-select'}),
-            'so_luong': forms.NumberInput(attrs={'class': 'form-control'}),
-        }
-
-
-class PhienSacForm(forms.ModelForm):
-    class Meta:
-        model = PhienSac
-        fields = '__all__'
-
-
-class UserProfileForm(forms.ModelForm):
-    class Meta:
-        model = UserProfile
-        fields = ['so_dien_thoai', 'dia_chi', 'avatar']
-
-
-class FeedbackForm(forms.ModelForm):
-    class Meta:
-        model = Feedback
-        fields = ['xe', 'noi_dung', 'danh_gia']

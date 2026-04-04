@@ -1,9 +1,8 @@
-from datetime import timezone
 import json
 from math import radians, sin, cos, sqrt, atan2
 import folium
 from folium.plugins import LocateControl
-from .forms import FeedbackForm
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -13,14 +12,12 @@ from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.db.models import Q, Count
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 
 # --- 1. IMPORT MODELS ---
-from .models import Feedback, KhoHang, PhienSac, TramSac, XeDien, CuaHang, XeDienForm, DonHang, DanhMuc
+from .models import TramSac, XeDien, CuaHang, XeDienForm, DonHang, DanhMuc
 
 # --- 2. IMPORT FORMS ---
-from .forms import FeedbackForm, KhoHangForm, UserForm, RegisterForm, DonHangForm, DonHangTaiQuayForm, UserProfileForm
+from .forms import UserForm, RegisterForm, DonHangForm, DonHangTaiQuayForm
 
 
 # ==========================================
@@ -29,7 +26,6 @@ from .forms import FeedbackForm, KhoHangForm, UserForm, RegisterForm, DonHangFor
 def trang_chu(request):
     xe_noi_bat = XeDien.objects.filter(noi_bat=True, trang_thai=True)
     xe_sap_ve = XeDien.objects.filter(sap_ve=True, trang_thai=True)
-    form = FeedbackForm()
     context = {'xe_noi_bat': xe_noi_bat, 'xe_sap_ve': xe_sap_ve}
     # Đã sửa đường dẫn: pages/
     return render(request, 'pages/trang_chu.html', context)
@@ -458,103 +454,3 @@ def xoa_cua_hang(request, pk):
         ch.delete()
         messages.success(request, 'Đã xóa chi nhánh thành công!')
     return redirect('quan_ly_cua_hang')
-
-@login_required
-def quan_ly_kho(request):
-    kho = KhoHang.objects.all()
-    return render(request, 'kho/danh_sach.html', {'kho': kho})
-
-
-@login_required
-def them_kho(request):
-    form = KhoHangForm(request.POST or None)
-    if form.is_valid():
-        form.save()
-        return redirect('quan_ly_kho')
-    return render(request, 'kho/form.html', {'form': form})
-@login_required
-@user_passes_test(lambda u: u.is_staff or u.is_superuser)
-def nhap_kho(request, kho_id):
-    kho = get_object_or_404(KhoHang, id=kho_id)
-    
-    if request.method == 'POST':
-        try:
-            so_luong_nhap = int(request.POST.get('so_luong_nhap', 0))
-            if so_luong_nhap > 0:
-                kho.so_luong += so_luong_nhap
-                kho.save()
-                messages.success(request, f'Đã nhập thêm {so_luong_nhap} xe {kho.xe.ten_xe} vào kho!')
-                return redirect('quan_ly_kho')
-            else:
-                messages.error(request, "Số lượng nhập phải lớn hơn 0!")
-        except ValueError:
-            messages.error(request, "Số lượng không hợp lệ!")
-    
-    return render(request, 'kho/nhap_kho.html', {'kho': kho})
-
-@login_required
-def danh_sach_phien_sac(request):
-    phien = PhienSac.objects.filter(user=request.user)
-    return render(request, 'sac/danh_sach.html', {'phien': phien})
-
-
-@login_required
-def bat_dau_sac(request, tram_id):
-    tram = get_object_or_404(TramSac, id=tram_id)
-    PhienSac.objects.create(
-        user=request.user,
-        tram_sac=tram,
-        thoi_gian_bat_dau=timezone.now()
-    )
-    return redirect('danh_sach_phien_sac')
-
-@login_required
-def profile(request):
-    profile = request.user.userprofile
-    form = UserProfileForm(request.POST or None, request.FILES or None, instance=profile)
-
-    if form.is_valid():
-        form.save()
-        messages.success(request, "Cập nhật thành công")
-        return redirect('profile')
-
-    return render(request, 'user/profile.html', {'form': form})
-@login_required
-
-
-def gui_feedback(request):
-    form = FeedbackForm(request.POST or None)
-    if form.is_valid():
-        fb = form.save(commit=False)
-        fb.user = request.user
-        fb.save()
-        messages.success(request, "Gửi feedback thành công")
-        return redirect('trang_chu')
-
-    return render(request, 'feedback/form.html', {'form': form})
-
-@login_required
-@user_passes_test(lambda u: u.is_staff or u.is_superuser)
-def quan_ly_feedback(request):
-    danh_sach = Feedback.objects.all().order_by('-id')
-    return render(request, 'feedback/admin_feedback.html', {'feedbacks': danh_sach})
-@receiver(post_save, sender=DonHang)
-def tru_kho_khi_dat_hang(sender, instance, created, **kwargs):
-    if created and instance.trang_thai in ['Deposit Paid', 'Paid']:  # Chỉ trừ khi đã cọc hoặc thanh toán
-        # Tìm kho của xe tại cửa hàng (nếu có nhiều cửa hàng, bạn cần chỉ định cửa hàng)
-        # Ở đây giả sử trừ tại cửa hàng mặc định của xe, hoặc bạn thêm trường cua_hang vào DonHang sau
-        try:
-            kho = KhoHang.objects.get(xe=instance.xe, cua_hang=instance.xe.cua_hang)
-            if kho.so_luong >= 1:
-                kho.so_luong -= 1
-                kho.save()
-                
-      
-                if kho.so_luong == 0:
-                    instance.xe.trang_thai = False  # Hoặc thêm logic khác
-                    instance.xe.save()
-            else:
-               
-                print(f"Hết hàng xe {instance.xe.ten_xe}")
-        except KhoHang.DoesNotExist:
-            print(f"Không tìm thấy kho cho xe {instance.xe.ten_xe}")

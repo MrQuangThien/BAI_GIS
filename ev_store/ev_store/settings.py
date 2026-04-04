@@ -31,13 +31,21 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+<<<<<<< HEAD
+=======
+    'core',
+>>>>>>> DEV
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+<<<<<<< HEAD
     'core',
+=======
+   
+>>>>>>> DEV
 ]
 
 MIDDLEWARE = [
@@ -55,7 +63,11 @@ ROOT_URLCONF = 'ev_store.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+<<<<<<< HEAD
         'DIRS': [],
+=======
+     'DIRS': [BASE_DIR / 'templates'],
+>>>>>>> DEV
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

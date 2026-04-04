@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ban_do_tram_sac, get_nearest_tram, admin_dashboard, gui_feedback, quan_ly_tram_sac, sua_xe, them_tram_sac, them_xe, trang_chu, xoa_tram_sac, sua_tram_sac,danh_sach_xe, xoa_xe
+from .views import ban_do_tram_sac, get_nearest_tram, admin_dashboard, quan_ly_tram_sac, sua_xe, them_tram_sac, them_xe, trang_chu, xoa_tram_sac, sua_tram_sac,danh_sach_xe, xoa_xe
 from django.contrib import admin  # <-- THÊM ĐÚNG DÒNG NÀY VÀO
 from django.contrib.auth import views as auth_views
 from . import views
@@ -59,24 +59,4 @@ urlpatterns = [
     path('cua-hang/them/', views.them_cua_hang, name='them_cua_hang'),
     path('cua-hang/sua/<int:pk>/', views.sua_cua_hang, name='sua_cua_hang'),
     path('cua-hang/xoa/<int:pk>/', views.xoa_cua_hang, name='xoa_cua_hang'),
-
-
-
-
-
-        # ==================== KHO HÀNG ====================
- path('kho/', views.quan_ly_kho, name='quan_ly_kho'),
-    path('kho/them/', views.them_kho, name='them_kho'),
-        path('kho/nhap/<int:kho_id>/', views.nhap_kho, name='nhap_kho'),
-
-    # ==================== PHIÊN SẠC ====================
-    path('phien-sac/', views.danh_sach_phien_sac, name='danh_sach_phien_sac'),
-    path('phien-sac/bat-dau/<int:tram_id>/', views.bat_dau_sac, name='bat_dau_sac'),
-
-    # ==================== PROFILE ====================
-    path('profile/', views.profile, name='profile'),
-
-    # ==================== FEEDBACK ====================
-    path('feedback/', views.gui_feedback, name='gui_feedback'),
-    path('admin/feedback/', views.quan_ly_feedback, name='quan_ly_feedback'),
 ]

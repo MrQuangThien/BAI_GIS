@@ -226,21 +226,7 @@
             {% endfor %}
         </div>
     </div>
-<div class="container my-5">
-    <div class="bg-white p-4 rounded shadow-sm">
-        <h2 class="section-title border-success">Gửi feedback</h2>
 
-        <form method="POST" action="{% url 'gui_feedback' %}">
-            {% csrf_token %}
-            
-            {{ form.as_p }}
-            
-            <button type="submit" class="btn btn-success">
-                <i class="bi bi-send"></i> Gửi
-            </button>
-        </form>
-    </div>
-</div>
 
     <footer class="bg-dark text-light pt-5 pb-3 mt-5">
         <div class="container">

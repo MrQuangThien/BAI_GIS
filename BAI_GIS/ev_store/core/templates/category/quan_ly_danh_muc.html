@@ -18,7 +18,14 @@
         </div>
     {% endfor %}
 {% endif %}
-
+<form method="GET" class="mb-3">
+    <div class="input-group shadow-sm">
+        <input type="text" name="q" class="form-control" placeholder="🔍 Tìm kiếm..." value="{{ request.GET.q }}">
+        <button class="btn btn-success fw-bold">
+            <i class="bi bi-search"></i> Tìm
+        </button>
+    </div>
+</form>
 <div class="card shadow-sm border-0 rounded-3 p-4">
     <table class="table table-hover align-middle mb-0">
         <thead class="table-dark">

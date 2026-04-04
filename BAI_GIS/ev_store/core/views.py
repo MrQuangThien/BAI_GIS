@@ -74,7 +74,11 @@ def trang_chu(request):
 def tim_kiem(request):
     tu_khoa = request.GET.get('q', '')
     if tu_khoa:
-        ket_qua = XeDien.objects.filter(Q(ten_xe__icontains=tu_khoa) | Q(hang_san_xuat__icontains=tu_khoa))
+       ket_qua = XeDien.objects.filter(
+    Q(ten_xe__icontains=tu_khoa) |
+    Q(hang_san_xuat__icontains=tu_khoa) |
+    Q(mo_ta__icontains=tu_khoa)
+)
     else:
         ket_qua = XeDien.objects.none()
     return render(request, 'pages/tim_kiem.html', {'ket_qua': ket_qua, 'tu_khoa': tu_khoa})
@@ -268,8 +272,22 @@ def tao_don_hang(request, xe_id):
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
 def danh_sach_don_hang(request):
+    tu_khoa = request.GET.get('q', '')
+
     danh_sach = DonHang.objects.all().order_by('-ngay_dat')
-    return render(request, 'donhang/danh_sach.html', {'danh_sach_don_hang': danh_sach})
+
+    if tu_khoa:
+        danh_sach = danh_sach.filter(
+            Q(ho_ten__icontains=tu_khoa) |
+            Q(so_dien_thoai__icontains=tu_khoa) |
+            Q(xe__ten_xe__icontains=tu_khoa) |
+            Q(id__icontains=tu_khoa)
+        )
+
+    return render(request, 'donhang/danh_sach.html', {
+        'danh_sach_don_hang': danh_sach,
+        'tu_khoa': tu_khoa
+    })
 
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
@@ -351,21 +369,49 @@ def xoa_user(request, id):
         user.delete()
         messages.success(request, "Đã xóa tài khoản thành công!")
     return redirect('ql_nhan_vien' if is_staff else 'ql_khach_hang')
-
 @login_required
 @phan_quyen(roles=['admin','quan_ly'])
 def ql_nhan_vien(request):
-    danh_sach = User.objects.filter(is_staff=True).order_by('-date_joined')
-    context = {'danh_sach': danh_sach, 'title': 'Quản lý Nhân Viên', 'icon': 'bi-person-vcard', 'show_add_button': True}
-    return render(request, 'users/list_user.html', context)
+    tu_khoa = request.GET.get('q', '')
 
+    danh_sach = User.objects.filter(is_staff=True)
+
+    if tu_khoa:
+        danh_sach = danh_sach.filter(
+            Q(username__icontains=tu_khoa) |
+            Q(first_name__icontains=tu_khoa) |
+            Q(last_name__icontains=tu_khoa)
+        )
+
+    context = {
+        'danh_sach': danh_sach,
+        'title': 'Quản lý Nhân Viên',
+        'icon': 'bi-person-vcard',
+        'show_add_button': True,
+        'tu_khoa': tu_khoa
+    }
+    return render(request, 'users/list_user.html', context)
 @login_required
 @phan_quyen(roles=['admin'])
 def ql_khach_hang(request):
-    danh_sach = User.objects.filter(is_staff=False).order_by('-date_joined')
-    context = {'danh_sach': danh_sach, 'title': 'Quản lý Khách Hàng', 'icon': 'bi-people', 'show_add_button': False}
-    return render(request, 'users/list_user.html', context)
+    tu_khoa = request.GET.get('q', '')
 
+    danh_sach = User.objects.filter(is_staff=False)
+
+    if tu_khoa:
+        danh_sach = danh_sach.filter(
+            Q(username__icontains=tu_khoa) |
+            Q(email__icontains=tu_khoa)
+        )
+
+    context = {
+        'danh_sach': danh_sach,
+        'title': 'Quản lý Khách Hàng',
+        'icon': 'bi-people',
+        'show_add_button': False,
+        'tu_khoa': tu_khoa
+    }
+    return render(request, 'users/list_user.html', context)
 # --- Các trang đăng nhập / đăng xuất không bị ảnh hưởng ---
 def dang_ky_view(request):
     if request.method == 'POST':
@@ -483,7 +529,21 @@ def xoa_cua_hang(request, pk):
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
 def quan_ly_kho(request):
-    return render(request, 'kho/danh_sach.html', {'kho': KhoHang.objects.all()})
+    tu_khoa = request.GET.get('q', '')
+
+    danh_sach = KhoHang.objects.select_related('xe', 'cua_hang').all()
+
+    if tu_khoa:
+        danh_sach = danh_sach.filter(
+            Q(xe__ten_xe__icontains=tu_khoa) |
+            Q(xe__hang_san_xuat__icontains=tu_khoa) |
+            Q(cua_hang__ten_cua_hang__icontains=tu_khoa)
+        )
+
+    return render(request, 'kho/danh_sach.html', {
+        'kho': danh_sach,
+        'tu_khoa': tu_khoa
+    })
 
 
 @login_required
@@ -529,8 +589,20 @@ def them_kho(request):
 # ==========================================
 @login_required
 def danh_sach_phien_sac(request):
+    tu_khoa = request.GET.get('q', '')
+
     phien = PhienSac.objects.filter(user=request.user)
-    return render(request, 'tram_sac/danh_sach.html', {'phien': phien})
+
+    if tu_khoa:
+        phien = phien.filter(
+            Q(tram_sac__ten_tram__icontains=tu_khoa) |
+            Q(tram_sac__dia_chi__icontains=tu_khoa)
+        )
+
+    return render(request, 'tram_sac/danh_sach.html', {
+        'phien': phien,
+        'tu_khoa': tu_khoa
+    })
 
 @login_required
 def bat_dau_sac(request, tram_id):
@@ -551,12 +623,25 @@ def gui_feedback(request):
         return redirect('chi_tiet_xe', xe_id=xe_duoc_chon.id) 
     return render(request, 'feedback/form.html', {'form': form})
 
+
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
 def quan_ly_feedback(request):
-    danh_sach = Feedback.objects.all().order_by('-id')
-    return render(request, 'feedback/admin_feedback.html', {'feedbacks': danh_sach})
+    tu_khoa = request.GET.get('q', '')
 
+    danh_sach = Feedback.objects.all().order_by('-id')
+
+    if tu_khoa:
+        danh_sach = danh_sach.filter(
+            Q(user__username__icontains=tu_khoa) |
+            Q(xe__ten_xe__icontains=tu_khoa) |
+            Q(noi_dung__icontains=tu_khoa)
+        )
+
+    return render(request, 'feedback/admin_feedback.html', {
+        'feedbacks': danh_sach,
+        'tu_khoa': tu_khoa
+    })
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
 def xoa_feedback(request, feedback_id):

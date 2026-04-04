@@ -74,12 +74,15 @@
                     </li>
                     {% endif %}
                 </ul>
-
-                <form class="d-flex me-3" action="{% url 'tim_kiem' %}" method="GET">
-                    <input class="form-control me-2 rounded-pill px-3" type="search" name="q"
-                        placeholder="Tìm tên xe, hãng..." required>
-                    <button class="btn btn-light rounded-circle" type="submit"><i class="bi bi-search"></i></button>
-                </form>
+<!-- FORM TÌM KIẾM -->
+<form action="{% url 'tim_kiem' %}" method="GET" class="mt-4 d-flex justify-content-center">
+    <div class="input-group" style="max-width: 500px;">
+        <input type="text" name="q" class="form-control form-control-lg" placeholder="Tìm xe điện..." required>
+        <button class="btn btn-success btn-lg" type="submit">
+            <i class="bi bi-search"></i>
+        </button>
+    </div>
+</form>
 
                 <div class="d-flex align-items-center">
                     {% if user.is_authenticated %}

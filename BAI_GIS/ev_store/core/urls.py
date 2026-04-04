@@ -101,4 +101,5 @@ urlpatterns = [
     path('api/ket-thuc-sac/', views.ket_thuc_sac_api, name='ket_thuc_sac_api'),
     path('tram_sac/lich-su-sac/', views.lich_su_sac, name='lich_su_sac'),
     path('users/user_sac/', views.lich_su_sac_khach_hang, name='user_sac'),
+    path('tim-kiem/', views.tim_kiem, name='tim_kiem'),
 ]

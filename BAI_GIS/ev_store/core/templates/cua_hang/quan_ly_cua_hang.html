@@ -5,7 +5,12 @@
 {% block content %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-    .mini-map { height: 250px; width: 100%; border-radius: 8px; border: 1px solid #dee2e6; }
+    /* Đã tối ưu z-index để không đè lên các popup của Bootstrap */
+    .mini-map { height: 280px; width: 100%; border-radius: 8px; border: 1px solid #dee2e6; z-index: 1; }
+    
+    /* Thêm CSS highlight cho ô tọa độ */
+    .input-calculated { background-color: #e9ecef !important; font-weight: bold; color: #198754; border-color: #198754; }
+    .input-calculated-edit { background-color: #e9ecef !important; font-weight: bold; color: #0d6efd; border-color: #0d6efd; }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -92,21 +97,21 @@
                                     
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold text-muted">Tọa độ trên Bản đồ</label>
-                                        <p class="small text-primary mb-1"><i class="bi bi-cursor-fill"></i> Click vào bản đồ để đổi vị trí</p>
+                                        <p class="small text-primary mb-1"><i class="bi bi-cursor-fill"></i> Kéo thả ghim để đổi vị trí</p>
                                         
                                         <div class="input-group input-group-sm mb-2 shadow-sm">
                                             <input type="text" id="searchEdit{{ ch.id }}" class="form-control" placeholder="Tìm địa chỉ nhanh..." onkeydown="if(event.key === 'Enter'){ event.preventDefault(); searchLocation('searchEdit{{ ch.id }}', 'edit', '{{ ch.id }}'); }">
                                             <button class="btn btn-primary" type="button" onclick="searchLocation('searchEdit{{ ch.id }}', 'edit', '{{ ch.id }}')"><i class="bi bi-search"></i></button>
                                         </div>
 
-                                        <div id="mapEdit{{ ch.id }}" class="mini-map mb-2"></div>
+                                        <div id="mapEdit{{ ch.id }}" class="mini-map mb-2 shadow-sm"></div>
                                         
                                         <div class="row g-2">
                                             <div class="col-6">
-                                                <input type="text" id="latEdit{{ ch.id }}" name="lat" class="form-control form-control-sm bg-light text-center fw-bold" value="{{ ch.lat }}" placeholder="Vĩ độ (Lat)" readonly required>
+                                                <input type="text" id="latEdit{{ ch.id }}" name="lat" class="form-control form-control-sm input-calculated-edit text-center" value="{{ ch.lat }}" placeholder="Vĩ độ (Lat)" readonly required>
                                             </div>
                                             <div class="col-6">
-                                                <input type="text" id="lonEdit{{ ch.id }}" name="lon" class="form-control form-control-sm bg-light text-center fw-bold" value="{{ ch.lon }}" placeholder="Kinh độ (Lon)" readonly required>
+                                                <input type="text" id="lonEdit{{ ch.id }}" name="lon" class="form-control form-control-sm input-calculated-edit text-center" value="{{ ch.lon }}" placeholder="Kinh độ (Lon)" readonly required>
                                             </div>
                                         </div>
                                     </div>
@@ -159,21 +164,21 @@
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold text-muted">Xác định tọa độ</label>
-                            <p class="small text-danger mb-1"><i class="bi bi-cursor-fill"></i> Click vào bản đồ để ghim vị trí</p>
+                            <p class="small text-success mb-1"><i class="bi bi-cursor-fill"></i> Kéo thả ghim để chọn vị trí chính xác</p>
                             
                             <div class="input-group input-group-sm mb-2 shadow-sm">
                                 <input type="text" id="searchAdd" class="form-control" placeholder="Nhập địa chỉ để tìm nhanh..." onkeydown="if(event.key === 'Enter'){ event.preventDefault(); searchLocation('searchAdd', 'add'); }">
                                 <button class="btn btn-success" type="button" onclick="searchLocation('searchAdd', 'add')"><i class="bi bi-search"></i></button>
                             </div>
 
-                            <div id="mapAdd" class="mini-map mb-2"></div>
+                            <div id="mapAdd" class="mini-map mb-2 shadow-sm"></div>
                             
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <input type="text" id="latAdd" name="lat" class="form-control form-control-sm bg-light text-center fw-bold" placeholder="Vĩ độ (Lat)" readonly required>
+                                    <input type="text" id="latAdd" name="lat" class="form-control form-control-sm input-calculated text-center" placeholder="Vĩ độ (Lat)" readonly required>
                                 </div>
                                 <div class="col-6">
-                                    <input type="text" id="lonAdd" name="lon" class="form-control form-control-sm bg-light text-center fw-bold" placeholder="Kinh độ (Lon)" readonly required>
+                                    <input type="text" id="lonAdd" name="lon" class="form-control form-control-sm input-calculated text-center" placeholder="Kinh độ (Lon)" readonly required>
                                 </div>
                             </div>
                         </div>
@@ -187,16 +192,35 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // Đưa các biến bản đồ ra Global Scope để hàm searchLocation có thể sử dụng
+    // SỬ DỤNG BẢN ĐỒ CARTODB (Không bị lỗi 403)
+    const simpleTile = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    const DEFAULT_CENTER_LAT = 10.7769; // Mặc định HCM
+    const DEFAULT_CENTER_LON = 106.7009;
+
     let mapAdd = null;
     let markerAdd = null;
     let editMaps = {};
     let editMarkers = {};
 
-    // HÀM TÌM KIẾM ĐỊA CHỈ VÀ BAY BẢN ĐỒ TỚI ĐÓ
+    // Khởi tạo Icon
+    const greenIcon = L.icon({
+        iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
+        iconSize: [25, 41], iconAnchor: [12, 41]
+    });
+
+    const blueIcon = L.icon({
+        iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
+        iconSize: [25, 41], iconAnchor: [12, 41]
+    });
+
+    // 1. HÀM TÌM KIẾM ĐỊA CHỈ
     async function searchLocation(inputId, type, id = null) {
         let query = document.getElementById(inputId).value;
         if (!query) return;
@@ -210,25 +234,16 @@
                 let lon = parseFloat(data[0].lon);
                 let latLng = [lat, lon];
 
-                if (type === 'add') {
-                    if (mapAdd) {
-                        mapAdd.setView(latLng, 15);
-                        if (markerAdd) markerAdd.setLatLng(latLng);
-                        else markerAdd = L.marker(latLng).addTo(mapAdd);
-                        
-                        document.getElementById('latAdd').value = lat.toFixed(6);
-                        document.getElementById('lonAdd').value = lon.toFixed(6);
-                    }
-                } else if (type === 'edit' && id) {
-                    let eMap = editMaps[id];
-                    if (eMap) {
-                        eMap.setView(latLng, 15);
-                        if (editMarkers[id]) editMarkers[id].setLatLng(latLng);
-                        else editMarkers[id] = L.marker(latLng).addTo(eMap);
-                        
-                        document.getElementById('latEdit' + id).value = lat.toFixed(6);
-                        document.getElementById('lonEdit' + id).value = lon.toFixed(6);
-                    }
+                if (type === 'add' && mapAdd) {
+                    mapAdd.setView(latLng, 15);
+                    if (markerAdd) markerAdd.setLatLng(latLng);
+                    document.getElementById('latAdd').value = lat.toFixed(6);
+                    document.getElementById('lonAdd').value = lon.toFixed(6);
+                } else if (type === 'edit' && id && editMaps[id]) {
+                    editMaps[id].setView(latLng, 15);
+                    if (editMarkers[id]) editMarkers[id].setLatLng(latLng);
+                    document.getElementById('latEdit' + id).value = lat.toFixed(6);
+                    document.getElementById('lonEdit' + id).value = lon.toFixed(6);
                 }
             } else {
                 alert("Không tìm thấy địa chỉ này! Vui lòng gõ rõ tên Tỉnh/Thành phố.");
@@ -239,58 +254,56 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        // --- 1. XỬ LÝ BẢN ĐỒ Ở FORM THÊM MỚI ---
+        // 2. XỬ LÝ BẢN ĐỒ THÊM MỚI
         const addModal = document.getElementById('addCuaHangModal');
         addModal.addEventListener('shown.bs.modal', function () {
             if (!mapAdd) {
-                mapAdd = L.map('mapAdd').setView([10.7769, 106.7009], 12);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapAdd);
+                mapAdd = L.map('mapAdd').setView([DEFAULT_CENTER_LAT, DEFAULT_CENTER_LON], 12);
+                L.tileLayer(simpleTile, { maxZoom: 20, attribution: '&copy; CartoDB' }).addTo(mapAdd);
                 
-                mapAdd.on('click', function(e) {
-                    let lat = e.latlng.lat.toFixed(6);
-                    let lon = e.latlng.lng.toFixed(6);
-                    
-                    document.getElementById('latAdd').value = lat;
-                    document.getElementById('lonAdd').value = lon;
-                    
-                    if (markerAdd) markerAdd.setLatLng(e.latlng);
-                    else markerAdd = L.marker(e.latlng).addTo(mapAdd);
-                });
+                markerAdd = L.marker([DEFAULT_CENTER_LAT, DEFAULT_CENTER_LON], {icon: greenIcon, draggable: true}).addTo(mapAdd);
+                
+                function updateAddCoords(lat, lon) {
+                    document.getElementById('latAdd').value = lat.toFixed(6);
+                    document.getElementById('lonAdd').value = lon.toFixed(6);
+                }
+                updateAddCoords(DEFAULT_CENTER_LAT, DEFAULT_CENTER_LON);
+
+                // Sự kiện kéo ghim và click
+                markerAdd.on('dragend', function(e) { updateAddCoords(e.target.getLatLng().lat, e.target.getLatLng().lng); });
+                mapAdd.on('click', function(e) { markerAdd.setLatLng(e.latlng); updateAddCoords(e.latlng.lat, e.latlng.lng); });
             } else {
                 mapAdd.invalidateSize();
             }
         });
 
-        // --- 2. XỬ LÝ BẢN ĐỒ Ở CÁC FORM SỬA ---
+        // 3. XỬ LÝ BẢN ĐỒ SỬA
         document.querySelectorAll('.edit-modal').forEach(function(modal) {
             modal.addEventListener('shown.bs.modal', function () {
                 let id = this.getAttribute('data-ch-id');
                 let latInput = document.getElementById('latEdit' + id);
                 let lonInput = document.getElementById('lonEdit' + id);
                 
-                let lat = parseFloat(this.getAttribute('data-lat')) || 10.7769;
-                let lon = parseFloat(this.getAttribute('data-lon')) || 106.7009;
+                let lat = parseFloat(this.getAttribute('data-lat')) || DEFAULT_CENTER_LAT;
+                let lon = parseFloat(this.getAttribute('data-lon')) || DEFAULT_CENTER_LON;
 
                 if (!editMaps[id]) {
                     editMaps[id] = L.map('mapEdit' + id).setView([lat, lon], 15);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(editMaps[id]);
+                    L.tileLayer(simpleTile, { maxZoom: 20, attribution: '&copy; CartoDB' }).addTo(editMaps[id]);
 
-                    if (latInput.value && lonInput.value) {
-                        editMarkers[id] = L.marker([lat, lon]).addTo(editMaps[id]);
+                    editMarkers[id] = L.marker([lat, lon], {icon: blueIcon, draggable: true}).addTo(editMaps[id]);
+                    
+                    function updateEditCoords(newLat, newLon) {
+                        latInput.value = newLat.toFixed(6);
+                        lonInput.value = newLon.toFixed(6);
                     }
 
-                    editMaps[id].on('click', function(e) {
-                        let newLat = e.latlng.lat.toFixed(6);
-                        let newLon = e.latlng.lng.toFixed(6);
-                        
-                        latInput.value = newLat;
-                        lonInput.value = newLon;
-                        
-                        if (editMarkers[id]) editMarkers[id].setLatLng(e.latlng);
-                        else editMarkers[id] = L.marker(e.latlng).addTo(editMaps[id]);
-                    });
+                    // Sự kiện kéo ghim và click
+                    editMarkers[id].on('dragend', function(e) { updateEditCoords(e.target.getLatLng().lat, e.target.getLatLng().lng); });
+                    editMaps[id].on('click', function(e) { editMarkers[id].setLatLng(e.latlng); updateEditCoords(e.latlng.lat, e.latlng.lng); });
                 } else {
                     editMaps[id].invalidateSize();
+                    editMaps[id].setView([lat, lon], 15);
                 }
             });
         });

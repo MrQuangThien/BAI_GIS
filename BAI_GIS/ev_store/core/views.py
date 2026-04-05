@@ -5,6 +5,8 @@ from functools import wraps # Import thư viện hỗ trợ Decorator
 import folium
 from folium.plugins import LocateControl
 
+from django.conf import settings
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -65,23 +67,41 @@ def phan_quyen(roles=[]):
 # 1. GIAO DIỆN TRANG CHỦ & CÁC TRANG CHUNG
 # ==========================================
 def trang_chu(request):
-    xe_noi_bat = XeDien.objects.filter(noi_bat=True, trang_thai=True)
+    # Lấy xe nổi bật và tính toán xem xe nào hết hàng (số lượng <= 0)
+    xe_noi_bat_qs = XeDien.objects.filter(noi_bat=True, trang_thai=True)
+    danh_sach_noi_bat = list(xe_noi_bat_qs)
+    for xe in danh_sach_noi_bat:
+        tong_ton = xe.kho_hang.aggregate(Sum('so_luong'))['so_luong__sum'] or 0
+        # Gắn thêm 1 cờ 'het_hang' ảo cho từng xe
+        xe.het_hang = (tong_ton <= 0 and not xe.sap_ve)
+        
     xe_sap_ve = XeDien.objects.filter(sap_ve=True, trang_thai=True)
     form = FeedbackForm() 
-    context = {'xe_noi_bat': xe_noi_bat, 'xe_sap_ve': xe_sap_ve, 'form': form}
+    
+    context = {
+        'xe_noi_bat': danh_sach_noi_bat, # Trả ra danh sách đã được gắn cờ hết hàng
+        'xe_sap_ve': xe_sap_ve, 
+        'form': form
+    }
     return render(request, 'pages/trang_chu.html', context)
 
 def tim_kiem(request):
     tu_khoa = request.GET.get('q', '')
     if tu_khoa:
-       ket_qua = XeDien.objects.filter(
-    Q(ten_xe__icontains=tu_khoa) |
-    Q(hang_san_xuat__icontains=tu_khoa) |
-    Q(mo_ta__icontains=tu_khoa)
-)
+        # Chỉ tìm Xe điện (Bao gồm cả tìm theo tên kiểu dáng/danh mục)
+        ket_qua_xe = XeDien.objects.filter(
+            Q(ten_xe__icontains=tu_khoa) |
+            Q(hang_san_xuat__icontains=tu_khoa) |
+            Q(danh_muc__ten_danh_muc__icontains=tu_khoa) |
+            Q(mo_ta__icontains=tu_khoa)
+        ).distinct()
     else:
-        ket_qua = XeDien.objects.none()
-    return render(request, 'pages/tim_kiem.html', {'ket_qua': ket_qua, 'tu_khoa': tu_khoa})
+        ket_qua_xe = XeDien.objects.none()
+        
+    return render(request, 'pages/tim_kiem.html', {
+        'ket_qua_xe': ket_qua_xe, 
+        'tu_khoa': tu_khoa
+    })
 
 # Cả Admin và Quản lý đều được xem Dashboard tổng quan
 @login_required
@@ -140,8 +160,16 @@ def chi_tiet_xe(request, xe_id):
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
 def danh_sach_xe(request):
-    tat_ca_xe = XeDien.objects.all()
-    return render(request, 'xe/danh_sach_xe.html', {'tat_ca_xe': tat_ca_xe})
+    tu_khoa = request.GET.get('q', '')
+    tat_ca_xe = XeDien.objects.all().order_by('-id')
+    
+    if tu_khoa:
+        tat_ca_xe = tat_ca_xe.filter(
+            Q(ten_xe__icontains=tu_khoa) | 
+            Q(hang_san_xuat__icontains=tu_khoa) |
+            Q(danh_muc__ten_danh_muc__icontains=tu_khoa)
+        )
+    return render(request, 'xe/danh_sach_xe.html', {'tat_ca_xe': tat_ca_xe, 'tu_khoa': tu_khoa})
 
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
@@ -185,25 +213,58 @@ def haversine(lat1, lon1, lat2, lon2):
 
 def ban_do_tram_sac(request):
     trams = TramSac.objects.filter(trang_thai=True)
-    m = folium.Map(location=[10.7769, 106.7009], zoom_start=12, tiles='CartoDB positron')
+    
+    # 1. Kiểm tra xem người dùng có muốn "nhảy" đến trạm cụ thể nào không
+    target_id = request.GET.get('id')
+    map_center = [10.7769, 106.7009] # Mặc định là TP.HCM
+    zoom_level = 12 # Mức zoom rộng
+    
+    if target_id:
+        try:
+            # Tìm trạm đích
+            tram_target = TramSac.objects.get(id=target_id)
+            map_center = [float(tram_target.lat), float(tram_target.lon)]
+            zoom_level = 18 # Phóng to cực đại để thấy rõ vị trí
+        except:
+            pass
+
+    # 2. Khởi tạo bản đồ với tâm điểm đã tính toán
+    m = folium.Map(location=map_center, zoom_start=zoom_level, tiles='CartoDB positron')
+    
     for tram in trams:
         try:
+            # Nếu là trạm đang được định vị, cho màu khác (ví dụ màu đỏ) để nổi bật
+            color = 'red' if str(tram.id) == target_id else 'blue'
+            
             folium.Marker(
                 location=[float(tram.lat), float(tram.lon)],
-                popup=f"<b>{tram.ten_tram}</b><br>{tram.dia_chi}<br>Công suất: {tram.cong_suat} kW<br>Loại: {tram.loai_sac}",
+                popup=f"<b>{tram.ten_tram}</b><br>{tram.dia_chi}<br>Công suất: {tram.cong_suat} kW",
                 tooltip=tram.ten_tram,
-                icon=folium.Icon(color='blue', icon='plug', prefix='fa')
+                icon=folium.Icon(color=color, icon='plug', prefix='fa')
             ).add_to(m)
         except: continue
+        
     LocateControl(auto_start=False, keepCurrentPosition=True).add_to(m)
-    return render(request, 'tram_sac/map.html', {'map_html': m._repr_html_(), 'all_trams': list(trams.values('id', 'ten_tram', 'lat', 'lon', 'dia_chi'))})
+    
+    context = {
+        'map_html': m._repr_html_(), 
+        'all_trams': list(trams.values('id', 'ten_tram', 'lat', 'lon', 'dia_chi'))
+    }
+    return render(request, 'tram_sac/map.html', context)
 
-# Chỉ Admin và Quản lý 
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
 def quan_ly_tram_sac(request):
+    tu_khoa = request.GET.get('q', '')
     danh_sach_tram = TramSac.objects.all().order_by('-id')
-    return render(request, 'tram_sac/quan_ly_tram_sac.html', {'danh_sach_tram': danh_sach_tram})
+    
+    if tu_khoa:
+        danh_sach_tram = danh_sach_tram.filter(
+            Q(ten_tram__icontains=tu_khoa) | 
+            Q(dia_chi__icontains=tu_khoa) |
+            Q(loai_sac__icontains=tu_khoa)
+        )
+    return render(request, 'tram_sac/quan_ly_tram_sac.html', {'danh_sach_tram': danh_sach_tram, 'tu_khoa': tu_khoa})
 
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
@@ -262,6 +323,45 @@ def tao_don_hang(request, xe_id):
                 don_hang.trang_thai = 'Paid'
                 don_hang.tong_tien = xe.gia 
             don_hang.save()
+            
+            # ==========================================
+            # ĐOẠN CODE GỬI MAIL VỪA ĐƯỢC THÊM VÀO
+            # ==========================================
+            try:
+                # Lấy email từ form (nếu model có trường email) hoặc từ tài khoản đăng nhập
+                email_nhan = getattr(don_hang, 'email', None) 
+                if not email_nhan and request.user.is_authenticated:
+                    email_nhan = request.user.email
+
+                if email_nhan:
+                    chu_de = f"Xác nhận đặt hàng thành công - Đơn hàng #{don_hang.id} - EV STORE"
+                    noi_dung = f"""
+                    Chào {don_hang.ho_ten},
+
+                    Cảm ơn bạn đã tin tưởng và đặt hàng tại EV STORE!
+                    Đây là email xác nhận đơn hàng của bạn.
+
+                    THÔNG TIN ĐƠN HÀNG:
+                    - Mã đơn hàng: #{don_hang.id}
+                    - Sản phẩm: {xe.ten_xe}
+                    - Số tiền phải thanh toán: {don_hang.tong_tien:,.0f} VNĐ
+
+                    Chúng tôi sẽ sớm liên hệ với bạn qua số điện thoại {don_hang.so_dien_thoai} để tiến hành xác nhận và bàn giao xe.
+
+                    Trân trọng,
+                    Đội ngũ EV STORE.
+                    """
+                    send_mail(
+                        chu_de,
+                        noi_dung,
+                        settings.EMAIL_HOST_USER,
+                        [email_nhan],
+                        fail_silently=False,
+                    )
+            except Exception as e:
+                print(f"Lỗi gửi email: {e}") # Báo lỗi ra console terminal nhưng không làm sập web
+            # ==========================================
+
             messages.success(request, "Đặt hàng thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.")
             return redirect('trang_chu') 
     else:
@@ -453,8 +553,13 @@ def profile(request):
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
 def quan_ly_danh_muc(request):
+    tu_khoa = request.GET.get('q', '')
     danh_sach_dm = DanhMuc.objects.all().order_by('-id')
-    return render(request, 'category/quan_ly_danh_muc.html', {'danh_sach_dm': danh_sach_dm})
+    
+    if tu_khoa:
+        danh_sach_dm = danh_sach_dm.filter(ten_danh_muc__icontains=tu_khoa)
+        
+    return render(request, 'category/quan_ly_danh_muc.html', {'danh_sach_dm': danh_sach_dm, 'tu_khoa': tu_khoa})
 
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
@@ -569,6 +674,26 @@ def them_kho(request):
                 kho, created = KhoHang.objects.get_or_create(xe=ct.xe, cua_hang=phieu.cua_hang)
                 kho.so_luong += ct.so_luong
                 kho.save()
+                
+                # =========================================================
+                # FIX LỖI TỰ ĐỘNG CẬP NHẬT TRẠNG THÁI XE KHI CÓ HÀNG
+                # =========================================================
+                cap_nhat_xe = False
+                
+                # 1. Nếu xe đang "Dừng bán", bật lại thành "Đang kinh doanh"
+                if not ct.xe.trang_thai and ct.so_luong > 0:
+                    ct.xe.trang_thai = True
+                    cap_nhat_xe = True
+                    
+                # 2. Nếu xe đang "Sắp về", tắt Sắp về đi vì hàng đã về kho rồi!
+                if ct.xe.sap_ve and ct.so_luong > 0:
+                    ct.xe.sap_ve = False
+                    cap_nhat_xe = True
+                    
+                # Lưu lại nếu có bất kỳ thay đổi nào
+                if cap_nhat_xe:
+                    ct.xe.save()
+                # =========================================================
                 
             # Xử lý các dòng bị user bấm Xóa trên form
             for obj in formset.deleted_objects:

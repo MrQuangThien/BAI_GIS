@@ -1,31 +1,35 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block title %}Kết quả tìm kiếm{% endblock %}
 
 {% block content %}
 <div class="container my-5">
-    <h3>Kết quả tìm kiếm cho: "<b>{{ tu_khoa }}</b>"</h3>
+    <h3 class="mb-4">Kết quả tìm kiếm cho: "<b>{{ tu_khoa }}</b>"</h3>
 
-    <div class="row mt-4">
-        {% for xe in ket_qua %}
+    <h4 class="text-success border-bottom pb-2 mt-4"><i class="bi bi-car-front me-2"></i>Sản phẩm Xe Điện</h4>
+    <div class="row mt-3">
+        {% for xe in ket_qua_xe %}
         <div class="col-md-3 col-sm-6 mb-4">
             <div class="card shadow-sm h-100">
                 {% if xe.hinh_anh %}
                 <img src="{{ xe.hinh_anh.url }}" class="card-img-top" style="height:200px; object-fit:cover;">
                 {% endif %}
 
-                <div class="card-body text-center">
-                    <h5>{{ xe.ten_xe }}</h5>
-                    <p class="text-muted">{{ xe.hang_san_xuat }}</p>
-                    <p class="text-danger fw-bold">{{ xe.gia }} VNĐ</p>
+                <div class="card-body text-center d-flex flex-column">
+                    <h5 class="fw-bold">{{ xe.ten_xe }}</h5>
+                    <p class="text-muted mb-2">{{ xe.hang_san_xuat }}</p>
+                    <p class="text-danger fw-bold">{{ xe.gia|intcomma }} VNĐ</p>
 
-                    <a href="{% url 'chi_tiet_xe' xe.id %}" class="btn btn-outline-success btn-sm">
+                    <a href="{% url 'chi_tiet_xe' xe.id %}" class="btn btn-outline-success btn-sm px-4 mt-auto">
                         Xem chi tiết
                     </a>
                 </div>
             </div>
         </div>
         {% empty %}
-        <p class="text-muted">Không tìm thấy sản phẩm nào.</p>
+        <div class="col-12">
+            <p class="text-muted fst-italic">Không tìm thấy xe điện nào phù hợp với từ khóa này.</p>
+        </div>
         {% endfor %}
     </div>
 </div>

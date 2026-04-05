@@ -6,9 +6,15 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         .action-btn { font-size: 0.85rem; padding: 5px 10px; }
-        .mini-map-container { height: 300px; width: 100%; z-index: 1051; position: relative; } 
+        .mini-map-container { height: 350px; width: 100%; z-index: 1051; position: relative; border-radius: 8px; } 
         .input-calculated { background-color: #e9ecef !important; font-weight: bold; color: #198754; border-color: #198754; }
         .input-calculated-edit { background-color: #e9ecef !important; font-weight: bold; color: #0d6efd; border-color: #0d6efd; }
+        
+        /* Hiệu ứng focus cho form */
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+            border-color: #198754;
+        }
     </style>
 {% endblock %}
 
@@ -19,45 +25,45 @@
             <i class="bi bi-plus-circle me-1"></i> Thêm Trạm Mới
         </button>
     </div>
-<form method="GET" class="mb-3">
-    <div class="input-group shadow-sm">
-        <input type="text" name="q" class="form-control" placeholder="🔍 Tìm kiếm..." value="{{ request.GET.q }}">
-        <button class="btn btn-success fw-bold">
-            <i class="bi bi-search"></i> Tìm
-        </button>
-    </div>
-</form>
+
+    <form method="GET" class="mb-4">
+        <div class="input-group shadow-sm">
+            <input type="text" name="q" class="form-control border-success" placeholder="🔍 Tìm kiếm tên trạm, địa chỉ..." value="{{ request.GET.q }}">
+            <button class="btn btn-success fw-bold px-4">Tìm kiếm</button>
+        </div>
+    </form>
+
     <div class="card shadow-sm border-0 rounded-3">
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle m-0">
                     <thead class="table-dark">
                         <tr>
-                            <th>ID</th>
+                            <th class="ps-3">ID</th>
                             <th>Tên Trạm</th>
                             <th>Địa Chỉ</th>
                             <th>Công Suất</th>
                             <th>Loại Sạc</th>
                             <th>Trạng Thái</th>
-                            <th class="text-center">Hành Động</th>
+                            <th class="text-center pe-3">Hành Động</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for tram in danh_sach_tram %}
                         <tr>
-                            <td class="fw-bold text-muted">#{{ tram.id }}</td>
+                            <td class="fw-bold text-muted ps-3">#{{ tram.id }}</td>
                             <td class="fw-bold text-success">{{ tram.ten_tram }}</td>
-                            <td><span class="d-inline-block text-truncate" style="max-width: 250px;" title="{{ tram.dia_chi }}">{{ tram.dia_chi }}</span></td>
+                            <td><span class="d-inline-block text-truncate" style="max-width: 250px;" title="{{ tram.dia_chi }}"><i class="bi bi-geo-alt text-danger me-1"></i>{{ tram.dia_chi }}</span></td>
                             <td><span class="badge bg-secondary">{{ tram.cong_suat }} kW</span></td>
                             <td>{{ tram.loai_sac }}</td>
                             <td>
                                 {% if tram.trang_thai %}
-                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Hoạt động</span>
+                                    <span class="badge bg-success-subtle text-success border border-success"><i class="bi bi-check-circle me-1"></i>Hoạt động</span>
                                 {% else %}
-                                    <span class="badge bg-danger"><i class="bi bi-tools me-1"></i>Bảo trì</span>
+                                    <span class="badge bg-danger-subtle text-danger border border-danger"><i class="bi bi-tools me-1"></i>Bảo trì</span>
                                 {% endif %}
                             </td>
-                            <td class="text-center">
+                            <td class="text-center pe-3">
                                 <button class="btn btn-sm btn-outline-primary action-btn me-1" data-bs-toggle="modal" data-bs-target="#editTramModal{{ tram.id }}">
                                     <i class="bi bi-pencil-square"></i> Sửa
                                 </button>
@@ -68,77 +74,84 @@
                         </tr>
 
                         <div class="modal fade" id="editTramModal{{ tram.id }}" tabindex="-1">
-                            <div class="modal-dialog modal-lg text-start">
-                                <div class="modal-content">
+                            <div class="modal-dialog modal-lg modal-dialog-centered text-start">
+                                <div class="modal-content border-0 shadow-lg">
                                     <div class="modal-header bg-primary text-white">
-                                        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Chỉnh Sửa: {{ tram.ten_tram }}</h5>
+                                        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Chỉnh Sửa Trạm Sạc</h5>
                                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                     </div>
                                     <form action="{% url 'sua_tram_sac' tram.id %}" method="POST" enctype="multipart/form-data">
                                         {% csrf_token %}
-                                        <div class="modal-body bg-light">
-                                            <div class="row g-3">
-                                                <div class="col-md-12 bg-white p-3 rounded shadow-sm border">
-                                                    <label class="form-label text-primary fw-bold"><i class="bi bi-geo-alt-fill me-1"></i>Bước 1: Tìm vị trí trên bản đồ</label>
-                                                    <div class="input-group mb-2">
-                                                        <input type="text" class="form-control" id="edit_dia_chi_geocoder_{{ tram.id }}" placeholder="Nhập địa chỉ để tìm nhanh..." value="{{ tram.dia_chi }}">
-                                                        <button class="btn btn-primary" type="button" onclick="timViTriMiniMapEdit('{{ tram.id }}')"><i class="bi bi-search"></i> Tìm</button>
-                                                    </div>
-                                                    <small class="text-muted d-block mb-2">Hoặc cầm ghim di chuyển để lấy tọa độ mới nhất.</small>
-                                                    <div id="miniMap-edit-{{ tram.id }}" class="mini-map-container border rounded" data-lat="{{ tram.lat }}" data-lon="{{ tram.lon }}"></div>
+                                        <div class="modal-body p-4 bg-light">
+                                            
+                                            <h6 class="fw-bold text-primary mb-3 text-uppercase border-bottom border-primary pb-2">
+                                                <i class="bi bi-1-circle-fill me-2"></i> Thông tin trạm
+                                            </h6>
+                                            <div class="row g-3 mb-4 bg-white p-3 rounded shadow-sm border">
+                                                <div class="col-md-12">
+                                                    <label class="form-label fw-semibold text-muted small mb-1">Tên Trạm Sạc</label>
+                                                    <input type="text" class="form-control" name="ten_tram" value="{{ tram.ten_tram }}" required>
                                                 </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label fw-semibold text-muted small mb-1">Công suất (kW)</label>
+                                                    <input type="number" step="any" class="form-control" name="cong_suat" value="{{ tram.cong_suat }}" required>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label fw-semibold text-muted small mb-1">Loại Sạc</label>
+                                                    <input type="text" class="form-control" name="loai_sac" value="{{ tram.loai_sac }}" required>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label fw-semibold text-muted small mb-1">Cập nhật hình ảnh</label>
+                                                    <input type="file" class="form-control" name="hinh_anh" accept="image/*">
+                                                </div>
+                                                <div class="col-md-12 mt-3 pt-2 border-top">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="trangThaiSwitchEdit{{ tram.id }}" name="trang_thai" {% if tram.trang_thai %}checked{% endif %}>
+                                                        <label class="form-check-label text-success fw-bold ms-2" for="trangThaiSwitchEdit{{ tram.id }}">Trạm đang hoạt động bình thường</label>
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                                <div class="col-md-12 bg-white p-3 rounded shadow-sm border mt-3">
-                                                    <label class="form-label text-primary fw-bold mb-3"><i class="bi bi-card-text me-1"></i>Bước 2: Cập nhật thông tin</label>
-                                                    <div class="row g-3">
-                                                        <div class="col-md-6">
-                                                            <label class="form-label fw-semibold">Tên Trạm</label>
-                                                            <input type="text" class="form-control" name="ten_tram" value="{{ tram.ten_tram }}" required>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label fw-semibold">Công suất (kW)</label>
-                                                            <input type="number" step="any" class="form-control" name="cong_suat" value="{{ tram.cong_suat }}" required>
-                                                        </div>
-                                                        <div class="col-md-12">
-                                                            <label class="form-label fw-semibold">Địa Chỉ Thực Tế (Hiện trên Web)</label>
-                                                            <input type="text" class="form-control" name="dia_chi" id="edit_dia_chi_real_{{ tram.id }}" value="{{ tram.dia_chi }}" required>
-                                                        </div>
-                                                        <div class="col-md-8">
-                                                            <label class="form-label fw-semibold">Tải Ảnh Lên</label>
-                                                            <input type="file" class="form-control" name="hinh_anh" accept="image/*">
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <label class="form-label fw-semibold">Loại Sạc</label>
-                                                            <input type="text" class="form-control" name="loai_sac" value="{{ tram.loai_sac }}" required>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label text-primary fw-bold small">Vĩ độ (Lat)</label>
-                                                            <input type="number" step="any" class="form-control input-calculated-edit" name="lat" id="edit_lat_{{ tram.id }}" value="{{ tram.lat }}" required readonly>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label text-primary fw-bold small">Kinh độ (Lon)</label>
-                                                            <input type="number" step="any" class="form-control input-calculated-edit" name="lon" id="edit_lon_{{ tram.id }}" value="{{ tram.lon }}" required readonly>
-                                                        </div>
-                                                        <div class="col-md-12 mt-3 pt-3 border-top">
-                                                            <div class="form-check form-switch fs-5">
-                                                                <input class="form-check-input" type="checkbox" id="trangThaiSwitchEdit{{ tram.id }}" name="trang_thai" {% if tram.trang_thai %}checked{% endif %}>
-                                                                <label class="form-check-label text-success fw-bold ms-2" for="trangThaiSwitchEdit{{ tram.id }}">Trạm đang hoạt động</label>
-                                                            </div>
-                                                        </div>
+                                            <h6 class="fw-bold text-primary mb-3 text-uppercase border-bottom border-primary pb-2 mt-4">
+                                                <i class="bi bi-2-circle-fill me-2"></i> Định vị bản đồ
+                                            </h6>
+                                            <div class="row g-3 bg-white p-3 rounded shadow-sm border">
+                                                <div class="col-md-12 mb-2">
+                                                    <label class="form-label fw-semibold text-muted small mb-1">Địa chỉ thực tế (Dùng để tìm kiếm vị trí)</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" name="dia_chi" id="edit_dia_chi_real_{{ tram.id }}" value="{{ tram.dia_chi }}" required>
+                                                        <button class="btn btn-primary fw-bold" type="button" onclick="timViTriMiniMapEdit('{{ tram.id }}')"><i class="bi bi-search"></i> Định vị lại</button>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-12">
+                                                    <div id="miniMap-edit-{{ tram.id }}" class="mini-map-container border shadow-sm" data-lat="{{ tram.lat }}" data-lon="{{ tram.lon }}"></div>
+                                                </div>
+                                                
+                                                <div class="col-md-6">
+                                                    <div class="input-group input-group-sm mt-2">
+                                                        <span class="input-group-text bg-dark text-white fw-bold">Vĩ độ (Lat)</span>
+                                                        <input type="number" step="any" class="form-control input-calculated-edit" name="lat" id="edit_lat_{{ tram.id }}" value="{{ tram.lat }}" required readonly>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="input-group input-group-sm mt-2">
+                                                        <span class="input-group-text bg-dark text-white fw-bold">Kinh độ (Lon)</span>
+                                                        <input type="number" step="any" class="form-control input-calculated-edit" name="lon" id="edit_lon_{{ tram.id }}" value="{{ tram.lon }}" required readonly>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="modal-footer bg-white">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" class="btn btn-primary fw-bold"><i class="bi bi-save me-1"></i> Lưu Thay Đổi</button>
+                                            <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Hủy</button>
+                                            <button type="submit" class="btn btn-primary px-5 fw-bold"><i class="bi bi-save me-1"></i> Lưu Cập Nhật</button>
                                         </div>
                                     </form>
                                 </div>
                             </div>
                         </div>
                         {% empty %}
-                        <tr><td colspan="7" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i> Chưa có dữ liệu.</td></tr>
+                        <tr><td colspan="7" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i> Chưa có dữ liệu trạm sạc.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -147,63 +160,83 @@
     </div>
 
     <div class="modal fade" id="addTramModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-success text-white">
                     <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Thêm Trạm Sạc Mới</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="{% url 'them_tram_sac' %}" method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
-                    <div class="modal-body bg-light">
-                        <div class="row g-3">
-                            <div class="col-md-12 bg-white p-3 rounded shadow-sm border">
-                                <label class="form-label text-success fw-bold"><i class="bi bi-search me-1"></i>Bước 1: Tìm vị trí trên bản đồ</label>
-                                <div class="input-group mb-2">
-                                    <input type="text" class="form-control" id="add_dia_chi_geocoder" placeholder="Nhập địa chỉ: số nhà, phường, quận...">
-                                    <button class="btn btn-success" type="button" onclick="timVịTriMiniMap()"><i class="bi bi-search"></i> Tìm</button>
-                                </div>
-                                <div id="miniMap-add" class="mini-map-container border rounded"></div>
+                    <div class="modal-body p-4 bg-light">
+                        
+                        <h6 class="fw-bold text-success mb-3 text-uppercase border-bottom border-success pb-2">
+                            <i class="bi bi-1-circle-fill me-2"></i> Thông tin trạm
+                        </h6>
+                        <div class="row g-3 mb-4 bg-white p-3 rounded shadow-sm border">
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold text-muted small mb-1">Tên Trạm Sạc <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="ten_tram" placeholder="VD: Trạm sạc Vincom Đồng Khởi" required>
                             </div>
-
-                            <div class="col-md-12 bg-white p-3 rounded shadow-sm border mt-3">
-                                <label class="form-label text-success fw-bold mb-3"><i class="bi bi-card-text me-1"></i>Bước 2: Xác nhận thông tin</label>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Tên Trạm Sạc</label>
-                                        <input type="text" class="form-control" name="ten_tram" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Công suất (kW)</label>
-                                        <input type="number" step="any" class="form-control" name="cong_suat" required>
-                                    </div>
-                                    <div class="col-md-12">
-                                        <label class="form-label fw-semibold">Địa Chỉ Thực Tế</label>
-                                        <input type="text" class="form-control" name="dia_chi" id="add_dia_chi_real" required>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <label class="form-label fw-semibold">Tải Ảnh Lên</label>
-                                        <input type="file" class="form-control" name="hinh_anh" accept="image/*" required>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-semibold">Loại Sạc</label>
-                                        <input type="text" class="form-control" name="loai_sac" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-success fw-bold small">Vĩ độ (Lat)</label>
-                                        <input type="number" step="any" class="form-control input-calculated" name="lat" id="add_lat" required readonly>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-success fw-bold small">Kinh độ (Lon)</label>
-                                        <input type="number" step="any" class="form-control input-calculated" name="lon" id="add_lon" required readonly>
-                                    </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-muted small mb-1">Công suất (kW) <span class="text-danger">*</span></label>
+                                <input type="number" step="any" class="form-control" name="cong_suat" placeholder="VD: 250" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-muted small mb-1">Loại Sạc <span class="text-danger">*</span></label>
+                                <select name="loai_sac" class="form-select">
+                                    <option value="DC Siêu Nhanh">DC Siêu Nhanh</option>
+                                    <option value="AC Thường">AC Thường</option>
+                                    <option value="AC/DC Hỗn hợp">AC/DC Hỗn hợp</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-muted small mb-1">Hình ảnh</label>
+                                <input type="file" class="form-control" name="hinh_anh" accept="image/*">
+                            </div>
+                            <div class="col-md-12 mt-3 pt-2 border-top">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="trang_thai" id="trangThaiSwitchAdd" checked>
+                                    <label class="form-check-label fw-bold text-success ms-2" for="trangThaiSwitchAdd">Trạm đang hoạt động bình thường</label>
                                 </div>
                             </div>
                         </div>
+
+                        <h6 class="fw-bold text-primary mb-3 text-uppercase border-bottom border-primary pb-2 mt-4">
+                            <i class="bi bi-2-circle-fill me-2"></i> Định vị trên bản đồ
+                        </h6>
+                        <div class="row g-3 bg-white p-3 rounded shadow-sm border">
+                            <div class="col-md-12 mb-2">
+                                <label class="form-label fw-semibold text-muted small mb-1">Địa chỉ (Nhập để tìm kiếm tọa độ) <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="dia_chi" id="add_dia_chi_real" placeholder="Nhập địa chỉ: Số nhà, đường, phường, quận..." required>
+                                    <button class="btn btn-primary fw-bold" type="button" onclick="timViTriMiniMap()"><i class="bi bi-search"></i> Tìm Vị Trí</button>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-12">
+                                <div id="miniMap-add" class="mini-map-container border shadow-sm"></div>
+                                <small class="text-muted d-block mt-2 fst-italic"><i class="bi bi-info-circle me-1"></i>Bạn có thể kéo thả ghim màu xanh trên bản đồ để tinh chỉnh vị trí chính xác nhất.</small>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="input-group input-group-sm mt-2">
+                                    <span class="input-group-text bg-dark text-white fw-bold">Vĩ độ (Lat)</span>
+                                    <input type="number" step="any" class="form-control input-calculated" name="lat" id="add_lat" required readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group input-group-sm mt-2">
+                                    <span class="input-group-text bg-dark text-white fw-bold">Kinh độ (Lon)</span>
+                                    <input type="number" step="any" class="form-control input-calculated" name="lon" id="add_lon" required readonly>
+                                </div>
+                            </div>
+                        </div>
+                        
                     </div>
                     <div class="modal-footer bg-white">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-success fw-bold"><i class="bi bi-save me-1"></i> Lưu Trạm Mới</button>
+                        <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-success px-5 fw-bold"><i class="bi bi-save-fill me-1"></i> Lưu Trạm Mới</button>
                     </div>
                 </form>
             </div>
@@ -214,26 +247,38 @@
 {% block extra_js %}
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const DEFAULT_CENTER_LAT = 10.354;
-        const DEFAULT_CENTER_LON = 106.368;
+        const DEFAULT_CENTER_LAT = 10.7769; // Mặc định TP.HCM thay vì tọa độ ảo
+        const DEFAULT_CENTER_LON = 106.7009;
 
+        // DÙNG GOOGLE MAPS ĐỂ FIX LỖI 403 OSM
+        // Bản đồ trắng xám tối giản, không bị rối mắt
+const simpleTile = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+
+        // ==========================================
+        // JS CHO MODAL THÊM TRẠM SẠC
+        // ==========================================
         let mapAdd, markerAdd;
         const addTramModalEl = document.getElementById('addTramModal');
+        
         addTramModalEl.addEventListener('shown.bs.modal', function () {
             if (!mapAdd) {
                 mapAdd = L.map('miniMap-add').setView([DEFAULT_CENTER_LAT, DEFAULT_CENTER_LON], 14);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapAdd);
+                L.tileLayer(simpleTile, { maxZoom: 20, attribution: '&copy; Google Maps' }).addTo(mapAdd);
+                
                 const greenIcon = L.icon({
                     iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
                     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
                     iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
                 });
-                markerAdd = L.marker([DEFAULT_CENTER_LAT, DEFAULT_CENTER_LON], {icon: greenIcon, draggable: true}).addTo(mapAdd).bindPopup("<b>Kéo ghim</b>").openPopup();
+
+                markerAdd = L.marker([DEFAULT_CENTER_LAT, DEFAULT_CENTER_LON], {icon: greenIcon, draggable: true}).addTo(mapAdd).bindPopup("<b>Kéo ghim để định vị</b>").openPopup();
+                
                 function capNhatToaDoForm(lat, lon) {
                     document.getElementById('add_lat').value = lat.toFixed(6);
                     document.getElementById('add_lon').value = lon.toFixed(6);
                 }
                 capNhatToaDoForm(DEFAULT_CENTER_LAT, DEFAULT_CENTER_LON);
+                
                 markerAdd.on('dragend', function (event) { capNhatToaDoForm(event.target.getLatLng().lat, event.target.getLatLng().lon); });
                 mapAdd.on('click', function (e) { markerAdd.setLatLng(e.latlng); capNhatToaDoForm(e.latlng.lat, e.latlng.lon); });
             } else {
@@ -241,10 +286,11 @@
             }
         });
 
-        async function timVịTriMiniMap() {
-            const address = document.getElementById('add_dia_chi_geocoder').value;
-            if (!address) { alert("Vui lòng nhập địa chỉ!"); return; }
-            document.getElementById('add_dia_chi_real').value = address;
+        async function timViTriMiniMap() {
+            const addressInput = document.getElementById('add_dia_chi_real');
+            const address = addressInput.value;
+            if (!address) { alert("Vui lòng nhập địa chỉ vào ô!"); return; }
+            
             try {
                 const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=vn`);
                 const data = await response.json();
@@ -254,35 +300,44 @@
                     markerAdd.setLatLng([lat, lon]);
                     document.getElementById('add_lat').value = lat.toFixed(6);
                     document.getElementById('add_lon').value = lon.toFixed(6);
-                } else { alert("Không tìm thấy!"); }
-            } catch (error) { alert("Lỗi mạng!"); }
+                } else { alert("Không tìm thấy vị trí này trên bản đồ. Bạn hãy nhập rõ ràng hơn nhé!"); }
+            } catch (error) { alert("Lỗi mạng, không thể lấy dữ liệu bản đồ!"); }
         }
 
+        // ==========================================
+        // JS CHO TẤT CẢ CÁC MODAL SỬA TRẠM SẠC
+        // ==========================================
         const editMaps = {};
         const editMarkers = {};
+        
         document.addEventListener('shown.bs.modal', function (event) {
             const modal = event.target;
             if (modal.id.startsWith('editTramModal')) {
                 const tramId = modal.id.replace('editTramModal', '');
                 const mapContainerId = 'miniMap-edit-' + tramId;
                 const mapContainer = document.getElementById(mapContainerId);
+                
                 let lat = parseFloat(mapContainer.getAttribute('data-lat'));
                 let lon = parseFloat(mapContainer.getAttribute('data-lon'));
                 if (isNaN(lat) || isNaN(lon)) { lat = DEFAULT_CENTER_LAT; lon = DEFAULT_CENTER_LON; }
 
                 if (!editMaps[tramId]) {
                     editMaps[tramId] = L.map(mapContainerId).setView([lat, lon], 16);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(editMaps[tramId]);
+                    L.tileLayer(googleMapsTile, { maxZoom: 20, attribution: '&copy; Google Maps' }).addTo(editMaps[tramId]);
+                    
                     const blueIcon = L.icon({
                         iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
                         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
                         iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
                     });
-                    editMarkers[tramId] = L.marker([lat, lon], {icon: blueIcon, draggable: true}).addTo(editMaps[tramId]);
+                    
+                    editMarkers[tramId] = L.marker([lat, lon], {icon: blueIcon, draggable: true}).addTo(editMaps[tramId]).bindPopup("<b>Kéo ghim để đổi vị trí</b>").openPopup();
+                    
                     function capNhatToaDoEdit(newLat, newLon) {
                         document.getElementById('edit_lat_' + tramId).value = newLat.toFixed(6);
                         document.getElementById('edit_lon_' + tramId).value = newLon.toFixed(6);
                     }
+                    
                     editMarkers[tramId].on('dragend', function (e) { capNhatToaDoEdit(e.target.getLatLng().lat, e.target.getLatLng().lon); });
                     editMaps[tramId].on('click', function (e) { editMarkers[tramId].setLatLng(e.latlng); capNhatToaDoEdit(e.latlng.lat, e.latlng.lon); });
                 } else {
@@ -294,9 +349,10 @@
         });
 
         async function timViTriMiniMapEdit(tramId) {
-            const address = document.getElementById('edit_dia_chi_geocoder_' + tramId).value;
-            if (!address) { alert("Nhập địa chỉ trước!"); return; }
-            document.getElementById('edit_dia_chi_real_' + tramId).value = address;
+            const addressInput = document.getElementById('edit_dia_chi_real_' + tramId);
+            const address = addressInput.value;
+            if (!address) { alert("Vui lòng nhập địa chỉ trước!"); return; }
+            
             try {
                 const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=vn`);
                 const data = await response.json();
@@ -306,8 +362,8 @@
                     editMarkers[tramId].setLatLng([lat, lon]);
                     document.getElementById('edit_lat_' + tramId).value = lat.toFixed(6);
                     document.getElementById('edit_lon_' + tramId).value = lon.toFixed(6);
-                } else { alert("Không tìm thấy!"); }
-            } catch (error) { alert("Lỗi mạng!"); }
+                } else { alert("Không tìm thấy vị trí này trên bản đồ. Bạn hãy nhập rõ ràng hơn nhé!"); }
+            } catch (error) { alert("Lỗi mạng, không thể lấy dữ liệu bản đồ!"); }
         }
     </script>
 {% endblock %}

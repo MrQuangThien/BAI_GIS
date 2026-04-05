@@ -161,29 +161,22 @@ class UserProfile(models.Model):
     dia_chi = models.TextField(blank=True)
     avatar = models.ImageField(upload_to='avatar/', null=True, blank=True)
     
-    # TRƯỜNG PHÂN QUYỀN MỚI BỔ SUNG
     vai_tro = models.CharField(max_length=20, choices=VAI_TRO_CHOICES, default='khach_hang', verbose_name="Vai trò")
 
     def __str__(self):
         return self.user.username
-
 
 class Feedback(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     xe = models.ForeignKey(XeDien, on_delete=models.CASCADE, null=True, blank=True)
     noi_dung = models.TextField()
     danh_gia = models.IntegerField(choices=[
-        (1, '1 sao'),
-        (2, '2 sao'),
-        (3, '3 sao'),
-        (4, '4 sao'),
-        (5, '5 sao'),
+        (1, '1 sao'), (2, '2 sao'), (3, '3 sao'), (4, '4 sao'), (5, '5 sao'),
     ], default=5)
     ngay_tao = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.danh_gia}⭐"
-
 
 class NhanVien(User):
     class Meta:
@@ -197,25 +190,9 @@ class KhachHang(User):
         verbose_name = 'Khách hàng'
         verbose_name_plural = 'Quản lý Khách hàng'
 
-
 # ==========================================
-#                  FORMS 
+# BẢNG PHIẾU NHẬP KHO (MỚI THÊM)
 # ==========================================
-class XeDienForm(forms.ModelForm):
-    class Meta:
-        model = XeDien
-        fields = '__all__'
-        widgets = {
-            'ten_xe': forms.TextInput(attrs={'class': 'form-control'}),
-            'hang_san_xuat': forms.TextInput(attrs={'class': 'form-control'}),
-            'dung_luong_pin': forms.NumberInput(attrs={'class': 'form-control'}),
-            'tam_di_chuyen': forms.NumberInput(attrs={'class': 'form-control'}),
-            'gia': forms.NumberInput(attrs={'class': 'form-control'}),
-            'trang_thai': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'cua_hang': forms.Select(attrs={'class': 'form-select'}),
-        }
-
-# Bảng lưu thông tin chung của 1 lần nhập (Phiếu Nhập)
 class PhieuNhapKho(models.Model):
     cua_hang = models.ForeignKey(CuaHang, on_delete=models.CASCADE, verbose_name="Nhập vào chi nhánh")
     nhan_vien_nhap = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="Nhân viên phụ trách")
@@ -225,7 +202,6 @@ class PhieuNhapKho(models.Model):
     def __str__(self):
         return f"Phiếu nhập #{self.id} - {self.cua_hang.ten_cua_hang} ({self.ngay_nhap|date:'d/m/Y'})"
 
-# Bảng lưu chi tiết bên trong Phiếu Nhập đó có những xe gì, số lượng bao nhiêu
 class ChiTietPhieuNhap(models.Model):
     phieu_nhap = models.ForeignKey(PhieuNhapKho, on_delete=models.CASCADE, related_name='chi_tiet')
     xe = models.ForeignKey(XeDien, on_delete=models.CASCADE)

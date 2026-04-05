@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Trang chủ | EV STORE{% endblock %}
 
 {% block extra_css %}
 <style>
-    /* CSS dành riêng cho trang chủ */
     .hero {
         height: 550px;
         background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url("https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2");
@@ -16,26 +16,21 @@
         color: white;
         text-align: center;
     }
-
     .hero h1 { font-size: 55px; font-weight: 700; }
-
     .section-title {
         border-left: 5px solid #198754;
         padding-left: 12px;
         font-weight: bold;
         margin-bottom: 25px;
     }
-
     .card-product-img {
         height: 220px;
         object-fit: cover;
         background: #fff;
         transition: 0.3s;
     }
-
     .price-text { color: #dc3545; font-weight: bold; font-size: 1.1rem; }
     .feature-icon { font-size: 40px; color: #198754; }
-
     .product-card { transition: 0.3s; overflow: hidden; }
     .product-card:hover {
         transform: translateY(-5px);
@@ -87,7 +82,8 @@
                 <div class="card product-card shadow-sm h-100 border-0 position-relative">
                     <div class="position-absolute top-0 start-0 p-2 d-flex flex-column gap-1" style="z-index: 10;">
                         <span class="badge bg-warning text-dark shadow-sm"><i class="bi bi-star-fill text-danger me-1"></i>Nổi bật</span>
-                        {% if not xe.trang_thai and not xe.sap_ve %}
+                        
+                        {% if xe.het_hang %}
                         <span class="badge bg-danger shadow-sm"><i class="bi bi-x-circle me-1"></i>Hết hàng</span>
                         {% elif xe.sap_ve %}
                         <span class="badge bg-info text-dark shadow-sm"><i class="bi bi-clock-history me-1"></i>Sắp ra mắt</span>
@@ -95,21 +91,23 @@
                     </div>
 
                     {% if xe.hinh_anh %}
-                    <img src="{{ xe.hinh_anh.url }}" class="card-img-top card-product-img {% if not xe.trang_thai and not xe.sap_ve %}opacity-50{% endif %}" alt="{{ xe.ten_xe }}">
+                    <img src="{{ xe.hinh_anh.url }}" class="card-img-top card-product-img {% if xe.het_hang %}opacity-50{% endif %}" alt="{{ xe.ten_xe }}">
                     {% else %}
-                    <img src="https://via.placeholder.com/300x200?text=No+Image" class="card-img-top card-product-img opacity-50">
+                    <img src="https://via.placeholder.com/300x200?text=No+Image" class="card-img-top card-product-img {% if xe.het_hang %}opacity-50{% endif %}">
                     {% endif %}
 
                     <div class="card-body text-center d-flex flex-column">
                         <h5 class="fw-bold mb-1 text-truncate" title="{{ xe.ten_xe }}">{{ xe.ten_xe }}</h5>
                         <p class="text-muted small mb-2">{{ xe.hang_san_xuat }}</p>
-                        <p class="price-text mb-3 {% if not xe.trang_thai and not xe.sap_ve %}text-muted{% endif %}">{{ xe.gia }} VNĐ</p>
+                        
+                        <p class="price-text mb-3 {% if xe.het_hang %}text-muted{% endif %}">{{ xe.gia|intcomma }} VNĐ</p>
 
                         <div class="mt-auto d-grid gap-2">
                             <a href="{% url 'chi_tiet_xe' xe.id %}" class="btn btn-outline-success fw-bold">
                                 <i class="bi bi-eye"></i> Xem chi tiết
                             </a>
-                            {% if not xe.trang_thai and not xe.sap_ve %}
+                            
+                            {% if xe.het_hang %}
                             <button class="btn btn-secondary fw-bold" disabled>
                                 <i class="bi bi-x-octagon"></i> Hết Hàng
                             </button>
@@ -154,7 +152,8 @@
                     <div class="card-body text-center d-flex flex-column">
                         <h5 class="fw-bold mb-1 text-truncate" title="{{ xe.ten_xe }}">{{ xe.ten_xe }}</h5>
                         <p class="text-muted small mb-2">{{ xe.hang_san_xuat }}</p>
-                        <p class="price-text text-info mb-3">Dự kiến: {{ xe.gia }} VNĐ</p>
+                        
+                        <p class="price-text text-info mb-3">Dự kiến: {{ xe.gia|intcomma }} VNĐ</p>
 
                         <div class="mt-auto d-grid gap-2">
                             <a href="{% url 'chi_tiet_xe' xe.id %}" class="btn btn-outline-info text-dark fw-bold border-info">

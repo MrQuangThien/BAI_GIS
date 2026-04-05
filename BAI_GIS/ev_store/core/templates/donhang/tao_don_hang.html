@@ -1,4 +1,5 @@
 {% load static %}
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -163,7 +164,7 @@
                         
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="text-muted fw-semibold">Giá xe:</span>
-                            <span class="fw-bold">{{ xe.gia }} VNĐ</span>
+                            <span class="fw-bold">{{ xe.gia|intcomma }} VNĐ</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <span class="text-muted fw-semibold">Phí giao xe:</span>
@@ -173,7 +174,7 @@
                         <div class="p-3 bg-white rounded-3 border shadow-sm mb-4">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="fw-bold text-dark fs-5">Tạm tính:</span>
-                                <span class="fs-4 fw-bold text-danger">{{ xe.gia }} VNĐ</span>
+                                <span class="fs-4 fw-bold text-danger">{{ xe.gia|intcomma }} VNĐ</span>
                             </div>
                         </div>
 

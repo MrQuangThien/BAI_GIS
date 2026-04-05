@@ -1,0 +1,259 @@
+[
+{
+  "model": "core.danhmuc",
+  "pk": 1,
+  "fields": {
+    "ten_danh_muc": "SUV"
+  }
+},
+{
+  "model": "core.danhmuc",
+  "pk": 2,
+  "fields": {
+    "ten_danh_muc": "Sedan"
+  }
+},
+{
+  "model": "core.danhmuc",
+  "pk": 3,
+  "fields": {
+    "ten_danh_muc": "Pickup"
+  }
+},
+{
+  "model": "core.danhmuc",
+  "pk": 4,
+  "fields": {
+    "ten_danh_muc": "Mini Car"
+  }
+},
+{
+  "model": "core.danhmuc",
+  "pk": 5,
+  "fields": {
+    "ten_danh_muc": "LCV"
+  }
+},
+{
+  "model": "core.danhmuc",
+  "pk": 6,
+  "fields": {
+    "ten_danh_muc": "Mini SUV"
+  }
+},
+{
+  "model": "core.cuahang",
+  "pk": 1,
+  "fields": {
+    "ten_cua_hang": "EV Store Q1",
+    "dia_chi": "Pasteur",
+    "so_dien_thoai": "012345678",
+    "trang_thai": true,
+    "lat": 10.776203,
+    "lon": 106.700163,
+    "hinh_anh": ""
+  }
+},
+{
+  "model": "core.cuahang",
+  "pk": 2,
+  "fields": {
+    "ten_cua_hang": "EV Store Q7",
+    "dia_chi": "335 Nguyen Huu Tho",
+    "so_dien_thoai": "1900 18556060",
+    "trang_thai": true,
+    "lat": 10.734759,
+    "lon": 106.700249,
+    "hinh_anh": "cua_hang_images/showroomq7.jpg"
+  }
+},
+{
+  "model": "core.xedien",
+  "pk": 6,
+  "fields": {
+    "ten_xe": "Vinfast VF3",
+    "hang_san_xuat": "Vinfast",
+    "dung_luong_pin": 19,
+    "tam_di_chuyen": 210,
+    "gia": 299000000,
+    "trang_thai": true,
+    "cua_hang": 1,
+    "danh_muc": 4,
+    "hinh_anh": "xe_dien_images/vf3-1.jpg",
+    "noi_bat": true,
+    "sap_ve": false,
+    "mo_ta": "<p><i>VF3 được thiết kế nhỏ gọn, thuộc phân khúc mini, lần đầu được Vinfast ra mắt tại Việt Nam.&nbsp;</i></p><p><i>Kích thước tổng thể D x R x C lần lượt 3114 x 1673 x 1567 mm. Như vậy, VF3 có chiều dài ngắn hơn Fadil (3676 mm), Hyundai Grand i10 (3765 mm), Kia Morning (3595 mm) nhưng nhỉnh hơn 197 mm so với Wuling. Tuy nhiên, bên trong xe vẫn được thiết kế với 5 chỗ ngồi.</i><br><i>Thiết kế ngoại thất của VF3 mang tính đặc trưng và độc đáo. Hai bên hông có hộc bánh xe hầm hố. Khoảng sáng gầm xe lớn, cho phép xe di chuyển linh hoạt trên mọi địa hình. VF3 được thiết kế với cấu hình 2 cửa bên hông và một cửa cốp sau, mang lại không gian thoải mái cho 5 người ngồi.</i></p>",
+    "anh_phu_1": "xe_dien_images/vf3-2.jpg",
+    "anh_phu_2": "xe_dien_images/vf3-3.jpg",
+    "anh_phu_3": "xe_dien_images/vf3-4.jpg"
+  }
+},
+{
+  "model": "core.xedien",
+  "pk": 7,
+  "fields": {
+    "ten_xe": "Tesla CyperTruck",
+    "hang_san_xuat": "Tesla",
+    "dung_luong_pin": 123,
+    "tam_di_chuyen": 520,
+    "gia": 2500000000,
+    "trang_thai": true,
+    "cua_hang": 1,
+    "danh_muc": 3,
+    "hinh_anh": "xe_dien_images/tesla1.webp",
+    "noi_bat": false,
+    "sap_ve": true,
+    "mo_ta": "<p><i>Tesla Cybertruck là một chiếc bán tải thuần điện có thiết kế vị lai (futuristic) với những đặc điểm nhận diện \"không giống ai.</i><br><i>Cybertruck là mẫu bán tải gây tranh cãi lớn về thiết kế. Kiểu dáng mẫu xe này không giống bất kỳ loại xe nào trên thị trường. Vỏ xe được chế tạo từ thép không gỉ siêu cứng, giúp bảo vệ tối ưu trong các tình huống va chạm, thậm chí cả đạn bắn vào. Kính bảo vệ trên xe cũng được thiết kế để không dễ dàng bị vỡ. Nhiều người gọi vui đây là \"xe tăng</i>\".<br>&nbsp;</p>",
+    "anh_phu_1": "xe_dien_images/tesla2.webp",
+    "anh_phu_2": "xe_dien_images/tesla3.webp",
+    "anh_phu_3": "xe_dien_images/cyper2_u9LcOdv.jpg"
+  }
+},
+{
+  "model": "core.xedien",
+  "pk": 8,
+  "fields": {
+    "ten_xe": "Vinfast EC Van",
+    "hang_san_xuat": "Vinfast",
+    "dung_luong_pin": 18,
+    "tam_di_chuyen": 175,
+    "gia": 285000000,
+    "trang_thai": true,
+    "cua_hang": 1,
+    "danh_muc": 5,
+    "hinh_anh": "xe_dien_images/ecvan-1.webp",
+    "noi_bat": false,
+    "sap_ve": false,
+    "mo_ta": "<p><i>Cách mạng xanh trong vận tải hàng hóa</i><br><i>EC Van tiên phong mang đến giải pháp vận chuyển thương mại đột phá, nổi bật với khả năng vận hành linh hoạt, êm ái và tiết kiệm chi phí. Sở hữu thiết kế hiện đại, tiện dụng cùng bảng màu ngoại thất với 4 lựa chọn nổi bật Xanh – Vàng – Trắng – Đỏ, EC Van không chỉ là phương tiện di chuyển mà còn là đối tác tin cậy, phương tiện sinh kế phù hợp cho kinh tế hộ gia đình, doanh nghiệp.</i></p>",
+    "anh_phu_1": "xe_dien_images/ecvan-2.webp",
+    "anh_phu_2": "xe_dien_images/ecvan-3.jpg",
+    "anh_phu_3": "xe_dien_images/ecvan-4.webp"
+  }
+},
+{
+  "model": "core.xedien",
+  "pk": 9,
+  "fields": {
+    "ten_xe": "Minio Green",
+    "hang_san_xuat": "Vinfast",
+    "dung_luong_pin": 18,
+    "tam_di_chuyen": 210,
+    "gia": 269000000,
+    "trang_thai": true,
+    "cua_hang": 1,
+    "danh_muc": 6,
+    "hinh_anh": "xe_dien_images/miniogreen-1.webp",
+    "noi_bat": true,
+    "sap_ve": false,
+    "mo_ta": "<p><i>VinFast Minio Green (phiên bản xe điện mini 4 chỗ) có giá niêm yết là 269 triệu đồng (đã bao gồm pin). Mẫu xe này nổi bật với thiết kế nhỏ gọn, phù hợp đô thị, tầm hoạt động khoảng 210km mỗi lần sạc và thường có chính sách miễn 100% lệ phí trước bạ, cùng ưu đãi sạc pin miễn phí tại các trạm VinFast.</i></p>",
+    "anh_phu_1": "xe_dien_images/minigreen4.jpg",
+    "anh_phu_2": "xe_dien_images/miniogreen-2.webp",
+    "anh_phu_3": "xe_dien_images/miniogreen-3.jpg"
+  }
+},
+{
+  "model": "core.xedien",
+  "pk": 10,
+  "fields": {
+    "ten_xe": "Vinfast VF5 Plus",
+    "hang_san_xuat": "Vinfast",
+    "dung_luong_pin": 37,
+    "tam_di_chuyen": 326,
+    "gia": 529000000,
+    "trang_thai": true,
+    "cua_hang": 1,
+    "danh_muc": 6,
+    "hinh_anh": "xe_dien_images/vf5plus-3.jpg",
+    "noi_bat": true,
+    "sap_ve": false,
+    "mo_ta": "<p><i>VinFast VF 5 Plus là mẫu xe chiến lược thuộc phân khúc A-SUV, hướng đến mục tiêu phổ cập hoá xe điện tại Việt Nam.</i><br><i>Xe sở hữu thiết kế hiện đại, độc đáo, được trang bị các công nghệ và tính năng thông minh vượt trội, khả năng vận hành mạnh mẽ, an toàn. Cụ thể, VF 5 Plus có chiều dài cơ sở 2.513 mm, kích thước các chiều dài, rộng, cao lần lượt là 3.965 x 1.720 x 1.580 (mm), ngoại thất nổi bật với bộ la-zăng có kích thước lên tới 17 inch. Xe có bảng màu đa dạng gồm 16 lựa chọn màu ngoại thất và 3 lựa chọn màu nội thất, đảm bảo cá nhân hóa lựa chọn theo phong cách, cá tính, sở thích của mỗi khách hàng.</i></p>",
+    "anh_phu_1": "xe_dien_images/vf5plus-2.jpg",
+    "anh_phu_2": "xe_dien_images/vf5plus-1.jpg",
+    "anh_phu_3": "xe_dien_images/vf5plus-4.jpg"
+  }
+},
+{
+  "model": "core.xedien",
+  "pk": 11,
+  "fields": {
+    "ten_xe": "Vinfast VF6",
+    "hang_san_xuat": "Vinfast",
+    "dung_luong_pin": 60,
+    "tam_di_chuyen": 399,
+    "gia": 689000000,
+    "trang_thai": true,
+    "cua_hang": 1,
+    "danh_muc": 1,
+    "hinh_anh": "xe_dien_images/vf6eco-1.jpg",
+    "noi_bat": false,
+    "sap_ve": true,
+    "mo_ta": "<p><i>inFast VF 6 là mẫu ô tô điện thông minh được định vị thuộc phân khúc B. Về cơ bản, cả hai phiên bản VF 6 Base và VF 6 Plus đều có kích thước ngoại thất giống nhau, cụ thể như sau:</i></p><p><i>Kích thước tổng thể (Dài x Rộng x Cao): &nbsp;4.238 x 1.820 x 1.594 (mm)</i><br><i>Chiều dài cơ sở: 2.730 (mm)</i><br><i>Khoảng sáng gầm xe không tải: 170 (mm)</i><br><i>Kích thước lazang: 17 inches (bản Base) / 19 inches (bản Plus)</i><br><i>Thông số kỹ thuật VinFast VF 6 cho thấy đây sẽ là mẫu xe “đáng gờm” trong phân khúc SUV hạng B. Kích thước nhỏ gọn với những đường nét thiết kế cứng cáp giúp VF 6 dễ dàng di chuyển trên phố đông đúc nhưng cũng đầy tự tin khi chinh phục đường trường. Sở hữu ngoại hình lý tưởng, cấu trúc xe VF 6 cân đối, hỗ trợ phương tiện kiểm soát lực kéo tốt hơn khi vào cua hay di chuyển ở dải tốc độ cao, đảm bảo an toàn cho người điều khiển.</i></p><p><i>Được định vị ở phân khúc B nhưng VF 6 được trang bị lazang kích thước lớn, mang đến khả năng vận hành mạnh mẽ và tăng tốc tốt hơn. Có thể nói, VF 6 toát lên khí chất của mẫu SUV thời thượng, mạnh mẽ và hầm hố, phù hợp với các gia đình trẻ hoặc cá nhân.</i></p>",
+    "anh_phu_1": "xe_dien_images/vf6eco-2.jpg",
+    "anh_phu_2": "xe_dien_images/vf6eco-3.jpg",
+    "anh_phu_3": "xe_dien_images/vf6eco-4.jpg"
+  }
+},
+{
+  "model": "core.xedien",
+  "pk": 12,
+  "fields": {
+    "ten_xe": "Vinfast VF7 eco",
+    "hang_san_xuat": "Vinfast",
+    "dung_luong_pin": 60,
+    "tam_di_chuyen": 431,
+    "gia": 799000000,
+    "trang_thai": true,
+    "cua_hang": 1,
+    "danh_muc": 1,
+    "hinh_anh": "xe_dien_images/vf7eco-1.jpeg",
+    "noi_bat": true,
+    "sap_ve": false,
+    "mo_ta": "<p><i>Với mong muốn mang tới cho khách hàng nhiều hơn những sự lựa chọn phương tiện thân thiện môi trường, VinFast đã liên tục cho ra mắt các mẫu ô tô điện trải dài ở đầy đủ các phân khúc. Trong dòng C-SUV mới nhất, VinFast đã chính thức công bố thông số kỹ thuật VF 7 với hai phiên bản Base(Eco) và Plus hứa hẹn mang đến những trải nghiệm lý tưởng cho người dùng.</i><br><i>Điểm nổi bật trong thông số VF 7 là khoảng cách giữa tâm bánh trước và bánh sau được bố trí hợp lý giúp khả năng kiểm soát lực kéo tương đối hoàn chỉnh. Nhờ vậy, người điều khiển xe VinFast VF 7 luôn tìm được cảm giác chắc chắn khi cầm lái, dễ dàng di chuyển, vào cua mượt mà và linh hoạt khi tăng giảm tốc độ.</i></p><p><i>Kích thước la-zăng ở xe VinFast VF 7 Base(Eco) là 19 inches và VF 7 Plus là 20 inches, tương đối lớn so với các mẫu xe cùng phân khúc. Thiết kế này tạo điểm nhấn đặc biệt cho tổng thể xe, khỏe khoắn nhưng vẫn giữ nét tinh tế, sang trọng đầy ấn tượng. &nbsp;</i></p>",
+    "anh_phu_1": "xe_dien_images/vf7eco-2.jpeg",
+    "anh_phu_2": "xe_dien_images/vf7eco-3.jpeg",
+    "anh_phu_3": "xe_dien_images/vf7eco-4.jpeg"
+  }
+},
+{
+  "model": "core.xedien",
+  "pk": 13,
+  "fields": {
+    "ten_xe": "Vinfast VF8",
+    "hang_san_xuat": "Vinfast",
+    "dung_luong_pin": 85,
+    "tam_di_chuyen": 471,
+    "gia": 1199000000,
+    "trang_thai": true,
+    "cua_hang": 1,
+    "danh_muc": 1,
+    "hinh_anh": "xe_dien_images/vf8eco-2.jpg",
+    "noi_bat": false,
+    "sap_ve": true,
+    "mo_ta": "<p><i>Sự kiện VinFast Global EV Day nằm trong khuôn khổ CES (Mỹ) 2022, VinFast VF 8 đã chính thức được mở bán, đánh dấu một bước tiến mới trong ngành sản xuất ô tô điện của Việt Nam. Vì thế, thông tin thông số kỹ thuật VF 8 kích thước như thế nào, có gì nổi bật thu hút nhiều sự quan tâm từ người tiêu dùng trong nước và quốc tế.&nbsp;</i><br><i>VinFast VF 8 ứng dụng linh hoạt ngôn ngữ thiết kế “Cân bằng động” (Dynamic Balance) linh hoạt tạo nên sự cân đối cả về ngoại thất, khoang nội thất lẫn cách bố trí động cơ. Sự kết hợp giữa kiểu dáng SUV và Couple với đường vuốt cong từ phần mái ở trụ C tạo nên những đường nét thanh thoát đồng thời tối ưu không gian nội thất của xe.</i></p>",
+    "anh_phu_1": "xe_dien_images/vf8eco-1.jpg",
+    "anh_phu_2": "xe_dien_images/vf8eco-3.jpg",
+    "anh_phu_3": "xe_dien_images/vf8eco-4.jpg"
+  }
+},
+{
+  "model": "core.xedien",
+  "pk": 14,
+  "fields": {
+    "ten_xe": "Vinfast VF9",
+    "hang_san_xuat": "Vinfast",
+    "dung_luong_pin": 92,
+    "tam_di_chuyen": 620,
+    "gia": 1699000000,
+    "trang_thai": true,
+    "cua_hang": 1,
+    "danh_muc": 1,
+    "hinh_anh": "xe_dien_images/vf9-4.jpg",
+    "noi_bat": false,
+    "sap_ve": true,
+    "mo_ta": "<p><i>CHIÊM NGƯỠNG VF 9 - SUV CỠ LỚN KHỎE KHOẮN VÀ TIỆN DỤNG</i></p><p><i>Sở hữu vẻ đẹp đầy khoẻ khoắn, tiện dụng được chắp bút bởi đơn vị thiết kế huyền thoại - Pininfarina, VF 9 chắc chắn sẽ làm những người sử dụng SUV cỡ lớn yêu thích. Các chi tiết trên xe VF 9 cho phép cải thiện khí động học và mở rộng phạm vi xe điện.</i><br><i>Là một trong hai mẫu SUV điện đầu tiên của người Việt vươn tầm thế giới, xe điện VinFast VF 9 đánh dấu một bước tiến quan trọng trong ngành công nghiệp ô tô điện tại Việt Nam khi xuất hiện trên thị trường quốc tế. Đánh giá tổng quan VinFast VF 9 về thông số kỹ thuật, công nghệ thông minh vượt trội được trang bị để khách hàng hiểu hơn về thông điệp chủ đạo của VinFast - “Tương lai của di chuyển”.</i></p>",
+    "anh_phu_1": "xe_dien_images/vf9eco.jpg",
+    "anh_phu_2": "xe_dien_images/vf9-2.jpg",
+    "anh_phu_3": "xe_dien_images/vf9-3.jpg"
+  }
+}
+]

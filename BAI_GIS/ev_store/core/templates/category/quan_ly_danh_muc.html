@@ -18,14 +18,16 @@
         </div>
     {% endfor %}
 {% endif %}
+
 <form method="GET" class="mb-3">
     <div class="input-group shadow-sm">
-        <input type="text" name="q" class="form-control" placeholder="🔍 Tìm kiếm..." value="{{ request.GET.q }}">
+        <input type="text" name="q" class="form-control" placeholder="🔍 Tìm kiếm kiểu dáng, phân khúc..." value="{{ request.GET.q }}">
         <button class="btn btn-success fw-bold">
             <i class="bi bi-search"></i> Tìm
         </button>
     </div>
 </form>
+
 <div class="card shadow-sm border-0 rounded-3 p-4">
     <table class="table table-hover align-middle mb-0">
         <thead class="table-dark">
@@ -53,29 +55,6 @@
                     </a>
                 </td>
             </tr>
-
-            <div class="modal fade" id="editDanhMucModal{{ dm.id }}" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content border-0 shadow">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Sửa Kiểu Dáng</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                        <form action="{% url 'sua_danh_muc' dm.id %}" method="POST">
-                            {% csrf_token %}
-                            <div class="modal-body p-4">
-                                <label class="form-label fw-bold text-muted">Tên kiểu dáng / Phân khúc</label>
-                                <input type="text" name="ten_danh_muc" class="form-control form-control-lg" value="{{ dm.ten_danh_muc }}" required>
-                            </div>
-                            <div class="modal-footer bg-light">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                <button type="submit" class="btn btn-primary fw-bold">Lưu Thay Đổi</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
             {% empty %}
             <tr><td colspan="4" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Chưa có dữ liệu.</td></tr>
             {% endfor %}
@@ -104,4 +83,29 @@
         </div>
     </div>
 </div>
+
+{% for dm in danh_sach_dm %}
+<div class="modal fade" id="editDanhMucModal{{ dm.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Sửa Kiểu Dáng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'sua_danh_muc' dm.id %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <label class="form-label fw-bold text-muted">Tên kiểu dáng / Phân khúc</label>
+                    <input type="text" name="ten_danh_muc" class="form-control form-control-lg" value="{{ dm.ten_danh_muc }}" required>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Lưu Thay Đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
 {% endblock %}

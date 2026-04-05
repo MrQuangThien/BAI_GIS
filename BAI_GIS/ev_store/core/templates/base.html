@@ -54,19 +54,18 @@
             <a class="navbar-brand" href="{% url 'trang_chu' %}">
                 <i class="bi bi-lightning-charge-fill text-warning"></i> EV STORE
             </a>
-            <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#menu">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="collapse navbar-collapse" id="menu">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'trang_chu' %}">Trang chủ</a></li>
-                    <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'danh_sach_san_pham' %}">Sản phẩm</a>
-                    </li>
-                    <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm
-                            sạc</a></li>
+                    <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'danh_sach_san_pham' %}">Sản phẩm</a></li>
+                    <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm sạc</a></li>
 
                     {% if user.is_authenticated and user.is_staff %}
-                    <li class="nav-item ms-2">
+                    <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
                         <a class="nav-link text-warning fw-bold bg-dark bg-opacity-25 rounded px-3"
                             href="{% url 'admin_dashboard' %}">
                             <i class="bi bi-speedometer2"></i> Quản trị
@@ -74,20 +73,20 @@
                     </li>
                     {% endif %}
                 </ul>
-<!-- FORM TÌM KIẾM -->
-<form action="{% url 'tim_kiem' %}" method="GET" class="mt-4 d-flex justify-content-center">
-    <div class="input-group" style="max-width: 500px;">
-        <input type="text" name="q" class="form-control form-control-lg" placeholder="Tìm xe điện..." required>
-        <button class="btn btn-success btn-lg" type="submit">
-            <i class="bi bi-search"></i>
-        </button>
-    </div>
-</form>
 
-                <div class="d-flex align-items-center">
+                <form action="{% url 'tim_kiem' %}" method="GET" class="d-flex mx-lg-3 my-2 my-lg-0 w-100" style="max-width: 400px;">
+                    <div class="input-group shadow-sm">
+                        <input type="text" name="q" class="form-control" placeholder="Tìm kiếm xe, trạm sạc..." value="{{ request.GET.q }}" required>
+                        <button class="btn btn-warning text-dark fw-bold" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="d-flex align-items-center mt-2 mt-lg-0">
                     {% if user.is_authenticated %}
                     <div class="dropdown">
-                        <button class="btn btn-light dropdown-toggle fw-bold rounded-pill px-3" type="button"
+                        <button class="btn btn-light dropdown-toggle fw-bold rounded-pill px-3 shadow-sm" type="button"
                             data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle me-1 text-success"></i> {{ user.username }}
                         </button>
@@ -97,17 +96,12 @@
                                     <i class="bi bi-person-lines-fill me-2 text-primary"></i> Thông tin cá nhân
                                 </a>
                             </li>
-
                             <li>
                                 <a class="dropdown-item py-2" href="{% url 'user_sac' %}">
                                     <i class="bi bi-clock-history me-2 text-success"></i> Lịch sử sạc
                                 </a>
                             </li>
-
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-
+                            <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form action="{% url 'logout' %}" method="post" style="display: inline;">
                                     {% csrf_token %}
@@ -119,8 +113,7 @@
                         </ul>
                     </div>
                     {% else %}
-                    <a href="{% url 'login' %}" class="btn btn-success me-2 fw-bold shadow-sm border border-light">Đăng
-                        nhập</a>
+                    <a href="{% url 'login' %}" class="btn btn-success me-2 fw-bold shadow-sm border border-light">Đăng nhập</a>
                     <a href="{% url 'register' %}" class="btn btn-light fw-bold text-success shadow-sm">Đăng ký</a>
                     {% endif %}
                 </div>
@@ -133,8 +126,7 @@
         {% for message in messages %}
         <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show shadow-lg border-0"
             role="alert">
-            <i
-                class="bi {% if message.tags == 'error' %}bi-exclamation-triangle{% else %}bi-check-circle{% endif %} me-2 fs-5 align-middle"></i>
+            <i class="bi {% if message.tags == 'error' %}bi-exclamation-triangle{% else %}bi-check-circle{% endif %} me-2 fs-5 align-middle"></i>
             <strong>{{ message }}</strong>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>

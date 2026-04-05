@@ -713,15 +713,17 @@ def them_kho(request):
 # 9. PHIÊN SẠC & FEEDBACK
 # ==========================================
 @login_required
+@phan_quyen(roles=['admin', 'quan_ly']) 
 def danh_sach_phien_sac(request):
     tu_khoa = request.GET.get('q', '')
 
-    phien = PhienSac.objects.filter(user=request.user)
+    phien = PhienSac.objects.all().order_by('-thoi_gian_bat_dau')
 
     if tu_khoa:
         phien = phien.filter(
             Q(tram_sac__ten_tram__icontains=tu_khoa) |
-            Q(tram_sac__dia_chi__icontains=tu_khoa)
+            Q(tram_sac__dia_chi__icontains=tu_khoa) |
+            Q(user__username__icontains=tu_khoa) 
         )
 
     return render(request, 'tram_sac/danh_sach.html', {

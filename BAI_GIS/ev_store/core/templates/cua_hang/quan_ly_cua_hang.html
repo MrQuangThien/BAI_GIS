@@ -11,6 +11,11 @@
     /* Thêm CSS highlight cho ô tọa độ */
     .input-calculated { background-color: #e9ecef !important; font-weight: bold; color: #198754; border-color: #198754; }
     .input-calculated-edit { background-color: #e9ecef !important; font-weight: bold; color: #0d6efd; border-color: #0d6efd; }
+
+    /* Thêm vào trong cặp thẻ <style> ở đầu file */
+.ck-editor__editable_inline {
+    min-height: 200px; /* Chiều cao mặc định của khung soạn thảo */
+}
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -66,8 +71,7 @@
             </tr>
 
             <div class="modal fade edit-modal" id="editCuaHangModal{{ ch.id }}" data-ch-id="{{ ch.id }}" data-lat="{{ ch.lat|default:'10.7769' }}" data-lon="{{ ch.lon|default:'106.7009' }}" tabindex="-1">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content border-0 shadow">
+                <div class="modal-dialog modal-xl"> <div class="modal-content border-0 shadow">
                         <div class="modal-header bg-primary text-white">
                             <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Sửa Chi Nhánh</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -93,7 +97,12 @@
                                             <label class="form-label fw-bold text-muted">Cập nhật Ảnh (Bỏ trống nếu giữ nguyên)</label>
                                             <input type="file" name="hinh_anh" class="form-control" accept="image/*">
                                         </div>
-                                    </div>
+                                        
+                                        <div class="mb-3 mt-4">
+                                            <label class="form-label fw-bold text-primary"><i class="bi bi-file-earmark-richtext me-1"></i>Bài giới thiệu cửa hàng</label>
+                                            <textarea name="bai_gioi_thieu" id="editor_gioi_thieu_{{ ch.id }}" class="form-control">{% if ch.bai_gioi_thieu %}{{ ch.bai_gioi_thieu }}{% endif %}</textarea>
+                                        </div>
+                                        </div>
                                     
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold text-muted">Tọa độ trên Bản đồ</label>
@@ -104,9 +113,7 @@
                                             <button class="btn btn-primary" type="button" onclick="searchLocation('searchEdit{{ ch.id }}', 'edit', '{{ ch.id }}')"><i class="bi bi-search"></i></button>
                                         </div>
 
-                                        <div id="mapEdit{{ ch.id }}" class="mini-map mb-2 shadow-sm"></div>
-                                        
-                                        <div class="row g-2">
+                                        <div id="mapEdit{{ ch.id }}" class="mini-map mb-2 shadow-sm" style="height: 480px;"></div> <div class="row g-2">
                                             <div class="col-6">
                                                 <input type="text" id="latEdit{{ ch.id }}" name="lat" class="form-control form-control-sm input-calculated-edit text-center" value="{{ ch.lat }}" placeholder="Vĩ độ (Lat)" readonly required>
                                             </div>
@@ -133,8 +140,7 @@
 </div>
 
 <div class="modal fade" id="addCuaHangModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow">
+    <div class="modal-dialog modal-xl"> <div class="modal-content border-0 shadow">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Thêm Chi Nhánh Mới</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -160,7 +166,12 @@
                                 <label class="form-label fw-bold text-muted">Hình ảnh minh họa</label>
                                 <input type="file" name="hinh_anh" class="form-control" accept="image/*">
                             </div>
-                        </div>
+
+                            <div class="mb-3 mt-4">
+                                <label class="form-label fw-bold text-success"><i class="bi bi-file-earmark-richtext me-1"></i>Bài giới thiệu cửa hàng</label>
+                                <textarea name="bai_gioi_thieu" id="editor_gioi_thieu_add" class="form-control"></textarea>
+                            </div>
+                            </div>
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold text-muted">Xác định tọa độ</label>
@@ -171,9 +182,7 @@
                                 <button class="btn btn-success" type="button" onclick="searchLocation('searchAdd', 'add')"><i class="bi bi-search"></i></button>
                             </div>
 
-                            <div id="mapAdd" class="mini-map mb-2 shadow-sm"></div>
-                            
-                            <div class="row g-2">
+                            <div id="mapAdd" class="mini-map mb-2 shadow-sm" style="height: 480px;"></div> <div class="row g-2">
                                 <div class="col-6">
                                     <input type="text" id="latAdd" name="lat" class="form-control form-control-sm input-calculated text-center" placeholder="Vĩ độ (Lat)" readonly required>
                                 </div>
@@ -195,8 +204,48 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
+    // === KHỞI TẠO CKEDITOR 5 ===
+    document.addEventListener("DOMContentLoaded", function() {
+        // Cấu hình các nút công cụ cho bản 5
+        const editorConfig = {
+            toolbar: [
+                'heading', '|',
+                'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|',
+                'outdent', 'indent', '|',
+                'blockQuote', 'insertTable', 'undo', 'redo'
+            ]
+        };
+
+        // 1. Áp dụng cho modal "Thêm Mới"
+        const addEditorEl = document.querySelector('#editor_gioi_thieu_add');
+        if (addEditorEl) {
+            ClassicEditor
+                .create(addEditorEl, editorConfig)
+                .catch(error => console.error("Lỗi CKEditor Thêm:", error));
+        }
+
+        // 2. Áp dụng cho TẤT CẢ modal "Sửa"
+        document.querySelectorAll('textarea[id^="editor_gioi_thieu_"]').forEach(function(textarea) {
+            if (textarea.id !== 'editor_gioi_thieu_add') {
+                ClassicEditor
+                    .create(textarea, editorConfig)
+                    .catch(error => console.error("Lỗi CKEditor Sửa:", error));
+            }
+        });
+
+        // 3. FIX LỖI BOOTSTRAP 5: Cho phép nhấp vào popup (như ô chèn link) của CKEditor 5
+        document.addEventListener('focusin', function (e) {
+            if (e.target.closest('.ck-balloon-panel')) {
+                e.stopImmediatePropagation();
+            }
+        }, { capture: true });
+    });
+    // =====================================
+
     // SỬ DỤNG BẢN ĐỒ CARTODB (Không bị lỗi 403)
     const simpleTile = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
     const DEFAULT_CENTER_LAT = 10.7769; // Mặc định HCM

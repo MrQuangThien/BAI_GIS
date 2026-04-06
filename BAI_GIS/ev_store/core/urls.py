@@ -17,6 +17,8 @@ admin.site.index_title = 'Bảng Điều Khiển'
 urlpatterns = [
     # ==================== TRANG CHỦ & BẢN ĐỒ ====================
     path('', views.trang_chu, name='trang_chu'),
+    path('gioi-thieu/', views.gioi_thieu, name='gioi_thieu'),
+    path('chi-nhanh/<int:pk>/', views.chi_tiet_cua_hang, name='chi_tiet_cua_hang'),
     path("map/", ban_do_tram_sac, name='ban_do_tram_sac'),
     path("api/nearest-tram/", get_nearest_tram, name='get_nearest_tram'),  # Endpoint AJAX
     # Thêm 2 dòng API này vào để phục vụ cho Bản đồ GIS
@@ -33,6 +35,7 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(), name='login'),
     path('logout/', views.logout_view, name='logout'), # Sử dụng view tùy chỉnh của bạn
     path('register/', views.dang_ky_view, name='register'),
+    path('xac-thuc-otp/', views.xac_thuc_otp, name='xac_thuc_otp'), 
     path('tai-khoan/', views.tai_khoan, name='tai_khoan'),
     path('tai-khoan/don-hang/<int:don_hang_id>/', views.chi_tiet_don_hang_khach, name='chi_tiet_don_hang_khach'),
     path('profile/', views.profile, name='profile'),

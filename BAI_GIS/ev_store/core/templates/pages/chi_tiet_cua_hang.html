@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Chi nhánh {{ ch.ten_cua_hang }} | EV STORE{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ckeditor-content { line-height: 1.8; font-size: 1.1rem; color: #495057; }
+    .ckeditor-content img { max-width: 100%; height: auto; border-radius: 10px; margin: 20px 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'trang_chu' %}" class="text-success text-decoration-none">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'gioi_thieu' %}" class="text-success text-decoration-none">Hệ thống chi nhánh</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ ch.ten_cua_hang }}</li>
+        </ol>
+    </nav>
+
+    <div class="row bg-white p-4 p-md-5 rounded-4 shadow-sm border border-light">
+        <div class="col-md-5 mb-4 mb-md-0">
+            {% if ch.hinh_anh %}
+                <img src="{{ ch.hinh_anh.url }}" class="img-fluid w-100 rounded-4 shadow-sm" style="object-fit: cover; max-height: 400px;" alt="{{ ch.ten_cua_hang }}">
+            {% else %}
+                <div class="text-center text-muted py-5 border rounded-4 bg-light h-100 d-flex align-items-center justify-content-center">
+                    <i class="bi bi-shop display-1 opacity-25"></i>
+                </div>
+            {% endif %}
+            
+            <div class="mt-4 bg-light p-4 rounded-4">
+                <h5 class="fw-bold text-success mb-3">Thông tin liên hệ</h5>
+                <p class="mb-2"><i class="bi bi-geo-alt-fill text-danger me-2"></i><strong>Địa chỉ:</strong> {{ ch.dia_chi }}</p>
+                <p class="mb-0"><i class="bi bi-telephone-fill text-primary me-2"></i><strong>Hotline:</strong> {{ ch.so_dien_thoai }}</p>
+            </div>
+        </div>
+
+        <div class="col-md-7 ps-md-5">
+            <h1 class="fw-bold mb-4">{{ ch.ten_cua_hang }}</h1>
+            
+            <div class="ckeditor-content">
+                {% if ch.bai_gioi_thieu %}
+                    {{ ch.bai_gioi_thieu|safe }}
+                {% else %}
+                    <p class="text-muted fst-italic">Thông tin giới thiệu chi tiết về chi nhánh đang được cập nhật...</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

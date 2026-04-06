@@ -103,6 +103,17 @@ def tim_kiem(request):
         'tu_khoa': tu_khoa
     })
 
+def gioi_thieu(request):
+    # Lấy toàn bộ danh sách cửa hàng đang hoạt động
+    danh_sach_cua_hang = CuaHang.objects.all().order_by('id') 
+    
+    return render(request, 'pages/gioi_thieu.html', {'danh_sach_cua_hang': danh_sach_cua_hang})
+
+def chi_tiet_cua_hang(request, pk):
+    # Lấy đúng cửa hàng mà khách vừa click vào
+    cua_hang = get_object_or_404(CuaHang, pk=pk)
+    return render(request, 'pages/chi_tiet_cua_hang.html', {'ch': cua_hang})
+
 # Cả Admin và Quản lý đều được xem Dashboard tổng quan
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly','nhan_vien'])
@@ -513,17 +524,83 @@ def ql_khach_hang(request):
     }
     return render(request, 'users/list_user.html', context)
 # --- Các trang đăng nhập / đăng xuất không bị ảnh hưởng ---
+import random # Đảm bảo có dòng này ở tuốt trên cùng file views.py
+
+# ... (Các code khác)
+
 def dang_ky_view(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
             user.set_password(form.cleaned_data['password'])
+            
+            # QUAN TRỌNG: Khóa tài khoản, chưa cho đăng nhập ngay
+            user.is_active = False 
             user.save()
-            login(request, user)
-            return redirect('trang_chu')
-    else: form = RegisterForm()
+            
+            # 1. Tạo mã OTP ngẫu nhiên gồm 6 chữ số
+            otp = str(random.randint(100000, 999999))
+            
+            # 2. Lưu OTP và ID của user vào Session (Bộ nhớ tạm của trình duyệt)
+            request.session['otp'] = otp
+            request.session['user_id'] = user.id
+            
+            # 3. Gửi mã OTP vào Email của khách
+            email_nhan = user.email
+            if email_nhan:
+                chu_de = "Mã Xác Thực Đăng Ký Tài Khoản - EV STORE"
+                noi_dung = f"""
+                Chào {user.username},
+                
+                Cảm ơn bạn đã đăng ký tài khoản tại EV STORE.
+                Mã xác thực (OTP) của bạn là: {otp}
+                
+                Mã này dùng để kích hoạt tài khoản. Vui lòng không chia sẻ cho người khác!
+                
+                Trân trọng,
+                Đội ngũ EV STORE.
+                """
+                try:
+                    send_mail(chu_de, noi_dung, settings.EMAIL_HOST_USER, [email_nhan], fail_silently=False)
+                except Exception as e:
+                    print(f"Lỗi gửi mail: {e}")
+            
+            # Chuyển hướng sang trang nhập mã OTP
+            return redirect('xac_thuc_otp')
+    else: 
+        form = RegisterForm()
     return render(request, 'registration/register.html', {'form': form})
+
+# HÀM MỚI: Xử lý việc nhập mã OTP
+def xac_thuc_otp(request):
+    if request.method == 'POST':
+        otp_nhap = request.POST.get('otp')
+        otp_thuc = request.session.get('otp')
+        user_id = request.session.get('user_id')
+
+        if otp_nhap and otp_nhap == otp_thuc:
+            try:
+                # Nếu đúng mã, lôi user ra và mở khóa
+                user = User.objects.get(id=user_id)
+                user.is_active = True
+                user.save()
+                
+                # Đăng nhập luôn cho khách
+                login(request, user)
+                
+                # Xóa dọn dẹp Session
+                del request.session['otp']
+                del request.session['user_id']
+                
+                messages.success(request, "Xác thực email thành công! Chào mừng bạn đến với EV STORE.")
+                return redirect('trang_chu')
+            except User.DoesNotExist:
+                messages.error(request, "Không tìm thấy người dùng. Vui lòng đăng ký lại!")
+        else:
+            messages.error(request, "Mã OTP không chính xác. Vui lòng kiểm tra lại email!")
+            
+    return render(request, 'registration/xac_thuc_otp.html')
 
 def logout_view(request):
     logout(request)
@@ -613,6 +690,7 @@ def sua_cua_hang(request, pk):
         ch.ten_cua_hang = request.POST.get('ten_cua_hang')
         ch.dia_chi = request.POST.get('dia_chi')
         ch.so_dien_thoai = request.POST.get('so_dien_thoai')
+        ch.bai_gioi_thieu = request.POST.get('bai_gioi_thieu')
         lat, lon = request.POST.get('lat'), request.POST.get('lon')
         if lat: ch.lat = float(lat)
         if lon: ch.lon = float(lon)

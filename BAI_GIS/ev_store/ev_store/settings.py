@@ -39,6 +39,7 @@ CSRF_TRUSTED_ORIGINS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'ckeditor',
     'core',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -147,3 +148,27 @@ EMAIL_USE_SSL = False
 # ĐÃ SỬA: Lấy từ file .env thay vì viết thẳng ra đây
 EMAIL_HOST_USER = os.getenv('MAILTRAP_USER')
 EMAIL_HOST_PASSWORD = os.getenv('MAILTRAP_PASS')
+
+CKEDITOR_CONFIGS = {
+    # 1. Khung khổng lồ (Dành cho Giới thiệu cửa hàng)
+    'default': {
+        'toolbar': 'full',
+        'height': 500,
+        'width': '100%',
+        'extraPlugins': ','.join(['codesnippet', 'widget', 'dialog']),
+    },
+    
+    # 2. Khung nhỏ gọn (Dành cho Mô tả xe)
+    'mini': {
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Bold', 'Italic', 'Underline'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink'],
+            ['TextColor', 'BGColor'],
+            ['Maximize']
+        ],
+        'height': 200, # Kích thước nhỏ xinh chỉ 200px
+        'width': '100%',
+    }
+}

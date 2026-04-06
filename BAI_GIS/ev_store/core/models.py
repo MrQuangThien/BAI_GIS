@@ -2,7 +2,7 @@ from django.db import models
 from django import forms
 from django.contrib.auth.models import User
 from django.utils import timezone 
-
+from ckeditor.fields import RichTextField
 # ==========================================
 #                  MODELS
 # ==========================================
@@ -10,6 +10,7 @@ from django.utils import timezone
 class CuaHang(models.Model):
     ten_cua_hang = models.CharField(max_length=255)
     dia_chi = models.TextField()
+    bai_gioi_thieu = RichTextField(blank=True, null=True)
     so_dien_thoai = models.CharField(max_length=20)
     trang_thai = models.BooleanField(default=True)
 
@@ -38,7 +39,7 @@ class XeDien(models.Model):
     hinh_anh = models.ImageField(upload_to='xe_dien_images/', null=True, blank=True)
     noi_bat = models.BooleanField(default=False, verbose_name="Sản phẩm nổi bật")
     sap_ve = models.BooleanField(default=False, verbose_name="Sản phẩm sắp về")
-    mo_ta = models.TextField(verbose_name="Mô tả chi tiết", blank=True, null=True)
+    mo_ta = RichTextField(config_name='mini', blank=True, null=True, verbose_name="Mô tả chi tiết")
     
     anh_phu_1 = models.ImageField(upload_to='xe_dien_images/', blank=True, null=True, verbose_name="Ảnh phụ 1")
     anh_phu_2 = models.ImageField(upload_to='xe_dien_images/', blank=True, null=True, verbose_name="Ảnh phụ 2")
@@ -209,3 +210,5 @@ class ChiTietPhieuNhap(models.Model):
 
     def __str__(self):
         return f"{self.xe.ten_xe} - {self.so_luong} chiếc"
+    
+    

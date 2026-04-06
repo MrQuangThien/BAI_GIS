@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Giới thiệu hệ thống | EV STORE{% endblock %}
+
+{% block extra_css %}
+<style>
+    .about-hero {
+        background: linear-gradient(rgba(25, 135, 84, 0.85), rgba(33, 37, 41, 0.9)), url("https://images.unsplash.com/photo-1593941707882-a5bba14938c7");
+        background-size: cover;
+        background-position: center;
+        padding: 100px 0;
+        color: white;
+        text-align: center;
+    }
+
+    .ckeditor-content {
+        line-height: 1.7;
+        font-size: 1.05rem;
+        color: #495057;
+    }
+
+    .ckeditor-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 15px 0;
+    }
+
+    .branch-card {
+        transition: 0.3s ease;
+        border-left: 5px solid transparent;
+    }
+
+    .branch-card:hover {
+        border-left-color: #198754;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="about-hero mb-5">
+    <div class="container">
+        <h1 class="display-4 fw-bold mb-3">Về EV STORE</h1>
+        <p class="lead w-75 mx-auto">Chúng tôi tự hào là hệ thống phân phối xe điện thông minh lớn nhất, với mạng lưới
+            chi nhánh phủ sóng rộng khắp, cam kết mang đến trải nghiệm xanh và hiện đại cho mọi khách hàng.</p>
+    </div>
+</section>
+
+<div class="container mb-5 pb-5">
+    <h2 class="fw-bold text-center mb-5"><i class="bi bi-buildings text-success me-2"></i>Hệ thống Chi nhánh của chúng
+        tôi</h2>
+
+    <div class="row justify-content-center g-4">
+        {% for ch in danh_sach_cua_hang %}
+        <div class="col-12">
+            <div class="card branch-card shadow-sm border-0 rounded-4 overflow-hidden">
+                <div class="row g-0">
+                    <div class="col-md-4 bg-light d-flex align-items-center justify-content-center">
+                        {% if ch.hinh_anh %}
+                        <img src="{{ ch.hinh_anh.url }}" class="img-fluid h-100 w-100"
+                            style="object-fit: cover; min-height: 250px;" alt="{{ ch.ten_cua_hang }}">
+                        {% else %}
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-shop display-1 opacity-25"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-8">
+                        <div class="card-body p-4 p-md-5">
+                            <h3 class="fw-bold text-success mb-3">{{ ch.ten_cua_hang }}</h3>
+
+                            <div class="d-flex flex-wrap gap-3 mb-4 border-bottom pb-3">
+                                <span class="text-muted"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ ch.dia_chi }}</span>
+                                <span class="text-muted"><i class="bi bi-telephone-fill text-primary me-1"></i> {{ ch.so_dien_thoai }}</span>
+                            </div>
+
+                            {% if ch.bai_gioi_thieu %}
+                            <div class="ckeditor-content mb-3">
+                                {{ ch.bai_gioi_thieu|truncatewords_html:40|safe }}
+                            </div>
+                            
+                            <div class="d-flex flex-wrap gap-2 mt-3">
+                                <a href="{% url 'chi_tiet_cua_hang' ch.id %}" class="btn btn-success rounded-pill px-4 shadow-sm">
+                                    Đọc thêm <i class="bi bi-arrow-right"></i>
+                                </a>
+                                <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-outline-success rounded-pill px-4 shadow-sm">
+                                    Xem xe tại chi nhánh này
+                                </a>
+                            </div>
+                            {% else %}
+                            <p class="text-muted fst-italic mb-3">Chi nhánh hiện đại, trang bị đầy đủ trạm sạc...</p>
+                            
+                            <div class="d-flex flex-wrap gap-2 mt-3">
+                                <a href="{% url 'chi_tiet_cua_hang' ch.id %}" class="btn btn-outline-success rounded-pill px-4 shadow-sm">
+                                    Xem chi tiết
+                                </a>
+                                <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-success rounded-pill px-4 shadow-sm">
+                                    Xem xe tại chi nhánh này
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted fs-5">Hệ thống đang cập nhật danh sách chi nhánh...</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

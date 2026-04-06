@@ -19,6 +19,7 @@ urlpatterns = [
     path('', views.trang_chu, name='trang_chu'),
     path('gioi-thieu/', views.gioi_thieu, name='gioi_thieu'),
     path('chi-nhanh/<int:pk>/', views.chi_tiet_cua_hang, name='chi_tiet_cua_hang'),
+    path('chi-nhanh/<int:pk>/san-pham/', views.san_pham_tai_chi_nhanh, name='san_pham_tai_chi_nhanh'),
     path("map/", ban_do_tram_sac, name='ban_do_tram_sac'),
     path("api/nearest-tram/", get_nearest_tram, name='get_nearest_tram'),  # Endpoint AJAX
     # Thêm 2 dòng API này vào để phục vụ cho Bản đồ GIS

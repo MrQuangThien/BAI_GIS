@@ -35,6 +35,13 @@
     .table tbody tr:hover {
         background-color: #f8f9fa;
     }
+    
+    /* Thêm CSS cho phần thông số đẹp hơn */
+    .spec-badge {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        border-radius: 6px;
+    }
 </style>
 {% endblock %}
 
@@ -80,37 +87,44 @@
                     {% for xe in tat_ca_xe %}
                     <tr>
 
-                        <!-- Tên xe -->
                         <td class="ps-4">
                             <div class="fw-bold text-dark">{{ xe.ten_xe }}</div>
                             <small class="text-muted">#{{ xe.id }}</small>
                         </td>
 
-                        <!-- Hãng -->
                         <td class="text-center">
                             <span class="badge bg-light text-dark border">
                                 {{ xe.hang_san_xuat }}
                             </span>
                         </td>
 
-                        <!-- Thông số -->
-                        <td class="text-center small">
-                            🔋 {{ xe.dung_luong_pin }}kWh <br>
-                            🚗 {{ xe.tam_di_chuyen }}km
+                        <td class="text-center">
+                            <div class="d-flex flex-column gap-1 align-items-center">
+                                <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle spec-badge" title="Dung lượng pin">
+                                    <i class="bi bi-battery-charging me-1"></i>{{ xe.dung_luong_pin }} kWh
+                                </span>
+                                <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle spec-badge" title="Tầm hoạt động">
+                                    <i class="bi bi-speedometer2 me-1"></i>{{ xe.tam_di_chuyen }} km
+                                </span>
+                            </div>
                         </td>
 
-                        <!-- Giá -->
                         <td class="text-center price-text">
                             {{ xe.gia|intcomma }}đ
                         </td>
 
-                        <!-- Cửa hàng -->
                         <td class="text-center small">
-                            <i class="bi bi-shop text-primary"></i><br>
-                            {{ xe.cua_hang.ten_cua_hang }}
+                            <div class="d-flex flex-column gap-1 align-items-center">
+                                {% for ch in xe.cua_hang.all %}
+                                    <span class="badge bg-light text-secondary border border-secondary-subtle">
+                                        <i class="bi bi-shop text-primary me-1"></i>{{ ch.ten_cua_hang }}
+                                    </span>
+                                {% empty %}
+                                    <span class="text-muted fst-italic" style="font-size: 0.8rem;">Chưa phân bổ</span>
+                                {% endfor %}
+                            </div>
                         </td>
 
-                        <!-- Trạng thái -->
                         <td class="text-center">
                             {% if xe.trang_thai %}
                                 <span class="badge bg-success-subtle text-success border badge-status">
@@ -123,7 +137,6 @@
                             {% endif %}
                         </td>
 
-                        <!-- Phân loại -->
                         <td class="text-center">
                             {% if xe.noi_bat %}
                                 <span class="badge bg-warning text-dark mb-1 d-block">
@@ -142,7 +155,6 @@
                             {% endif %}
                         </td>
 
-                        <!-- Thao tác -->
                         <td class="text-center pe-4">
                             <div class="d-flex justify-content-center gap-2">
                                 <a href="{% url 'sua_xe' xe.pk %}" 

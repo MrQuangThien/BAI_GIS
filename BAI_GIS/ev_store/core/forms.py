@@ -149,27 +149,22 @@ class RegisterForm(forms.ModelForm):
 # ==========================================
 # 3. CÁC FORM SẢN PHẨM & KINH DOANH
 # ==========================================
+# Thêm class này lên trên đầu file forms.py (dưới phần import)
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
 class XeDienForm(forms.ModelForm):
+    # Ghi đè trường hinh_anh để chấp nhận nhiều file
+    hinh_anh = forms.FileField(
+        widget=MultipleFileInput(attrs={'class': 'form-control', 'multiple': True}),
+        required=False,
+        label="Chọn tất cả hình ảnh sản phẩm"
+    )
+
     class Meta:
         model = XeDien
-        fields = '__all__'
-        widgets = {
-            'ten_xe': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ví dụ: VinFast VF 8'}),
-            'hang_san_xuat': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ví dụ: VinFast'}),
-            'danh_muc': forms.Select(attrs={'class': 'form-select'}), 
-            'dung_luong_pin': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Ví dụ: 88'}),
-            'tam_di_chuyen': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Ví dụ: 400'}),
-            'gia': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Nhập giá bán (VNĐ)'}),
-            'cua_hang': forms.Select(attrs={'class': 'form-select'}),
-            'hinh_anh': forms.FileInput(attrs={'class': 'form-control mb-2'}),
-            'trang_thai': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'noi_bat': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'sap_ve': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'mo_ta': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Nhập mô tả chi tiết của xe...'}),
-            'anh_phu_1': forms.FileInput(attrs={'class': 'form-control'}),
-            'anh_phu_2': forms.FileInput(attrs={'class': 'form-control'}),
-            'anh_phu_3': forms.FileInput(attrs={'class': 'form-control'}),
-        }
+        exclude = ['anh_phu_1', 'anh_phu_2', 'anh_phu_3'] # Loại bỏ các trường cũ
+
 
 class DonHangForm(forms.ModelForm):
     class Meta:

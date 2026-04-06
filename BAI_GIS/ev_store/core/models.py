@@ -34,19 +34,20 @@ class XeDien(models.Model):
     tam_di_chuyen = models.IntegerField()
     gia = models.BigIntegerField()
     trang_thai = models.BooleanField(default=True)
-    cua_hang = models.ForeignKey(CuaHang, on_delete=models.CASCADE)
     danh_muc = models.ForeignKey(DanhMuc, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Danh mục sản phẩm")
-    hinh_anh = models.ImageField(upload_to='xe_dien_images/', null=True, blank=True)
+    hinh_anh = models.ImageField(upload_to='xe_dien_images/', null=True, blank=True, verbose_name="Ảnh đại diện")
     noi_bat = models.BooleanField(default=False, verbose_name="Sản phẩm nổi bật")
     sap_ve = models.BooleanField(default=False, verbose_name="Sản phẩm sắp về")
     mo_ta = RichTextField(config_name='mini', blank=True, null=True, verbose_name="Mô tả chi tiết")
+    cua_hang = models.ManyToManyField(CuaHang, related_name='danh_sach_xe', blank=True, verbose_name="Có tại chi nhánh")
     
-    anh_phu_1 = models.ImageField(upload_to='xe_dien_images/', blank=True, null=True, verbose_name="Ảnh phụ 1")
-    anh_phu_2 = models.ImageField(upload_to='xe_dien_images/', blank=True, null=True, verbose_name="Ảnh phụ 2")
-    anh_phu_3 = models.ImageField(upload_to='xe_dien_images/', blank=True, null=True, verbose_name="Ảnh phụ 3")
-
     def __str__(self):
         return self.ten_xe
+    
+
+class AnhXeDien(models.Model):
+    xe = models.ForeignKey(XeDien, on_delete=models.CASCADE, related_name='album_anh')
+    image = models.ImageField(upload_to='xe_dien_images/')
 
 class TramSac(models.Model):
     ten_tram = models.CharField(max_length=255)

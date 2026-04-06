@@ -1,5 +1,6 @@
 {% load static %}
-{% load humanize %} <!DOCTYPE html>
+{% load humanize %} 
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -8,74 +9,28 @@
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-   
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
     
     <style>
-        body { 
-            background: #f4f6f9; 
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
+        body { background: #f4f6f9; display: flex; flex-direction: column; min-height: 100vh; }
         .navbar-brand { font-weight: bold; font-size: 22px; }
         .price-text { color: #198754; font-weight: bold; font-size: 2.2rem; }
         
-        /* CSS CHO SWIPER SLIDER */
-        .mySwiper2 { 
-            height: 450px; 
-            width: 100%; 
-            border-radius: 10px; 
-            background: #ffffff; 
-            margin-bottom: 10px;
-        }
-        .mySwiper2 img { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: contain; 
-            padding: 10px;
-        }
+        /* CSS CHO KHUNG ẢNH LỚN */
+        .mySwiper2 { height: 450px; width: 100%; border-radius: 12px; background: #fff; margin-bottom: 15px;}
+        .mySwiper2 .swiper-slide { display: flex; align-items: center; justify-content: center; }
+        .mySwiper2 img { max-width: 100%; max-height: 100%; object-fit: contain; padding: 10px;}
         
-        
-        .swiper-button-next, .swiper-button-prev {
-            background-color: rgba(255, 255, 255, 0.8);
-            width: 40px !important;
-            height: 40px !important;
-            border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .swiper-button-next:after, .swiper-button-prev:after {
-            font-size: 18px !important;
-            font-weight: bold;
-        }
+        /* Nút qua lại */
+        .swiper-button-next, .swiper-button-prev { background-color: rgba(25, 135, 84, 0.1); width: 45px !important; height: 45px !important; border-radius: 50%; color: #198754 !important; transition: 0.3s;}
+        .swiper-button-next:hover, .swiper-button-prev:hover { background-color: #198754; color: white !important; }
+        .swiper-button-next:after, .swiper-button-prev:after { font-size: 20px !important; font-weight: bold; }
 
-
-        .mySwiper { 
-            height: 85px; 
-            box-sizing: border-box; 
-            padding: 10px 0; 
-        }
-        .mySwiper .swiper-slide { 
-            width: 25%; 
-            height: 100%; 
-            opacity: 0.5; 
-            cursor: pointer; 
-            border-radius: 8px; 
-            overflow: hidden; 
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-        .mySwiper .swiper-slide-thumb-active { 
-            opacity: 1; 
-            border-color: #198754; 
-            box-shadow: 0 4px 8px rgba(25, 135, 84, 0.2);
-        }
-        .mySwiper .swiper-slide img { 
-            display: block; 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-        }
+        /* CSS CHO KHUNG ẢNH NHỎ BÊN DƯỚI */
+        .mySwiper { height: 85px; box-sizing: border-box; padding: 5px 0; }
+        .mySwiper .swiper-slide { width: 25%; height: 100%; opacity: 0.4; cursor: pointer; border-radius: 8px; overflow: hidden; border: 2px solid transparent; transition: all 0.3s ease; background: white;}
+        .mySwiper .swiper-slide-thumb-active { opacity: 1; border-color: #198754; }
+        .mySwiper .swiper-slide img { display: block; width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
 <body>
@@ -102,12 +57,8 @@
         
        <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item">
-                    <a href="{% url 'trang_chu' %}" class="text-success text-decoration-none fw-semibold">Trang chủ</a>
-                </li>
-                <li class="breadcrumb-item">
-                    <a href="{% url 'danh_sach_san_pham' %}" class="text-success text-decoration-none fw-semibold">Sản phẩm</a>
-                </li>
+                <li class="breadcrumb-item"><a href="{% url 'trang_chu' %}" class="text-success text-decoration-none fw-semibold">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'danh_sach_san_pham' %}" class="text-success text-decoration-none fw-semibold">Sản phẩm</a></li>
                 <li class="breadcrumb-item active" aria-current="page">{{ xe.ten_xe }}</li>
             </ol>
         </nav>
@@ -115,39 +66,33 @@
         <div class="row bg-white shadow-sm p-4 rounded-4 mt-3">
             
             <div class="col-md-6 text-center border-end pe-md-4">
-               
-                <div style="--swiper-navigation-color: #198754; --swiper-pagination-color: #198754;">
-                    <div class="swiper mySwiper2 shadow-sm border">
-                        <div class="swiper-wrapper">
-                            {% if xe.hinh_anh %}
-                                <div class="swiper-slide"><img src="{{ xe.hinh_anh.url }}" alt="{{ xe.ten_xe }}" /></div>
-                            {% else %}
-                                <div class="swiper-slide"><img src="https://via.placeholder.com/500x400?text=Chưa+có+ảnh" /></div>
-                            {% endif %}
-
-                            {% if xe.anh_phu_1 %}<div class="swiper-slide"><img src="{{ xe.anh_phu_1.url }}" alt="Ảnh phụ 1" /></div>{% endif %}
-                            {% if xe.anh_phu_2 %}<div class="swiper-slide"><img src="{{ xe.anh_phu_2.url }}" alt="Ảnh phụ 2" /></div>{% endif %}
-                            {% if xe.anh_phu_3 %}<div class="swiper-slide"><img src="{{ xe.anh_phu_3.url }}" alt="Ảnh phụ 3" /></div>{% endif %}
-                        </div>
-                        <div class="swiper-button-next"></div>
-                        <div class="swiper-button-prev"></div>
+                <div class="swiper mySwiper2 shadow-sm border border-light-subtle">
+                    <div class="swiper-wrapper">
+                        {% if xe.hinh_anh %}
+                            <div class="swiper-slide"><img src="{{ xe.hinh_anh.url }}" alt="{{ xe.ten_xe }}" /></div>
+                        {% else %}
+                            <div class="swiper-slide"><img src="https://via.placeholder.com/800x600?text=Chưa+có+ảnh" alt="No image" /></div>
+                        {% endif %}
+                        
+                        {% for anh in xe.album_anh.all %}
+                            <div class="swiper-slide"><img src="{{ anh.image.url }}" alt="Ảnh chi tiết" /></div>
+                        {% endfor %}
                     </div>
-                    
-                    <div class="swiper mySwiper">
-                        <div class="swiper-wrapper">
-                            {% if xe.hinh_anh %}
-                                <div class="swiper-slide"><img src="{{ xe.hinh_anh.url }}" /></div>
-                            {% else %}
-                                <div class="swiper-slide"><img src="https://via.placeholder.com/500x400?text=Chưa+có+ảnh" /></div>
-     
-                                {% endif %}
-                            {% if xe.anh_phu_1 %}<div class="swiper-slide"><img src="{{ xe.anh_phu_1.url }}" /></div>{% endif %}
-                            {% if xe.anh_phu_2 %}<div class="swiper-slide"><img src="{{ xe.anh_phu_2.url }}" /></div>{% endif %}
-                            {% if xe.anh_phu_3 %}<div class="swiper-slide"><img src="{{ xe.anh_phu_3.url }}" /></div>{% endif %}
-                        </div>
+                    <div class="swiper-button-next"></div>
+                    <div class="swiper-button-prev"></div>
+                </div>
+                
+                <div class="swiper mySwiper mt-2">
+                    <div class="swiper-wrapper">
+                        {% if xe.hinh_anh %}
+                            <div class="swiper-slide"><img src="{{ xe.hinh_anh.url }}" /></div>
+                        {% endif %}
+                        
+                        {% for anh in xe.album_anh.all %}
+                            <div class="swiper-slide"><img src="{{ anh.image.url }}" /></div>
+                        {% endfor %}
                     </div>
                 </div>
-
             </div>
             
             <div class="col-md-6 ps-md-4 mt-4 mt-md-0 d-flex flex-column">
@@ -165,11 +110,11 @@
                 
                 <h2 class="price-text my-3 border-bottom pb-3">{{ xe.gia|intcomma }} VNĐ</h2>
                 
-                <h5 class="fw-bold mt-2 mb-3 text-secondary"><i class="bi bi-gear-fill me-2"></i>Thông số kỹ thuật:</h5>
-                <ul class="list-group list-group-flush mb-4">
+                <h5 class="fw-bold mt-2 mb-3 text-secondary"><i class="bi bi-gear-fill me-2 text-primary"></i>Thông số kỹ thuật:</h5>
+                <ul class="list-group list-group-flush mb-4 fs-6">
                     <li class="list-group-item d-flex justify-content-between px-0 bg-transparent">
                         <span class="text-muted">Dung lượng pin:</span>
-                        <strong class="text-dark">{{ xe.dung_luong_pin }} Ah</strong>
+                        <strong class="text-dark">{{ xe.dung_luong_pin }} kWh</strong>
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0 bg-transparent">
                         <span class="text-muted">Tầm di chuyển:</span>
@@ -189,31 +134,35 @@
                         </span>
                     </li>
                     
-                    {% if xe.cua_hang %}
-                    <li class="list-group-item d-flex justify-content-between px-0 bg-transparent">
-                        <span class="text-muted">Cửa hàng phân phối:</span>
-                        <strong class="text-primary"><i class="bi bi-shop me-1"></i> {{ xe.cua_hang }}</strong>
+                    <li class="list-group-item d-flex justify-content-between align-items-start px-0 bg-transparent">
+                        <span class="text-muted mt-1">Cửa hàng phân phối:</span>
+                        <div class="text-end">
+                            {% for ch in xe.cua_hang.all %}
+                                <strong class="text-primary d-block mb-1"><i class="bi bi-geo-alt-fill me-1"></i>{{ ch.ten_cua_hang }}</strong>
+                            {% empty %}
+                                <span class="text-muted fst-italic">Chưa có thông tin</span>
+                            {% endfor %}
+                        </div>
                     </li>
-                    {% endif %}
                 </ul>
                 
-                <div class="mt-auto">
+                <div class="mt-auto pt-3 border-top">
                     {% if cho_phep_dat %}
                         {% if xe.sap_ve %}
-                            <a href="{% url 'tao_don_hang' xe.id %}" class="btn btn-info btn-lg w-100 fw-bold text-dark shadow-sm py-3">
-                                <i class="bi bi-clock-history me-2"></i> ĐẶT CỌC GIỮ CHỖ
+                            <a href="{% url 'tao_don_hang' xe.id %}" class="btn btn-info btn-lg w-100 fw-bold text-dark shadow py-3 rounded-pill">
+                                <i class="bi bi-clock-history me-2 fs-5"></i> ĐẶT CỌC GIỮ CHỖ NGAY
                             </a>
                         {% else %}
-                            <a href="{% url 'tao_don_hang' xe.id %}" class="btn btn-success btn-lg w-100 fw-bold shadow-sm py-3">
-                                <i class="bi bi-cart-plus-fill me-2"></i> ĐẶT MUA NGAY
+                            <a href="{% url 'tao_don_hang' xe.id %}" class="btn btn-success btn-lg w-100 fw-bold shadow py-3 rounded-pill">
+                                <i class="bi bi-cart-plus-fill me-2 fs-5"></i> ĐẶT MUA NGAY
                             </a>
                         {% endif %}
                     {% else %}
-                        <button class="btn btn-secondary btn-lg w-100 fw-bold shadow-sm py-3" disabled>
+                        <button class="btn btn-secondary btn-lg w-100 fw-bold shadow-sm py-3 rounded-pill" disabled>
                             <i class="bi bi-x-octagon me-2"></i> TẠM THỜI HẾT HÀNG
                         </button>
-                        <div class="text-center mt-2 small text-danger fw-semibold">
-                            Sản phẩm đã được bán hết hoặc đang được khách khác giữ chỗ. Vui lòng quay lại sau!
+                        <div class="text-center mt-3 small text-danger fw-semibold bg-danger-subtle p-2 rounded">
+                            Sản phẩm đã bán hết hoặc đang được khách khác giữ chỗ. Vui lòng quay lại sau!
                         </div>
                     {% endif %}
                 </div>
@@ -221,66 +170,72 @@
             </div>
         </div>
 
-        <div class="row bg-white shadow-sm p-4 rounded-4 mt-4 mb-3">
+        <div class="row bg-white shadow-sm p-4 p-md-5 rounded-4 mt-4 mb-3">
             <div class="col-12">
                 <h4 class="fw-bold border-bottom border-success pb-3 mb-4 text-success">
-                    <i class="bi bi-card-text me-2"></i>Mô tả chi tiết
+                    <i class="bi bi-card-text me-2"></i>Mô tả chi tiết sản phẩm
                 </h4>
                 
-                <div class="text-secondary" style="line-height: 1.8;">
+                <div class="text-dark ck-content" style="line-height: 1.8; font-size: 1.05rem;">
                     {% if xe.mo_ta %}
                         {{ xe.mo_ta|safe }}
                     {% else %}
-                        <p class="fst-italic text-muted text-center py-4 bg-light rounded"><i class="bi bi-journal-x fs-2 d-block mb-2 text-black-50"></i> Chưa có bài viết mô tả cho sản phẩm này.</p>
+                        <div class="text-center py-5 bg-light rounded-4">
+                            <i class="bi bi-journal-x fs-1 d-block mb-3 text-muted"></i> 
+                            <p class="fst-italic text-muted fs-5 mb-0">Chưa có bài viết mô tả chi tiết cho sản phẩm này.</p>
+                        </div>
                     {% endif %}
                 </div>
             </div>
         </div>
 
-        <div class="row bg-white shadow-sm p-4 rounded-4 mt-4 mb-5">
+        <div class="row bg-white shadow-sm p-4 p-md-5 rounded-4 mt-4 mb-5">
             <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center border-bottom border-success pb-3 mb-4">
-                    <h4 class="fw-bold text-success mb-0">
-                        <i class="bi bi-star-half me-2"></i>Đánh giá từ khách hàng
+                <div class="d-flex justify-content-between align-items-center border-bottom border-warning pb-3 mb-4">
+                    <h4 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-star-half me-2 text-warning"></i>Đánh giá từ khách hàng
                     </h4>
                     
                     {% if trung_binh_sao > 0 %}
-                    <div class="fs-5 text-warning fw-bold">
+                    <div class="fs-4 text-warning fw-bold bg-warning-subtle px-3 py-1 rounded-pill">
                         {{ trung_binh_sao }} <i class="bi bi-star-fill"></i> 
-                        <span class="text-muted fs-6 fw-normal">({{ feedbacks|length }} đánh giá)</span>
+                        <span class="text-dark fs-6 fw-normal ms-1">({{ feedbacks|length }} đánh giá)</span>
                     </div>
                     {% endif %}
                 </div>
 
-                <div class="feedback-list">
+                <div class="row g-4">
                     {% for fb in feedbacks %}
-                    <div class="card border-0 bg-light mb-3 shadow-sm rounded-4">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between mb-2">
-                                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-person-circle text-secondary me-2"></i>{{ fb.user.username }}</h6>
-                                <small class="text-muted"><i class="bi bi-clock me-1"></i>{{ fb.ngay_tao|date:"d/m/Y H:i" }}</small>
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light h-100 shadow-sm rounded-4">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                    <h6 class="fw-bold mb-0 text-dark fs-5"><i class="bi bi-person-circle text-primary me-2"></i>{{ fb.user.username }}</h6>
+                                    <div class="text-warning fs-6 bg-white px-2 py-1 rounded shadow-sm border">
+                                        <span class="text-dark fw-bold me-1">{{ fb.danh_gia }}.0</span><i class="bi bi-star-fill"></i>
+                                    </div>
+                                </div>
+                                <p class="mb-3 text-secondary" style="line-height: 1.6;">"{{ fb.noi_dung }}"</p>
+                                <div class="text-end">
+                                    <small class="text-muted fst-italic"><i class="bi bi-clock me-1"></i>{{ fb.ngay_tao|date:"d/m/Y H:i" }}</small>
+                                </div>
                             </div>
-                            
-                            <div class="text-warning mb-2 fs-6">
-                                <i class="bi bi-star-fill"></i>
-                                <span class="text-dark fw-bold ms-1">{{ fb.danh_gia }}/5</span>
-                            </div>
-                            
-                            <p class="mb-0 text-secondary" style="line-height: 1.6;">{{ fb.noi_dung }}</p>
                         </div>
                     </div>
                     {% empty %}
-                    <div class="text-center py-5 bg-light rounded-4">
-                        <i class="bi bi-chat-square-text fs-1 text-muted opacity-50 mb-3 d-block"></i>
-                        <p class="text-muted mb-0 fs-5">Chưa có đánh giá nào cho sản phẩm này.</p>
-                        <p class="text-muted small">Hãy là người đầu tiên chia sẻ trải nghiệm của bạn!</p>
+                    <div class="col-12">
+                        <div class="text-center py-5 bg-light rounded-4 border border-dashed">
+                            <i class="bi bi-chat-heart fs-1 text-muted opacity-50 mb-3 d-block"></i>
+                            <p class="text-dark mb-1 fs-5 fw-bold">Chưa có đánh giá nào.</p>
+                            <p class="text-muted small">Hãy là người đầu tiên chia sẻ trải nghiệm tuyệt vời của bạn!</p>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
                 
-                <div class="text-center mt-4 pt-3 border-top">
-                    <a href="{% url 'gui_feedback' %}" class="btn btn-outline-success fw-bold px-4 py-2 rounded-pill shadow-sm">
-                        <i class="bi bi-pencil-square me-1"></i> Viết đánh giá của bạn
+                <div class="text-center mt-5">
+                    <a href="{% url 'gui_feedback' %}" class="btn btn-outline-warning text-dark border-2 fw-bold px-5 py-3 rounded-pill shadow-sm">
+                        <i class="bi bi-pencil-square me-2"></i> Viết đánh giá của bạn
                     </a>
                 </div>
             </div>
@@ -293,10 +248,9 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-   
     <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
     <script>
-
+        // Khởi tạo slider ảnh nhỏ (Thumbnails)
         var swiper = new Swiper(".mySwiper", {
             spaceBetween: 10,
             slidesPerView: 4,
@@ -304,7 +258,7 @@
             watchSlidesProgress: true,
         });
         
-
+        // Khởi tạo slider ảnh lớn liên kết với ảnh nhỏ
         var swiper2 = new Swiper(".mySwiper2", {
             spaceBetween: 10,
             navigation: {
@@ -314,7 +268,6 @@
             thumbs: {
                 swiper: swiper,
             },
-
             effect: "fade", 
             fadeEffect: { crossFade: true }
         });

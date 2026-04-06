@@ -20,7 +20,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.dateparse import parse_datetime
 
-from .models import TramSac, XeDien, CuaHang, DonHang, DanhMuc, Feedback, KhoHang, PhienSac
+from .models import TramSac, XeDien, CuaHang, DonHang, DanhMuc, Feedback, KhoHang, PhienSac, AnhXeDien
 
 from .forms import XeDienForm, UserForm, RegisterForm, DonHangForm, DonHangTaiQuayForm, FeedbackForm, UserProfileForm, PhieuNhapKhoForm, ChiTietPhieuNhapFormSet
 
@@ -185,20 +185,130 @@ def danh_sach_xe(request):
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
 def them_xe(request):
-    form = XeDienForm(request.POST or None, request.FILES or None)
-    if form.is_valid():
-        form.save()
-        return redirect('danh_sach_xe')
+    if request.method == 'POST':
+        # 1. THỦ THUẬT Ở ĐÂY: Tạo bản sao của dữ liệu file gửi lên
+        files_data = request.FILES.copy()
+        danh_sach_anh = request.FILES.getlist('hinh_anh')
+
+        # Nếu có ảnh, chỉ đưa tấm đầu tiên cho Form kiểm tra để không bị báo lỗi
+        if danh_sach_anh:
+            files_data['hinh_anh'] = danh_sach_anh[0]
+
+        # Đưa dữ liệu đã "xào nấu" vào Form
+        form = XeDienForm(request.POST, files_data)
+
+        if form.is_valid():
+            xe = form.save(commit=False)
+            xe.save() # Lưu để có ID xe trước
+
+            # 2. Xử lý Album ảnh (Lưu tất cả ảnh vào kho)
+            if danh_sach_anh:
+                for f in danh_sach_anh:
+                    AnhXeDien.objects.create(xe=xe, image=f)
+
+            # 3. Xử lý Cửa hàng
+            danh_sach_ch = request.POST.getlist('cua_hang')
+            if danh_sach_ch:
+                xe.cua_hang.set(danh_sach_ch)
+
+            messages.success(request, 'Thêm xe mới thành công!')
+            return redirect('danh_sach_xe')
+        else:
+            print("=== LỖI FORM THÊM XE ===", form.errors)
+    else:
+        form = XeDienForm()
+        
+    return render(request, 'xe/xe_form.html', {'form': form, 'title': 'Thêm Xe Mới'})
+
+@login_required
+@phan_quyen(roles=['admin', 'quan_ly'])
+def them_xe(request):
+    if request.method == 'POST':
+        # 1. TẠO BẢN SAO DỮ LIỆU
+        post_data = request.POST.copy()
+        file_data = request.FILES.copy()
+
+        # 2. RÚT ẢNH RA VÀ XÓA KHỎI FORM ĐỂ TRÁNH LỖI VALIDATION
+        danh_sach_anh = request.FILES.getlist('hinh_anh')
+        if 'hinh_anh' in file_data:
+            del file_data['hinh_anh'] # Xóa đi để đánh lừa form.is_valid()
+
+        # Đưa dữ liệu đã "xào nấu" vào form
+        form = XeDienForm(post_data, file_data)
+
+        if form.is_valid():
+            xe = form.save(commit=False)
+            
+            # 3. GÁN THỦ CÔNG ẢNH ĐẠI DIỆN
+            if danh_sach_anh:
+                xe.hinh_anh = danh_sach_anh[0]
+                
+            xe.save() # Lưu xe vào CSDL
+
+            # 4. LƯU TẤT CẢ ẢNH VÀO ALBUM (AnhXeDien)
+            if danh_sach_anh:
+                for f in danh_sach_anh:
+                    AnhXeDien.objects.create(xe=xe, image=f)
+
+            # 5. XỬ LÝ CỬA HÀNG
+            danh_sach_ch = request.POST.getlist('cua_hang')
+            if danh_sach_ch:
+                xe.cua_hang.set(danh_sach_ch)
+
+            messages.success(request, 'Thêm xe mới thành công!')
+            return redirect('danh_sach_xe')
+        else:
+            print("=== LỖI FORM THÊM XE ===", form.errors)
+    else:
+        form = XeDienForm()
+        
     return render(request, 'xe/xe_form.html', {'form': form, 'title': 'Thêm Xe Mới'})
 
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
 def sua_xe(request, pk):
     xe = get_object_or_404(XeDien, pk=pk)
-    form = XeDienForm(request.POST or None, request.FILES or None, instance=xe)
-    if form.is_valid():
-        form.save()
-        return redirect('danh_sach_xe')
+    if request.method == 'POST':
+        # 1. TẠO BẢN SAO DỮ LIỆU
+        post_data = request.POST.copy()
+        file_data = request.FILES.copy()
+
+        # 2. RÚT ẢNH RA VÀ XÓA KHỎI FORM
+        danh_sach_anh = request.FILES.getlist('hinh_anh')
+        if 'hinh_anh' in file_data:
+            del file_data['hinh_anh']
+
+        form = XeDienForm(post_data, file_data, instance=xe)
+
+        if form.is_valid():
+            xe = form.save(commit=False)
+
+            # 3. NẾU CÓ CHỌN ẢNH MỚI -> CẬP NHẬT ẢNH ĐẠI DIỆN VÀ ALBUM
+            if danh_sach_anh:
+                xe.hinh_anh = danh_sach_anh[0]
+                
+                # Xóa sạch album cũ để up album mới lên
+                xe.album_anh.all().delete()
+                
+                for f in danh_sach_anh:
+                    AnhXeDien.objects.create(xe=xe, image=f)
+
+            xe.save()
+
+            # 4. CẬP NHẬT CỬA HÀNG
+            danh_sach_ch = request.POST.getlist('cua_hang')
+            if danh_sach_ch:
+                xe.cua_hang.set(danh_sach_ch)
+            else:
+                xe.cua_hang.clear()
+
+            messages.success(request, 'Cập nhật xe thành công!')
+            return redirect('danh_sach_xe')
+        else:
+            print("=== LỖI FORM SỬA XE ===", form.errors)
+    else:
+        form = XeDienForm(instance=xe)
+        
     return render(request, 'xe/xe_form.html', {'form': form, 'title': 'Chỉnh Sửa Xe'})
 
 @login_required
@@ -861,14 +971,20 @@ def xoa_feedback(request, feedback_id):
 def tru_kho_khi_dat_hang(sender, instance, created, **kwargs):
     if created and instance.trang_thai in ['Deposit Paid', 'Paid']:  
         try:
-            kho = KhoHang.objects.get(xe=instance.xe, cua_hang=instance.xe.cua_hang)
-            if kho.so_luong >= 1:
+            # TÌM KHO THÔNG MINH: Quét xem kho của chi nhánh nào đang có xe này (số lượng >= 1) thì bốc kho đó ra trừ
+            kho = KhoHang.objects.filter(xe=instance.xe, so_luong__gte=1).first()
+            
+            if kho:
                 kho.so_luong -= 1
                 kho.save()
-                if kho.so_luong == 0:
+                
+                # Kiểm tra tổng tồn kho trên toàn hệ thống, nếu sạch bách thì Dừng Bán luôn
+                tong_ton = KhoHang.objects.filter(xe=instance.xe).aggregate(Sum('so_luong'))['so_luong__sum'] or 0
+                if tong_ton <= 0:
                     instance.xe.trang_thai = False
                     instance.xe.save()
-        except KhoHang.DoesNotExist: pass
+        except Exception as e:
+            print(f"Lỗi trừ kho: {e}")
 
 @csrf_exempt
 def get_nearest_tram(request):
@@ -929,3 +1045,15 @@ def lich_su_sac(request):
 def lich_su_sac_khach_hang(request):
     danh_sach_phien = PhienSac.objects.filter(user=request.user).order_by('-thoi_gian_bat_dau')
     return render(request, 'users/user_sac.html', {'phien': danh_sach_phien})
+
+def san_pham_tai_chi_nhanh(request, pk):
+    # 1. Lấy thông tin chi nhánh đó
+    chi_nhanh = get_object_or_404(CuaHang, pk=pk)
+    
+    # 2. Lấy tất cả xe thuộc chi nhánh này (nhờ related_name='danh_sach_xe' ở model)
+    danh_sach_xe = chi_nhanh.danh_sach_xe.all()
+    
+    return render(request, 'pages/san_pham_chi_nhanh.html', {
+        'chi_nhanh': chi_nhanh,
+        'danh_sach_xe': danh_sach_xe
+    })

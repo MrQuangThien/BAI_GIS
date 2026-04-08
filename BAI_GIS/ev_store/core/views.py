@@ -1,12 +1,14 @@
 import json
 from math import radians, sin, cos, sqrt, atan2
 from datetime import timezone
-from functools import wraps # Import thư viện hỗ trợ Decorator
+from functools import wraps 
 import folium
 from folium.plugins import LocateControl
 
-from django.conf import settings
+from django.http import HttpResponse
+import openpyxl
 
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -20,41 +22,31 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.dateparse import parse_datetime
 
-from .models import TramSac, XeDien, CuaHang, DonHang, DanhMuc, Feedback, KhoHang, PhienSac, AnhXeDien
+# ĐÃ THÊM: PhieuNhapKho vào dòng import này
+from .models import TramSac, XeDien, CuaHang, DonHang, DanhMuc, Feedback, KhoHang, PhienSac, AnhXeDien, PhieuNhapKho, ChiTietPhieuNhap
 
 from .forms import XeDienForm, UserForm, RegisterForm, DonHangForm, DonHangTaiQuayForm, FeedbackForm, UserProfileForm, PhieuNhapKhoForm, ChiTietPhieuNhapFormSet
 
 # ==========================================
-# 0. DECORATOR PHÂN QUYỀN (QUAN TRỌNG)
-# ==========================================
-# ==========================================
-# 0. DECORATOR PHÂN QUYỀN (ĐÃ FIX LỖI TÀI KHOẢN CŨ)
+# 0. DECORATOR PHÂN QUYỀN
 # ==========================================
 def phan_quyen(roles=[]):
-    """
-    Hàm chặn URL dựa trên vai trò. Trả về 404 nếu không có quyền.
-    """
     def decorator(view_func):
         @wraps(view_func)
         def wrapper_func(request, *args, **kwargs):
             if not request.user.is_authenticated:
                 return redirect('login')
             
-            user_role = 'khach_hang' # Đặt mặc định là khách
-            
-            # Lấy vai trò thực tế
+            user_role = 'khach_hang' 
             try:
                 user_role = request.user.userprofile.vai_tro
             except:
-                # CỨU HỘ: Nếu tài khoản tạo từ trước không có Profile nhưng có quyền is_staff
                 if request.user.is_staff:
                     user_role = 'nhan_vien'
 
-            # Mặc định tài khoản Superuser của Django luôn là Admin tối cao
             if request.user.is_superuser: 
                 user_role = 'admin'
 
-            # Kiểm tra xem vai trò có nằm trong danh sách cho phép không
             if user_role in roles:
                 return view_func(request, *args, **kwargs)
             else:
@@ -67,19 +59,17 @@ def phan_quyen(roles=[]):
 # 1. GIAO DIỆN TRANG CHỦ & CÁC TRANG CHUNG
 # ==========================================
 def trang_chu(request):
-    # Lấy xe nổi bật và tính toán xem xe nào hết hàng (số lượng <= 0)
     xe_noi_bat_qs = XeDien.objects.filter(noi_bat=True, trang_thai=True)
     danh_sach_noi_bat = list(xe_noi_bat_qs)
     for xe in danh_sach_noi_bat:
         tong_ton = xe.kho_hang.aggregate(Sum('so_luong'))['so_luong__sum'] or 0
-        # Gắn thêm 1 cờ 'het_hang' ảo cho từng xe
         xe.het_hang = (tong_ton <= 0 and not xe.sap_ve)
         
     xe_sap_ve = XeDien.objects.filter(sap_ve=True, trang_thai=True)
     form = FeedbackForm() 
     
     context = {
-        'xe_noi_bat': danh_sach_noi_bat, # Trả ra danh sách đã được gắn cờ hết hàng
+        'xe_noi_bat': danh_sach_noi_bat, 
         'xe_sap_ve': xe_sap_ve, 
         'form': form
     }
@@ -88,7 +78,6 @@ def trang_chu(request):
 def tim_kiem(request):
     tu_khoa = request.GET.get('q', '')
     if tu_khoa:
-        # Chỉ tìm Xe điện (Bao gồm cả tìm theo tên kiểu dáng/danh mục)
         ket_qua_xe = XeDien.objects.filter(
             Q(ten_xe__icontains=tu_khoa) |
             Q(hang_san_xuat__icontains=tu_khoa) |
@@ -104,17 +93,13 @@ def tim_kiem(request):
     })
 
 def gioi_thieu(request):
-    # Lấy toàn bộ danh sách cửa hàng đang hoạt động
     danh_sach_cua_hang = CuaHang.objects.all().order_by('id') 
-    
     return render(request, 'pages/gioi_thieu.html', {'danh_sach_cua_hang': danh_sach_cua_hang})
 
 def chi_tiet_cua_hang(request, pk):
-    # Lấy đúng cửa hàng mà khách vừa click vào
     cua_hang = get_object_or_404(CuaHang, pk=pk)
     return render(request, 'pages/chi_tiet_cua_hang.html', {'ch': cua_hang})
 
-# Cả Admin và Quản lý đều được xem Dashboard tổng quan
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly','nhan_vien'])
 def admin_dashboard(request):
@@ -167,7 +152,6 @@ def chi_tiet_xe(request, xe_id):
     context = {'xe': xe, 'tong_ton_kho': tong_ton_kho, 'cho_phep_dat': cho_phep_dat, 'feedbacks': feedbacks, 'trung_binh_sao': round(trung_binh_sao, 1)}
     return render(request, 'xe/chi_tiet_xe.html', context)
 
-# Chỉ Admin và Quản lý sửa/xóa/xem xe
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
 def danh_sach_xe(request):
@@ -182,75 +166,32 @@ def danh_sach_xe(request):
         )
     return render(request, 'xe/danh_sach_xe.html', {'tat_ca_xe': tat_ca_xe, 'tu_khoa': tu_khoa})
 
+# ĐÃ XÓA HÀM them_xe BỊ TRÙNG LẶP
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
 def them_xe(request):
     if request.method == 'POST':
-        # 1. THỦ THUẬT Ở ĐÂY: Tạo bản sao của dữ liệu file gửi lên
-        files_data = request.FILES.copy()
-        danh_sach_anh = request.FILES.getlist('hinh_anh')
-
-        # Nếu có ảnh, chỉ đưa tấm đầu tiên cho Form kiểm tra để không bị báo lỗi
-        if danh_sach_anh:
-            files_data['hinh_anh'] = danh_sach_anh[0]
-
-        # Đưa dữ liệu đã "xào nấu" vào Form
-        form = XeDienForm(request.POST, files_data)
-
-        if form.is_valid():
-            xe = form.save(commit=False)
-            xe.save() # Lưu để có ID xe trước
-
-            # 2. Xử lý Album ảnh (Lưu tất cả ảnh vào kho)
-            if danh_sach_anh:
-                for f in danh_sach_anh:
-                    AnhXeDien.objects.create(xe=xe, image=f)
-
-            # 3. Xử lý Cửa hàng
-            danh_sach_ch = request.POST.getlist('cua_hang')
-            if danh_sach_ch:
-                xe.cua_hang.set(danh_sach_ch)
-
-            messages.success(request, 'Thêm xe mới thành công!')
-            return redirect('danh_sach_xe')
-        else:
-            print("=== LỖI FORM THÊM XE ===", form.errors)
-    else:
-        form = XeDienForm()
-        
-    return render(request, 'xe/xe_form.html', {'form': form, 'title': 'Thêm Xe Mới'})
-
-@login_required
-@phan_quyen(roles=['admin', 'quan_ly'])
-def them_xe(request):
-    if request.method == 'POST':
-        # 1. TẠO BẢN SAO DỮ LIỆU
         post_data = request.POST.copy()
         file_data = request.FILES.copy()
 
-        # 2. RÚT ẢNH RA VÀ XÓA KHỎI FORM ĐỂ TRÁNH LỖI VALIDATION
         danh_sach_anh = request.FILES.getlist('hinh_anh')
         if 'hinh_anh' in file_data:
-            del file_data['hinh_anh'] # Xóa đi để đánh lừa form.is_valid()
+            del file_data['hinh_anh'] 
 
-        # Đưa dữ liệu đã "xào nấu" vào form
         form = XeDienForm(post_data, file_data)
 
         if form.is_valid():
             xe = form.save(commit=False)
             
-            # 3. GÁN THỦ CÔNG ẢNH ĐẠI DIỆN
             if danh_sach_anh:
                 xe.hinh_anh = danh_sach_anh[0]
                 
-            xe.save() # Lưu xe vào CSDL
+            xe.save() 
 
-            # 4. LƯU TẤT CẢ ẢNH VÀO ALBUM (AnhXeDien)
             if danh_sach_anh:
                 for f in danh_sach_anh:
                     AnhXeDien.objects.create(xe=xe, image=f)
 
-            # 5. XỬ LÝ CỬA HÀNG
             danh_sach_ch = request.POST.getlist('cua_hang')
             if danh_sach_ch:
                 xe.cua_hang.set(danh_sach_ch)
@@ -269,11 +210,9 @@ def them_xe(request):
 def sua_xe(request, pk):
     xe = get_object_or_404(XeDien, pk=pk)
     if request.method == 'POST':
-        # 1. TẠO BẢN SAO DỮ LIỆU
         post_data = request.POST.copy()
         file_data = request.FILES.copy()
 
-        # 2. RÚT ẢNH RA VÀ XÓA KHỎI FORM
         danh_sach_anh = request.FILES.getlist('hinh_anh')
         if 'hinh_anh' in file_data:
             del file_data['hinh_anh']
@@ -283,19 +222,14 @@ def sua_xe(request, pk):
         if form.is_valid():
             xe = form.save(commit=False)
 
-            # 3. NẾU CÓ CHỌN ẢNH MỚI -> CẬP NHẬT ẢNH ĐẠI DIỆN VÀ ALBUM
             if danh_sach_anh:
                 xe.hinh_anh = danh_sach_anh[0]
-                
-                # Xóa sạch album cũ để up album mới lên
                 xe.album_anh.all().delete()
-                
                 for f in danh_sach_anh:
                     AnhXeDien.objects.create(xe=xe, image=f)
 
             xe.save()
 
-            # 4. CẬP NHẬT CỬA HÀNG
             danh_sach_ch = request.POST.getlist('cua_hang')
             if danh_sach_ch:
                 xe.cua_hang.set(danh_sach_ch)
@@ -334,29 +268,22 @@ def haversine(lat1, lon1, lat2, lon2):
 
 def ban_do_tram_sac(request):
     trams = TramSac.objects.filter(trang_thai=True)
-    
-    # 1. Kiểm tra xem người dùng có muốn "nhảy" đến trạm cụ thể nào không
     target_id = request.GET.get('id')
-    map_center = [10.7769, 106.7009] # Mặc định là TP.HCM
-    zoom_level = 12 # Mức zoom rộng
+    map_center = [10.7769, 106.7009] 
+    zoom_level = 12 
     
     if target_id:
         try:
-            # Tìm trạm đích
             tram_target = TramSac.objects.get(id=target_id)
             map_center = [float(tram_target.lat), float(tram_target.lon)]
-            zoom_level = 18 # Phóng to cực đại để thấy rõ vị trí
-        except:
-            pass
+            zoom_level = 18 
+        except: pass
 
-    # 2. Khởi tạo bản đồ với tâm điểm đã tính toán
     m = folium.Map(location=map_center, zoom_start=zoom_level, tiles='CartoDB positron')
     
     for tram in trams:
         try:
-            # Nếu là trạm đang được định vị, cho màu khác (ví dụ màu đỏ) để nổi bật
             color = 'red' if str(tram.id) == target_id else 'blue'
-            
             folium.Marker(
                 location=[float(tram.lat), float(tram.lon)],
                 popup=f"<b>{tram.ten_tram}</b><br>{tram.dia_chi}<br>Công suất: {tram.cong_suat} kW",
@@ -378,12 +305,9 @@ def ban_do_tram_sac(request):
 def quan_ly_tram_sac(request):
     tu_khoa = request.GET.get('q', '')
     danh_sach_tram = TramSac.objects.all().order_by('-id')
-    
     if tu_khoa:
         danh_sach_tram = danh_sach_tram.filter(
-            Q(ten_tram__icontains=tu_khoa) | 
-            Q(dia_chi__icontains=tu_khoa) |
-            Q(loai_sac__icontains=tu_khoa)
+            Q(ten_tram__icontains=tu_khoa) | Q(dia_chi__icontains=tu_khoa) | Q(loai_sac__icontains=tu_khoa)
         )
     return render(request, 'tram_sac/quan_ly_tram_sac.html', {'danh_sach_tram': danh_sach_tram, 'tu_khoa': tu_khoa})
 
@@ -423,7 +347,7 @@ def sua_tram_sac(request, tram_id):
 
 
 # ==========================================
-# 4. QUẢN LÝ ĐƠN HÀNG (Cả 3 quyền đều được vào)
+# 4. QUẢN LÝ ĐƠN HÀNG
 # ==========================================
 def tao_don_hang(request, xe_id):
     xe = get_object_or_404(XeDien, id=xe_id)
@@ -445,11 +369,7 @@ def tao_don_hang(request, xe_id):
                 don_hang.tong_tien = xe.gia 
             don_hang.save()
             
-            # ==========================================
-            # ĐOẠN CODE GỬI MAIL VỪA ĐƯỢC THÊM VÀO
-            # ==========================================
             try:
-                # Lấy email từ form (nếu model có trường email) hoặc từ tài khoản đăng nhập
                 email_nhan = getattr(don_hang, 'email', None) 
                 if not email_nhan and request.user.is_authenticated:
                     email_nhan = request.user.email
@@ -472,16 +392,8 @@ def tao_don_hang(request, xe_id):
                     Trân trọng,
                     Đội ngũ EV STORE.
                     """
-                    send_mail(
-                        chu_de,
-                        noi_dung,
-                        settings.EMAIL_HOST_USER,
-                        [email_nhan],
-                        fail_silently=False,
-                    )
-            except Exception as e:
-                print(f"Lỗi gửi email: {e}") # Báo lỗi ra console terminal nhưng không làm sập web
-            # ==========================================
+                    send_mail(chu_de, noi_dung, settings.EMAIL_HOST_USER, [email_nhan], fail_silently=False)
+            except Exception as e: print(f"Lỗi gửi email: {e}") 
 
             messages.success(request, "Đặt hàng thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.")
             return redirect('trang_chu') 
@@ -489,26 +401,16 @@ def tao_don_hang(request, xe_id):
         form = DonHangForm(initial={'loai_don': loai_mac_dinh}, xe=xe)
     return render(request, 'donhang/tao_don_hang.html', {'form': form, 'xe': xe})
 
-# Nhân viên được phép xử lý đơn hàng
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
 def danh_sach_don_hang(request):
     tu_khoa = request.GET.get('q', '')
-
     danh_sach = DonHang.objects.all().order_by('-ngay_dat')
-
     if tu_khoa:
         danh_sach = danh_sach.filter(
-            Q(ho_ten__icontains=tu_khoa) |
-            Q(so_dien_thoai__icontains=tu_khoa) |
-            Q(xe__ten_xe__icontains=tu_khoa) |
-            Q(id__icontains=tu_khoa)
+            Q(ho_ten__icontains=tu_khoa) | Q(so_dien_thoai__icontains=tu_khoa) | Q(xe__ten_xe__icontains=tu_khoa) | Q(id__icontains=tu_khoa)
         )
-
-    return render(request, 'donhang/danh_sach.html', {
-        'danh_sach_don_hang': danh_sach,
-        'tu_khoa': tu_khoa
-    })
+    return render(request, 'donhang/danh_sach.html', {'danh_sach_don_hang': danh_sach, 'tu_khoa': tu_khoa})
 
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
@@ -530,10 +432,7 @@ def tao_don_hang_offline(request):
         form = DonHangTaiQuayForm(request.POST)
         if form.is_valid():
             don_hang = form.save(commit=False)
-            
-            # --- ĐÃ THÊM: Tự động gán nhân viên đang đăng nhập làm người tạo đơn ---
             don_hang.nhan_vien_tao = request.user
-            
             if don_hang.loai_don == 'D': don_hang.so_tien_tra_truoc = 0
             don_hang.save()
             messages.success(request, f'Đã tạo đơn hàng thành công cho khách {don_hang.ho_ten}!')
@@ -550,8 +449,6 @@ def chi_tiet_don_hang_khach(request, don_hang_id):
 # ==========================================
 # 5. QUẢN LÝ USER VÀ AUTHENTICATION 
 # ==========================================
-# CÁC TRANG NÀY CHỈ DUY NHẤT ADMIN MỚI ĐƯỢC VÀO
-
 @login_required
 @phan_quyen(roles=['admin'])
 def list_user(request):
@@ -563,11 +460,9 @@ def them_user(request):
     if request.method == 'POST':
         form = UserForm(request.POST)
         if form.is_valid():
-            # ĐÃ SỬA: Chỉ cần 1 lệnh form.save() là form tự lo liệu phân quyền và mật khẩu
             form.save() 
             return redirect('ql_nhan_vien')
-    else: 
-        form = UserForm()
+    else: form = UserForm()
     return render(request, 'users/them_user.html', {'form': form})
 
 @login_required
@@ -576,7 +471,6 @@ def sua_user(request, id):
     user = get_object_or_404(User, id=id)
     form = UserForm(request.POST or None, instance=user)
     if form.is_valid():
-        # ĐÃ SỬA: Bỏ commit=False đi để form kích hoạt lưu UserProfile
         u = form.save() 
         return redirect('ql_nhan_vien' if u.is_staff else 'ql_khach_hang')
     return render(request, 'users/sua_user.html', {'form': form})
@@ -590,99 +484,56 @@ def xoa_user(request, id):
         user.delete()
         messages.success(request, "Đã xóa tài khoản thành công!")
     return redirect('ql_nhan_vien' if is_staff else 'ql_khach_hang')
+
 @login_required
 @phan_quyen(roles=['admin','quan_ly'])
 def ql_nhan_vien(request):
     tu_khoa = request.GET.get('q', '')
-
     danh_sach = User.objects.filter(is_staff=True)
-
     if tu_khoa:
-        danh_sach = danh_sach.filter(
-            Q(username__icontains=tu_khoa) |
-            Q(first_name__icontains=tu_khoa) |
-            Q(last_name__icontains=tu_khoa)
-        )
-
-    context = {
-        'danh_sach': danh_sach,
-        'title': 'Quản lý Nhân Viên',
-        'icon': 'bi-person-vcard',
-        'show_add_button': True,
-        'tu_khoa': tu_khoa
-    }
+        danh_sach = danh_sach.filter(Q(username__icontains=tu_khoa) | Q(first_name__icontains=tu_khoa) | Q(last_name__icontains=tu_khoa))
+    context = {'danh_sach': danh_sach, 'title': 'Quản lý Nhân Viên', 'icon': 'bi-person-vcard', 'show_add_button': True, 'tu_khoa': tu_khoa}
     return render(request, 'users/list_user.html', context)
+
 @login_required
 @phan_quyen(roles=['admin'])
 def ql_khach_hang(request):
     tu_khoa = request.GET.get('q', '')
-
     danh_sach = User.objects.filter(is_staff=False)
-
     if tu_khoa:
-        danh_sach = danh_sach.filter(
-            Q(username__icontains=tu_khoa) |
-            Q(email__icontains=tu_khoa)
-        )
-
-    context = {
-        'danh_sach': danh_sach,
-        'title': 'Quản lý Khách Hàng',
-        'icon': 'bi-people',
-        'show_add_button': False,
-        'tu_khoa': tu_khoa
-    }
+        danh_sach = danh_sach.filter(Q(username__icontains=tu_khoa) | Q(email__icontains=tu_khoa))
+    context = {'danh_sach': danh_sach, 'title': 'Quản lý Khách Hàng', 'icon': 'bi-people', 'show_add_button': False, 'tu_khoa': tu_khoa}
     return render(request, 'users/list_user.html', context)
-# --- Các trang đăng nhập / đăng xuất không bị ảnh hưởng ---
-import random # Đảm bảo có dòng này ở tuốt trên cùng file views.py
 
-# ... (Các code khác)
-
+import random 
 def dang_ky_view(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
             user.set_password(form.cleaned_data['password'])
-            
-            # QUAN TRỌNG: Khóa tài khoản, chưa cho đăng nhập ngay
             user.is_active = False 
             user.save()
             
-            # 1. Tạo mã OTP ngẫu nhiên gồm 6 chữ số
             otp = str(random.randint(100000, 999999))
-            
-            # 2. Lưu OTP và ID của user vào Session (Bộ nhớ tạm của trình duyệt)
             request.session['otp'] = otp
             request.session['user_id'] = user.id
             
-            # 3. Gửi mã OTP vào Email của khách
             email_nhan = user.email
             if email_nhan:
                 chu_de = "Mã Xác Thực Đăng Ký Tài Khoản - EV STORE"
                 noi_dung = f"""
                 Chào {user.username},
-                
                 Cảm ơn bạn đã đăng ký tài khoản tại EV STORE.
                 Mã xác thực (OTP) của bạn là: {otp}
-                
                 Mã này dùng để kích hoạt tài khoản. Vui lòng không chia sẻ cho người khác!
-                
-                Trân trọng,
-                Đội ngũ EV STORE.
                 """
-                try:
-                    send_mail(chu_de, noi_dung, settings.EMAIL_HOST_USER, [email_nhan], fail_silently=False)
-                except Exception as e:
-                    print(f"Lỗi gửi mail: {e}")
-            
-            # Chuyển hướng sang trang nhập mã OTP
+                try: send_mail(chu_de, noi_dung, settings.EMAIL_HOST_USER, [email_nhan], fail_silently=False)
+                except Exception as e: print(f"Lỗi gửi mail: {e}")
             return redirect('xac_thuc_otp')
-    else: 
-        form = RegisterForm()
+    else: form = RegisterForm()
     return render(request, 'registration/register.html', {'form': form})
 
-# HÀM MỚI: Xử lý việc nhập mã OTP
 def xac_thuc_otp(request):
     if request.method == 'POST':
         otp_nhap = request.POST.get('otp')
@@ -691,25 +542,17 @@ def xac_thuc_otp(request):
 
         if otp_nhap and otp_nhap == otp_thuc:
             try:
-                # Nếu đúng mã, lôi user ra và mở khóa
                 user = User.objects.get(id=user_id)
                 user.is_active = True
                 user.save()
-                
-                # Đăng nhập luôn cho khách
                 login(request, user)
-                
-                # Xóa dọn dẹp Session
                 del request.session['otp']
                 del request.session['user_id']
-                
                 messages.success(request, "Xác thực email thành công! Chào mừng bạn đến với EV STORE.")
                 return redirect('trang_chu')
             except User.DoesNotExist:
                 messages.error(request, "Không tìm thấy người dùng. Vui lòng đăng ký lại!")
-        else:
-            messages.error(request, "Mã OTP không chính xác. Vui lòng kiểm tra lại email!")
-            
+        else: messages.error(request, "Mã OTP không chính xác. Vui lòng kiểm tra lại email!")
     return render(request, 'registration/xac_thuc_otp.html')
 
 def logout_view(request):
@@ -742,10 +585,7 @@ def profile(request):
 def quan_ly_danh_muc(request):
     tu_khoa = request.GET.get('q', '')
     danh_sach_dm = DanhMuc.objects.all().order_by('-id')
-    
-    if tu_khoa:
-        danh_sach_dm = danh_sach_dm.filter(ten_danh_muc__icontains=tu_khoa)
-        
+    if tu_khoa: danh_sach_dm = danh_sach_dm.filter(ten_danh_muc__icontains=tu_khoa)
     return render(request, 'category/quan_ly_danh_muc.html', {'danh_sach_dm': danh_sach_dm, 'tu_khoa': tu_khoa})
 
 @login_required
@@ -784,8 +624,7 @@ def quan_ly_cua_hang(request):
 @phan_quyen(roles=['admin', 'quan_ly'])
 def them_cua_hang(request):
     if request.method == 'POST':
-        lat = request.POST.get('lat')
-        lon = request.POST.get('lon')
+        lat, lon = request.POST.get('lat'), request.POST.get('lon')
         CuaHang.objects.create(
             ten_cua_hang=request.POST.get('ten_cua_hang'), dia_chi=request.POST.get('dia_chi'), so_dien_thoai=request.POST.get('so_dien_thoai'),
             lat=float(lat) if lat else None, lon=float(lon) if lon else None, hinh_anh=request.FILES.get('hinh_anh')
@@ -817,85 +656,165 @@ def xoa_cua_hang(request, pk):
 
 
 # ==========================================
-# 8. KHO HÀNG (Cả 3 quyền đều vào được)
+# 8. KHO HÀNG (ĐÃ TÁCH LÀM 2 HÀM RIÊNG)
 # ==========================================
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
-def quan_ly_kho(request):
+def quan_ly_phieu_nhap(request):
     tu_khoa = request.GET.get('q', '')
+    danh_sach = PhieuNhapKho.objects.all().order_by('-ngay_nhap')
+    
+    if tu_khoa:
+        danh_sach = danh_sach.filter(
+            Q(cua_hang__ten_cua_hang__icontains=tu_khoa) |
+            Q(nhan_vien_nhap__username__icontains=tu_khoa) |
+            Q(ghi_chu__icontains=tu_khoa)
+        )
+    return render(request, 'kho/lich_su_nhap.html', {'danh_sach': danh_sach, 'tu_khoa': tu_khoa})
 
-    danh_sach = KhoHang.objects.select_related('xe', 'cua_hang').all()
+@login_required
+@phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
+def quan_ly_ton_kho(request):
+    tu_khoa = request.GET.get('q', '')
+    cua_hang_id = request.GET.get('cua_hang', '') 
+
+    danh_sach = KhoHang.objects.select_related('xe', 'cua_hang').all().order_by('-id')
 
     if tu_khoa:
         danh_sach = danh_sach.filter(
             Q(xe__ten_xe__icontains=tu_khoa) |
-            Q(xe__hang_san_xuat__icontains=tu_khoa) |
-            Q(cua_hang__ten_cua_hang__icontains=tu_khoa)
+            Q(xe__hang_san_xuat__icontains=tu_khoa)
         )
 
-    return render(request, 'kho/danh_sach.html', {
-        'kho': danh_sach,
-        'tu_khoa': tu_khoa
-    })
+    if cua_hang_id:
+        danh_sach = danh_sach.filter(cua_hang_id=cua_hang_id)
 
+    canh_bao_het_hang = danh_sach.filter(so_luong__lte=3).order_by('so_luong')
+    cac_cua_hang = CuaHang.objects.all()
+
+    return render(request, 'kho/bao_cao_ton_kho.html', {
+        'kho': danh_sach,
+        'tu_khoa': tu_khoa,
+        'cac_cua_hang': cac_cua_hang,
+        'cua_hang_chon': int(cua_hang_id) if cua_hang_id else '',
+        'canh_bao_het_hang': canh_bao_het_hang
+    })
 
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
 def them_kho(request):
     if request.method == 'POST':
-        form = PhieuNhapKhoForm(request.POST)
-        formset = ChiTietPhieuNhapFormSet(request.POST)
-        
-        if form.is_valid() and formset.is_valid():
-            # 1. Lưu Phiếu Nhập
-            phieu = form.save(commit=False)
-            phieu.nhan_vien_nhap = request.user
-            phieu.save()
-            
-            # 2. Lưu Chi tiết & Tự động cộng vào Kho gốc
-            chi_tiets = formset.save(commit=False)
-            for ct in chi_tiets:
-                ct.phieu_nhap = phieu
-                ct.save()
+        # ====================================================
+        # TRƯỜNG HỢP 1: NHẬP BẰNG FILE EXCEL
+        # ====================================================
+        if 'excel_file' in request.FILES:
+            try:
+                cua_hang_id = request.POST.get('cua_hang_excel')
+                cua_hang = get_object_or_404(CuaHang, id=cua_hang_id)
+                excel_file = request.FILES['excel_file']
                 
-                # CỘNG DỒN TỰ ĐỘNG:
-                kho, created = KhoHang.objects.get_or_create(xe=ct.xe, cua_hang=phieu.cua_hang)
-                kho.so_luong += ct.so_luong
-                kho.save()
+                wb = openpyxl.load_workbook(excel_file)
+                sheet = wb.active
+                so_xe_da_nhap = 0 
                 
-                # =========================================================
-                # FIX LỖI TỰ ĐỘNG CẬP NHẬT TRẠNG THÁI XE KHI CÓ HÀNG
-                # =========================================================
-                cap_nhat_xe = False
+                phieu = PhieuNhapKho.objects.create(
+                    cua_hang=cua_hang,
+                    nhan_vien_nhap=request.user,
+                    ghi_chu=f"Nhập tự động từ file: {excel_file.name}"
+                )
                 
-                # 1. Nếu xe đang "Dừng bán", bật lại thành "Đang kinh doanh"
-                if not ct.xe.trang_thai and ct.so_luong > 0:
-                    ct.xe.trang_thai = True
-                    cap_nhat_xe = True
-                    
-                # 2. Nếu xe đang "Sắp về", tắt Sắp về đi vì hàng đã về kho rồi!
-                if ct.xe.sap_ve and ct.so_luong > 0:
-                    ct.xe.sap_ve = False
-                    cap_nhat_xe = True
-                    
-                # Lưu lại nếu có bất kỳ thay đổi nào
-                if cap_nhat_xe:
-                    ct.xe.save()
-                # =========================================================
-                
-            # Xử lý các dòng bị user bấm Xóa trên form
-            for obj in formset.deleted_objects:
-                obj.delete()
+                print("==== BẮT ĐẦU ĐỌC EXCEL ====")
+                for i, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
+                    if not row or row[0] is None:
+                        continue
 
-            messages.success(request, f"Đã nhập lô hàng mới vào {phieu.cua_hang.ten_cua_hang} thành công!")
-            return redirect('quan_ly_kho')
+                    xe_id_raw = row[0]
+                    # Linh hoạt lấy Cột C hoặc Cột B
+                    so_luong_raw = row[2] if len(row) >= 3 else (row[1] if len(row) >= 2 else 0)
+                    
+                    try:
+                        xe_id = int(float(str(xe_id_raw).strip())) if str(xe_id_raw).strip() else 0
+                        so_luong = int(float(str(so_luong_raw).strip())) if str(so_luong_raw).strip() else 0
+                    except (ValueError, TypeError):
+                        continue 
+                        
+                    if xe_id <= 0 or so_luong <= 0: 
+                        continue 
+                    
+                    try:
+                        xe = XeDien.objects.get(id=xe_id)
+                        
+                        ChiTietPhieuNhap.objects.create(phieu_nhap=phieu, xe=xe, so_luong=so_luong)
+                        so_xe_da_nhap += 1
+                        
+                        kho, created = KhoHang.objects.get_or_create(xe=xe, cua_hang=cua_hang)
+                        kho.so_luong += so_luong
+                        kho.save()
+                        
+                        cap_nhat_xe = False
+                        if not xe.trang_thai: xe.trang_thai = True; cap_nhat_xe = True
+                        if xe.sap_ve: xe.sap_ve = False; cap_nhat_xe = True
+                        if cap_nhat_xe: xe.save()
+                        
+                        print(f" -> OK: Đã nhập {so_luong} chiếc {xe.ten_xe}")
+                            
+                    except XeDien.DoesNotExist:
+                        print(f" -> LỖI: Không tìm thấy xe có ID = {xe_id} tại dòng {i}")
+                        continue 
+                
+                print(f"==== KẾT THÚC. Tổng số dòng thành công: {so_xe_da_nhap} ====")
+
+                if so_xe_da_nhap == 0:
+                    phieu.delete() 
+                    messages.warning(request, "Lỗi: File Excel không có dữ liệu hợp lệ! Bạn kiểm tra xem đã gõ số lượng vào Cột C chưa nhé.")
+                    return redirect('them_kho')
+                
+                messages.success(request, f"Đã nhập kho từ Excel thành công! (Cập nhật {so_xe_da_nhap} mẫu xe)")
+                return redirect('quan_ly_phieu_nhap')
+                
+            except Exception as e:
+                messages.error(request, f"Lỗi xử lý file Excel: {e}")
+                return redirect('them_kho')
+                
+        # ====================================================
+        # TRƯỜNG HỢP 2: NHẬP BẰNG GIAO DIỆN WEB (Như cũ)
+        # ====================================================
+        else:
+            form = PhieuNhapKhoForm(request.POST)
+            formset = ChiTietPhieuNhapFormSet(request.POST)
+            
+            if form.is_valid() and formset.is_valid():
+                phieu = form.save(commit=False)
+                phieu.nhan_vien_nhap = request.user
+                phieu.save()
+                
+                chi_tiets = formset.save(commit=False)
+                for ct in chi_tiets:
+                    ct.phieu_nhap = phieu
+                    ct.save()
+                    
+                    kho, created = KhoHang.objects.get_or_create(xe=ct.xe, cua_hang=phieu.cua_hang)
+                    kho.so_luong += ct.so_luong
+                    kho.save()
+                    
+                    cap_nhat_xe = False
+                    if not ct.xe.trang_thai and ct.so_luong > 0:
+                        ct.xe.trang_thai = True
+                        cap_nhat_xe = True
+                    if ct.xe.sap_ve and ct.so_luong > 0:
+                        ct.xe.sap_ve = False
+                        cap_nhat_xe = True
+                    if cap_nhat_xe:
+                        ct.xe.save()
+                        
+                for obj in formset.deleted_objects: obj.delete()
+                messages.success(request, f"Đã nhập lô hàng thủ công vào {phieu.cua_hang.ten_cua_hang} thành công!")
+                return redirect('quan_ly_phieu_nhap')
     else:
         form = PhieuNhapKhoForm()
         formset = ChiTietPhieuNhapFormSet()
         
     return render(request, 'kho/form.html', {'form': form, 'formset': formset})
-
-
 
 # ==========================================
 # 9. PHIÊN SẠC & FEEDBACK
@@ -904,20 +823,10 @@ def them_kho(request):
 @phan_quyen(roles=['admin', 'quan_ly']) 
 def danh_sach_phien_sac(request):
     tu_khoa = request.GET.get('q', '')
-
     phien = PhienSac.objects.all().order_by('-thoi_gian_bat_dau')
-
     if tu_khoa:
-        phien = phien.filter(
-            Q(tram_sac__ten_tram__icontains=tu_khoa) |
-            Q(tram_sac__dia_chi__icontains=tu_khoa) |
-            Q(user__username__icontains=tu_khoa) 
-        )
-
-    return render(request, 'tram_sac/danh_sach.html', {
-        'phien': phien,
-        'tu_khoa': tu_khoa
-    })
+        phien = phien.filter(Q(tram_sac__ten_tram__icontains=tu_khoa) | Q(tram_sac__dia_chi__icontains=tu_khoa) | Q(user__username__icontains=tu_khoa))
+    return render(request, 'tram_sac/danh_sach.html', {'phien': phien, 'tu_khoa': tu_khoa})
 
 @login_required
 def bat_dau_sac(request, tram_id):
@@ -930,33 +839,22 @@ def gui_feedback(request):
     form = FeedbackForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         xe_duoc_chon = form.cleaned_data.get('xe')
-        da_danh_gia = Feedback.objects.filter(user=request.user, xe=xe_duoc_chon).exists()
-        if da_danh_gia: return redirect('gui_feedback')
+        if Feedback.objects.filter(user=request.user, xe=xe_duoc_chon).exists(): return redirect('gui_feedback')
         fb = form.save(commit=False)
         fb.user = request.user
         fb.save()
         return redirect('chi_tiet_xe', xe_id=xe_duoc_chon.id) 
     return render(request, 'feedback/form.html', {'form': form})
 
-
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
 def quan_ly_feedback(request):
     tu_khoa = request.GET.get('q', '')
-
     danh_sach = Feedback.objects.all().order_by('-id')
-
     if tu_khoa:
-        danh_sach = danh_sach.filter(
-            Q(user__username__icontains=tu_khoa) |
-            Q(xe__ten_xe__icontains=tu_khoa) |
-            Q(noi_dung__icontains=tu_khoa)
-        )
+        danh_sach = danh_sach.filter(Q(user__username__icontains=tu_khoa) | Q(xe__ten_xe__icontains=tu_khoa) | Q(noi_dung__icontains=tu_khoa))
+    return render(request, 'feedback/admin_feedback.html', {'feedbacks': danh_sach, 'tu_khoa': tu_khoa})
 
-    return render(request, 'feedback/admin_feedback.html', {
-        'feedbacks': danh_sach,
-        'tu_khoa': tu_khoa
-    })
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
 def xoa_feedback(request, feedback_id):
@@ -967,24 +865,8 @@ def xoa_feedback(request, feedback_id):
 # ==========================================
 # CÁC API & TỰ ĐỘNG KHÔNG ĐỔI
 # ==========================================
-@receiver(post_save, sender=DonHang)
-def tru_kho_khi_dat_hang(sender, instance, created, **kwargs):
-    if created and instance.trang_thai in ['Deposit Paid', 'Paid']:  
-        try:
-            # TÌM KHO THÔNG MINH: Quét xem kho của chi nhánh nào đang có xe này (số lượng >= 1) thì bốc kho đó ra trừ
-            kho = KhoHang.objects.filter(xe=instance.xe, so_luong__gte=1).first()
-            
-            if kho:
-                kho.so_luong -= 1
-                kho.save()
-                
-                # Kiểm tra tổng tồn kho trên toàn hệ thống, nếu sạch bách thì Dừng Bán luôn
-                tong_ton = KhoHang.objects.filter(xe=instance.xe).aggregate(Sum('so_luong'))['so_luong__sum'] or 0
-                if tong_ton <= 0:
-                    instance.xe.trang_thai = False
-                    instance.xe.save()
-        except Exception as e:
-            print(f"Lỗi trừ kho: {e}")
+
+# LƯU Ý: ĐÃ XÓA HÀM tru_kho_khi_dat_hang Ở ĐÂY VÌ ĐÃ CÓ TRONG FILE signals.py
 
 @csrf_exempt
 def get_nearest_tram(request):
@@ -1047,13 +929,38 @@ def lich_su_sac_khach_hang(request):
     return render(request, 'users/user_sac.html', {'phien': danh_sach_phien})
 
 def san_pham_tai_chi_nhanh(request, pk):
-    # 1. Lấy thông tin chi nhánh đó
     chi_nhanh = get_object_or_404(CuaHang, pk=pk)
-    
-    # 2. Lấy tất cả xe thuộc chi nhánh này (nhờ related_name='danh_sach_xe' ở model)
     danh_sach_xe = chi_nhanh.danh_sach_xe.all()
-    
     return render(request, 'pages/san_pham_chi_nhanh.html', {
         'chi_nhanh': chi_nhanh,
         'danh_sach_xe': danh_sach_xe
     })
+
+@login_required
+@phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
+def tai_file_mau_excel(request):
+    # Tạo một file Excel mới bằng code
+    wb = openpyxl.Workbook()
+    sheet = wb.active
+    sheet.title = "Mau_Nhap_Kho"
+
+    # 1. Tạo Dòng 1: Tiêu đề các cột
+    sheet.append(["ID Xe (KHÔNG SỬA)", "Tên Dòng Xe (Chỉ để xem)", "Số Lượng Nhập"])
+
+    # 2. Quét database, in toàn bộ xe đang bán ra Excel
+    xe_dien_list = XeDien.objects.filter(trang_thai=True).order_by('id')
+    for xe in xe_dien_list:
+        # Cột A: ID | Cột B: Tên xe | Cột C: Để trống cho nhân viên tự nhập
+        sheet.append([xe.id, xe.ten_xe, ""]) 
+
+    # 3. Canh chỉnh độ rộng cột cho đẹp
+    sheet.column_dimensions['A'].width = 20
+    sheet.column_dimensions['B'].width = 40
+    sheet.column_dimensions['C'].width = 20
+
+    # 4. Trả file về cho trình duyệt tải xuống
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=Mau_Nhap_Kho_EVStore.xlsx'
+    wb.save(response)
+    
+    return response

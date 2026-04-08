@@ -64,56 +64,71 @@
                     <i class="bi bi-lightning-charge-fill text-warning"></i> EV STORE
                 </h4>
 
-                <a href="{% url 'admin_dashboard' %}" class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                <a href="{% url 'admin_dashboard' %}"
+                    class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
                     <i class="bi bi-speedometer2 me-2"></i> Tổng quan
                 </a>
 
                 <div class="sidebar-heading">Sản phẩm & Chi nhánh</div>
-                
+
                 {% if request.user.is_superuser or request.user.userprofile.vai_tro == 'admin' or request.user.userprofile.vai_tro == 'quan_ly' %}
-                <a href="{% url 'danh_sach_xe' %}" class="{% if request.resolver_match.url_name == 'danh_sach_xe' or request.resolver_match.url_name == 'them_xe' or request.resolver_match.url_name == 'sua_xe' %}active{% endif %}">
+                <a href="{% url 'danh_sach_xe' %}"
+                    class="{% if request.resolver_match.url_name == 'danh_sach_xe' or request.resolver_match.url_name == 'them_xe' or request.resolver_match.url_name == 'sua_xe' %}active{% endif %}">
                     <i class="bi bi-car-front me-2"></i> Quản lý Xe Điện
                 </a>
-                <a href="{% url 'quan_ly_danh_muc' %}" class="{% if request.resolver_match.url_name == 'quan_ly_danh_muc' %}active{% endif %}">
+                <a href="{% url 'quan_ly_danh_muc' %}"
+                    class="{% if request.resolver_match.url_name == 'quan_ly_danh_muc' %}active{% endif %}">
                     <i class="bi bi-tags me-2"></i> Quản lý Kiểu Dáng
                 </a>
-                <a href="{% url 'quan_ly_cua_hang' %}" class="{% if request.resolver_match.url_name == 'quan_ly_cua_hang' %}active{% endif %}">
+                <a href="{% url 'quan_ly_cua_hang' %}"
+                    class="{% if request.resolver_match.url_name == 'quan_ly_cua_hang' %}active{% endif %}">
                     <i class="bi bi-shop me-2"></i> Quản lý Cửa Hàng
                 </a>
                 {% endif %}
-                
-                <a href="{% url 'quan_ly_kho' %}" class="{% if request.resolver_match.url_name == 'quan_ly_kho' %}active{% endif %}">
-                    <i class="bi bi-box-seam me-2"></i> Quản lý Kho Hàng
-                </a>
 
+                <a href="{% url 'quan_ly_phieu_nhap' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'quan_ly_phieu_nhap' %}active{% endif %} text-white">
+                    <i class="bi bi-clock-history me-2"></i> Lịch sử Nhập Kho
+                </a>
                 <div class="sidebar-heading">Kinh doanh & Vận hành</div>
-                
-                <a href="{% url 'danh_sach_don_hang' %}" class="{% if request.resolver_match.url_name == 'danh_sach_don_hang' or request.resolver_match.url_name == 'tao_don_hang_offline' or request.resolver_match.url_name == 'chi_tiet_don_hang' %}active{% endif %}">
+
+                <a href="{% url 'danh_sach_don_hang' %}"
+                    class="{% if request.resolver_match.url_name == 'danh_sach_don_hang' or request.resolver_match.url_name == 'tao_don_hang_offline' or request.resolver_match.url_name == 'chi_tiet_don_hang' %}active{% endif %}">
                     <i class="bi bi-receipt-cutoff me-2"></i> Quản lý Đơn Hàng
                 </a>
-                
+
+                <a href="{% url 'quan_ly_ton_kho' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'quan_ly_ton_kho' %}active{% endif %} text-white">
+                    <i class="bi bi-box-seam me-2"></i> Báo cáo Tồn Kho
+                </a>
+
                 {% if request.user.is_superuser or request.user.userprofile.vai_tro == 'admin' %}
-                <a href="{% url 'ql_khach_hang' %}" class="{% if request.resolver_match.url_name == 'ql_khach_hang' %}active{% endif %}">
+                <a href="{% url 'ql_khach_hang' %}"
+                    class="{% if request.resolver_match.url_name == 'ql_khach_hang' %}active{% endif %}">
                     <i class="bi bi-people me-2"></i> Quản lý Khách Hàng
                 </a>
                 {% endif %}
 
                 {% if request.user.is_superuser or request.user.userprofile.vai_tro == 'admin' or request.user.userprofile.vai_tro == 'quan_ly' %}
-                <a href="{% url 'ql_nhan_vien' %}" class="{% if request.resolver_match.url_name == 'ql_nhan_vien' or request.resolver_match.url_name == 'them_user' or request.resolver_match.url_name == 'sua_user' %}active{% endif %}">
+                <a href="{% url 'ql_nhan_vien' %}"
+                    class="{% if request.resolver_match.url_name == 'ql_nhan_vien' or request.resolver_match.url_name == 'them_user' or request.resolver_match.url_name == 'sua_user' %}active{% endif %}">
                     <i class="bi bi-person-vcard me-2"></i> Quản lý Nhân Viên
                 </a>
-                <a href="{% url 'quan_ly_feedback' %}" class="{% if request.resolver_match.url_name == 'quan_ly_feedback' %}active{% endif %}">
+                <a href="{% url 'quan_ly_feedback' %}"
+                    class="{% if request.resolver_match.url_name == 'quan_ly_feedback' %}active{% endif %}">
                     <i class="bi bi-chat-dots me-2"></i> Quản lý Feedback
                 </a>
                 {% endif %}
 
                 <div class="sidebar-heading">Hạ tầng Trạm Sạc</div>
-                
+
                 {% if request.user.is_superuser or request.user.userprofile.vai_tro == 'admin' or request.user.userprofile.vai_tro == 'quan_ly' %}
-                <a href="{% url 'quan_ly_tram_sac' %}" class="{% if request.resolver_match.url_name == 'quan_ly_tram_sac' %}active{% endif %}">
+                <a href="{% url 'quan_ly_tram_sac' %}"
+                    class="{% if request.resolver_match.url_name == 'quan_ly_tram_sac' %}active{% endif %}">
                     <i class="bi bi-ev-station me-2"></i> Quản lý Trạm Sạc
                 </a>
-                <a href="{% url 'danh_sach_phien_sac' %}" class="{% if request.resolver_match.url_name == 'danh_sach_phien_sac' %}active{% endif %}">
+                <a href="{% url 'danh_sach_phien_sac' %}"
+                    class="{% if request.resolver_match.url_name == 'danh_sach_phien_sac' %}active{% endif %}">
                     <i class="bi bi-battery-charging me-2"></i> Quản lý Phiên Sạc
                 </a>
                 {% endif %}
@@ -149,15 +164,16 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-    setTimeout(function() {
-        let alerts = document.querySelectorAll('.alert');
-        alerts.forEach(function(alert) {
-            let bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        });
-    }, 1000);
+        setTimeout(function () {
+            let alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function (alert) {
+                let bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 3000);
     </script>
     {% block extra_js %}{% endblock %}
 
 </body>
+
 </html>

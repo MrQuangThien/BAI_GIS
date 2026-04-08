@@ -89,8 +89,13 @@ urlpatterns = [
     path('cua-hang/xoa/<int:pk>/', views.xoa_cua_hang, name='xoa_cua_hang'),
 
     # Quản lý Kho Hàng
-    path('kho/', views.quan_ly_kho, name='quan_ly_kho'),
-    path('kho/them/', views.them_kho, name='them_kho'),
+    # 1. Trang Lịch sử nhập kho (Mới thêm)
+    path('quan-ly-phieu-nhap/', views.quan_ly_phieu_nhap, name='quan_ly_phieu_nhap'),
+    path('them-phieu-nhap/', views.them_kho, name='them_kho'),
+    path('tai-file-mau-excel/', views.tai_file_mau_excel, name='tai_file_mau_excel'),
+    
+    # 2. Trang Báo cáo tồn kho (Đã có sẵn, đổi tên path cho chuẩn)
+    path('bao-cao-ton-kho/', views.quan_ly_ton_kho, name='quan_ly_ton_kho'),
 
     # Quản lý Phiên Sạc
     path('phien-sac/', views.danh_sach_phien_sac, name='danh_sach_phien_sac'),

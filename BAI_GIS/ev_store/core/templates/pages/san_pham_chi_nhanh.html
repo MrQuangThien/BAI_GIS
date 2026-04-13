@@ -14,29 +14,52 @@
     <div class="row g-4">
         {% for xe in danh_sach_xe %}
         <div class="col-md-3">
-            <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden product-card">
-                {% if xe.hinh_anh %}
-                    <img src="{{ xe.hinh_anh.url }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ xe.ten_xe }}">
+            <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden product-card position-relative">
+                
+                {% if xe.ton_kho_tai_chi_nhanh <= 0 and not xe.sap_ve %}
+                    <div class="position-absolute top-0 end-0 m-2 z-3">
+                        <span class="badge bg-danger shadow-sm border border-light">
+                            <i class="bi bi-x-circle me-1"></i> Hết hàng tại chi nhánh
+                        </span>
+                    </div>
                 {% endif %}
-                <div class="card-body text-center">
-                    <h5 class="fw-bold">{{ xe.ten_xe }}</h5>
-                    <p class="text-danger fw-bold fs-5">{{ xe.gia|intcomma }} VNĐ</p>
-                    <a href="{% url 'chi_tiet_xe' xe.id %}" class="btn btn-success w-100 rounded-pill">Xem chi tiết</a>
+                
+                <div class="position-absolute top-0 start-0 m-2 z-3 d-flex flex-column gap-1">
+                    {% if xe.noi_bat %}
+                        <span class="badge bg-warning text-dark"><i class="bi bi-star-fill text-danger me-1"></i> Nổi bật</span>
+                    {% endif %}
+                    {% if xe.sap_ve %}
+                        <span class="badge bg-info text-dark"><i class="bi bi-clock-history me-1"></i> Sắp về</span>
+                    {% endif %}
+                </div>
+
+                {% if xe.hinh_anh %}
+                    <img src="{{ xe.hinh_anh.url }}" class="card-img-top bg-white p-2" style="height: 200px; object-fit: contain;" alt="{{ xe.ten_xe }}">
+                {% else %}
+                    <img src="https://via.placeholder.com/300x200?text=Chưa+có+ảnh" class="card-img-top bg-light" style="height: 200px; object-fit: cover;">
+                {% endif %}
+                
+                <div class="card-body text-center d-flex flex-column border-top">
+                    <p class="text-muted small mb-1">{{ xe.hang_san_xuat }}</p>
+                    <h5 class="fw-bold mb-2">{{ xe.ten_xe }}</h5>
+                    <p class="text-danger fw-bold fs-5 mt-auto">{{ xe.gia|intcomma }} VNĐ</p>
+                    <a href="{% url 'chi_tiet_xe' xe.id %}" class="btn btn-success w-100 rounded-pill mt-2">Xem chi tiết</a>
                 </div>
             </div>
         </div>
         {% empty %}
-        <div class="col-12 text-center py-5">
+        <div class="col-12 text-center py-5 bg-white rounded-4 shadow-sm border border-light">
             <i class="bi bi-inbox display-1 text-muted opacity-25"></i>
-            <p class="mt-3 text-muted">Hiện tại chi nhánh này đang cập nhật danh mục xe.</p>
-            <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-outline-success">Xem tất cả xe hệ thống</a>
+            <h4 class="mt-3 text-dark fw-bold">Chưa có sản phẩm</h4>
+            <p class="text-muted">Hiện tại chi nhánh này đang cập nhật danh mục xe, vui lòng quay lại sau.</p>
+            <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-outline-success mt-2 fw-bold">Xem tất cả xe hệ thống</a>
         </div>
         {% endfor %}
     </div>
 </div>
 
 <style>
-    .product-card { transition: 0.3s; }
-    .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+    .product-card { transition: all 0.3s ease; }
+    .product-card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important; }
 </style>
 {% endblock %}

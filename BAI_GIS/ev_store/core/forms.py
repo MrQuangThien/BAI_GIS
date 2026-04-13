@@ -1,7 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import XeDien, DonHang, KhoHang, PhienSac, UserProfile, Feedback,PhieuNhapKho, ChiTietPhieuNhap
-
+from .models import XeDien, DonHang, KhoHang, PhienSac, UserProfile, Feedback,PhieuNhapKho, ChiTietPhieuNhap, YeuCauHoTro
 from django.forms import inlineformset_factory
 
 # ==========================================
@@ -150,11 +149,12 @@ class RegisterForm(forms.ModelForm):
 # 3. CÁC FORM SẢN PHẨM & KINH DOANH
 # ==========================================
 # Thêm class này lên trên đầu file forms.py (dưới phần import)
+# Đảm bảo class này vẫn nằm ở trên
 class MultipleFileInput(forms.ClearableFileInput):
     allow_multiple_selected = True
 
 class XeDienForm(forms.ModelForm):
-    # Ghi đè trường hinh_anh để chấp nhận nhiều file
+    # ĐÃ SỬA LỖI Ở ĐÂY: Đổi forms.ClearableFileInput thành MultipleFileInput
     hinh_anh = forms.FileField(
         widget=MultipleFileInput(attrs={'class': 'form-control', 'multiple': True}),
         required=False,
@@ -164,6 +164,14 @@ class XeDienForm(forms.ModelForm):
     class Meta:
         model = XeDien
         exclude = ['anh_phu_1', 'anh_phu_2', 'anh_phu_3'] # Loại bỏ các trường cũ
+        
+        # Bổ sung widgets để biến các trường True/False thành nút Switch giao diện đẹp
+        widgets = {
+            'noi_bat': forms.CheckboxInput(attrs={'class': 'form-check-input cursor-pointer'}),
+            'sap_ve': forms.CheckboxInput(attrs={'class': 'form-check-input cursor-pointer'}),
+            'moi_ve': forms.CheckboxInput(attrs={'class': 'form-check-input cursor-pointer'}),
+            'ban_chay': forms.CheckboxInput(attrs={'class': 'form-check-input cursor-pointer'}),
+        }
 
 
 class DonHangForm(forms.ModelForm):
@@ -262,3 +270,13 @@ class FeedbackForm(forms.ModelForm):
     class Meta:
         model = Feedback
         fields = ['xe', 'noi_dung', 'danh_gia']
+
+
+class YeuCauHoTroForm(forms.ModelForm):
+    class Meta:
+        model = YeuCauHoTro
+        fields = ['tieu_de', 'noi_dung_hoi']
+        widgets = {
+            'tieu_de': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ví dụ: Cần tư vấn thủ tục mua trả góp VF8...'}),
+            'noi_dung_hoi': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Viết chi tiết câu hỏi của bạn tại đây...'}),
+        }

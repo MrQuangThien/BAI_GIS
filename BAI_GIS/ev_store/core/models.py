@@ -40,6 +40,8 @@ class XeDien(models.Model):
     sap_ve = models.BooleanField(default=False, verbose_name="Sản phẩm sắp về")
     mo_ta = RichTextField(config_name='mini', blank=True, null=True, verbose_name="Mô tả chi tiết")
     cua_hang = models.ManyToManyField(CuaHang, related_name='danh_sach_xe', blank=True, verbose_name="Có tại chi nhánh")
+    moi_ve = models.BooleanField(default=False, verbose_name="Hàng mới về")
+    ban_chay = models.BooleanField(default=False, verbose_name="Bán chạy nhất")
     
     def __str__(self):
         return self.ten_xe
@@ -212,4 +214,26 @@ class ChiTietPhieuNhap(models.Model):
     def __str__(self):
         return f"{self.xe.ten_xe} - {self.so_luong} chiếc"
     
+class YeuCauHoTro(models.Model):
+    khach_hang = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cac_yeu_cau')
+    tieu_de = models.CharField(max_length=255, verbose_name="Tiêu đề cần hỗ trợ")
+    noi_dung_hoi = models.TextField(verbose_name="Nội dung câu hỏi")
+    noi_dung_tra_loi = models.TextField(blank=True, null=True, verbose_name="Nhân viên trả lời")
+    ngay_gui = models.DateTimeField(auto_now_add=True)
+    trang_thai = models.BooleanField(default=False, verbose_name="Đã xử lý") 
+
+    def __str__(self):
+        return f"Hỗ trợ: {self.tieu_de} - {self.khach_hang.username}"
     
+class TinNhanChat(models.Model):
+    khach_hang = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_cua_khach')
+    nguoi_gui = models.ForeignKey(User, on_delete=models.CASCADE, related_name='nguoi_gui_tin_nhan') 
+    noi_dung = models.TextField()
+    thoi_gian = models.DateTimeField(auto_now_add=True)
+    da_doc = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['thoi_gian'] # Sắp xếp tin nhắn cũ ở trên, mới ở dưới
+        
+    def __str__(self):
+        return f"{self.nguoi_gui.username}: {self.noi_dung[:20]}"

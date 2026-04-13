@@ -118,6 +118,11 @@
                     class="{% if request.resolver_match.url_name == 'quan_ly_feedback' %}active{% endif %}">
                     <i class="bi bi-chat-dots me-2"></i> Quản lý Feedback
                 </a>
+                
+                <a href="{% url 'quan_ly_ho_tro' %}"
+                    class="{% if request.resolver_match.url_name == 'quan_ly_ho_tro' %}active{% endif %} text-warning">
+                    <i class="bi bi-headset me-2"></i> Quản lý Hỗ Trợ
+                </a>
                 {% endif %}
 
                 <div class="sidebar-heading">Hạ tầng Trạm Sạc</div>

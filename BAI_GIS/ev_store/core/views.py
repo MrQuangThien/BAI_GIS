@@ -17,13 +17,12 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login, logout 
 from django.contrib import messages
 from django.core.mail import send_mail
-from django.db.models import Q, Count, Sum, Avg
+from django.db.models import Q, Count, Sum, Avg, Max
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.dateparse import parse_datetime
 
-# ĐÃ THÊM: PhieuNhapKho vào dòng import này
-from .models import TramSac, XeDien, CuaHang, DonHang, DanhMuc, Feedback, KhoHang, PhienSac, AnhXeDien, PhieuNhapKho, ChiTietPhieuNhap
+from .models import TramSac, XeDien, CuaHang, DonHang, DanhMuc, Feedback, KhoHang, PhienSac, AnhXeDien, PhieuNhapKho, ChiTietPhieuNhap, TinNhanChat
 
 from .forms import XeDienForm, UserForm, RegisterForm, DonHangForm, DonHangTaiQuayForm, FeedbackForm, UserProfileForm, PhieuNhapKhoForm, ChiTietPhieuNhapFormSet
 
@@ -126,30 +125,109 @@ def admin_dashboard(request):
 # 2. GIAO DIỆN XE ĐIỆN & CỬA HÀNG
 # ==========================================
 def danh_sach_san_pham(request):
-    danh_sach = XeDien.objects.filter(trang_thai=True)
-    cac_hang_xe = XeDien.objects.values_list('hang_san_xuat', flat=True).distinct()
-    cac_phan_khuc = DanhMuc.objects.all()
+    danh_sach_xe = XeDien.objects.filter(trang_thai=True)
+    cac_phan_khuc = DanhMuc.objects.all() 
+    cac_hang_xe = XeDien.objects.filter(trang_thai=True).values_list('hang_san_xuat', flat=True).distinct()
+
+    # 1. NHẬN CÁC YÊU CẦU TỪ FORM
+    sort_by = request.GET.get('sort', '')
+    tieu_chi = request.GET.get('tieu_chi', '')
+    pk_chon = request.GET.get('phan_khuc', '')
+    hang_chon = request.GET.get('thuong_hieu', '')
     
-    hang_id = request.GET.get('thuong_hieu')
-    pk_id = request.GET.get('phan_khuc')
-    
-    if hang_id: danh_sach = danh_sach.filter(hang_san_xuat__iexact=hang_id)
-    if pk_id: danh_sach = danh_sach.filter(danh_muc__id=pk_id)
-        
-    context = {'danh_sach_xe': danh_sach, 'cac_hang_xe': cac_hang_xe, 'cac_phan_khuc': cac_phan_khuc, 'hang_chon': hang_id, 'pk_chon': int(pk_id) if pk_id else None}
+    # Nhận thêm biến Khoảng giá
+    khoang_gia = request.GET.get('khoang_gia', '')
+    gia_min = request.GET.get('gia_min', '')
+    gia_max = request.GET.get('gia_max', '')
+
+    # 2. XỬ LÝ LỌC
+    if pk_chon:
+        danh_sach_xe = danh_sach_xe.filter(danh_muc_id=pk_chon)
+    if hang_chon:
+        danh_sach_xe = danh_sach_xe.filter(hang_san_xuat=hang_chon)
+
+    # Lọc theo Tiêu chí
+    if tieu_chi == 'noi_bat': danh_sach_xe = danh_sach_xe.filter(noi_bat=True)
+    elif tieu_chi == 'moi_ve': danh_sach_xe = danh_sach_xe.filter(moi_ve=True)
+    elif tieu_chi == 'ban_chay': danh_sach_xe = danh_sach_xe.filter(ban_chay=True)
+
+    # LỌC THEO GIÁ TIỀN
+    if khoang_gia == 'duoi_500':
+        danh_sach_xe = danh_sach_xe.filter(gia__lt=500000000)
+    elif khoang_gia == '500_1000':
+        danh_sach_xe = danh_sach_xe.filter(gia__gte=500000000, gia__lte=1000000000)
+    elif khoang_gia == '1000_2000':
+        danh_sach_xe = danh_sach_xe.filter(gia__gte=1000000000, gia__lte=2000000000)
+    elif khoang_gia == 'tren_2000':
+        danh_sach_xe = danh_sach_xe.filter(gia__gt=2000000000)
+
+    # Lọc theo mức giá tự nhập (Ghi đè khoảng giá nếu khách có tự nhập)
+    if gia_min and gia_min.isdigit():
+        danh_sach_xe = danh_sach_xe.filter(gia__gte=int(gia_min))
+    if gia_max and gia_max.isdigit():
+        danh_sach_xe = danh_sach_xe.filter(gia__lte=int(gia_max))
+
+    # Sắp xếp
+    if sort_by == 'gia_tang': danh_sach_xe = danh_sach_xe.order_by('gia') 
+    elif sort_by == 'gia_giam': danh_sach_xe = danh_sach_xe.order_by('-gia') 
+    else: danh_sach_xe = danh_sach_xe.order_by('-id') 
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'count': danh_sach_xe.count()})
+
+    context = {
+        'danh_sach_xe': danh_sach_xe,
+        'cac_phan_khuc': cac_phan_khuc,
+        'cac_hang_xe': cac_hang_xe,
+        'pk_chon': int(pk_chon) if pk_chon else None,
+        'hang_chon': hang_chon,
+        'tieu_chi': tieu_chi,
+        'sort_by': sort_by,
+        'khoang_gia': khoang_gia, # Truyền ra HTML để giữ sáng nút
+        'gia_min': gia_min,
+        'gia_max': gia_max,
+    }
     return render(request, 'xe/san_pham.html', context)
 
 def chi_tiet_xe(request, xe_id):
     xe = get_object_or_404(XeDien, id=xe_id)
-    tong_ton_kho = xe.kho_hang.aggregate(Sum('so_luong'))['so_luong__sum'] or 0
+    
+    # Lấy chi tiết tồn kho ở từng chi nhánh
+    chi_tiet_ton_kho = []
+    tong_ton_kho = 0
+    for ch in xe.cua_hang.all():
+        kho = KhoHang.objects.filter(xe=xe, cua_hang=ch).first()
+        so_luong = kho.so_luong if kho else 0
+        tong_ton_kho += so_luong
+        chi_tiet_ton_kho.append({
+            'ten_cua_hang': ch.ten_cua_hang,
+            'so_luong': so_luong
+        })
+        
     cho_phep_dat = True
     if not xe.sap_ve and tong_ton_kho <= 0:
         cho_phep_dat = False
         
     feedbacks = Feedback.objects.filter(xe=xe).order_by('-ngay_tao')
     trung_binh_sao = feedbacks.aggregate(Avg('danh_gia'))['danh_gia__avg'] or 0
+
+   # ====================================================
+    # LẤY 4 SẢN PHẨM CÙNG HÃNG SẢN XUẤT
+    # ====================================================
+    xe_tuong_tu = XeDien.objects.filter(
+        hang_san_xuat=xe.hang_san_xuat,
+        trang_thai=True
+    ).exclude(id=xe.id).order_by('?')[:4] # Lấy ngẫu nhiên tối đa 4 xe
         
-    context = {'xe': xe, 'tong_ton_kho': tong_ton_kho, 'cho_phep_dat': cho_phep_dat, 'feedbacks': feedbacks, 'trung_binh_sao': round(trung_binh_sao, 1)}
+    context = {
+        'xe': xe, 
+        'tong_ton_kho': tong_ton_kho, 
+        'chi_tiet_ton_kho': chi_tiet_ton_kho,
+        'cho_phep_dat': cho_phep_dat, 
+        'feedbacks': feedbacks, 
+        'trung_binh_sao': round(trung_binh_sao, 1),
+        'xe_tuong_tu': xe_tuong_tu # Nhớ truyền biến này ra HTML nhé
+    }
     return render(request, 'xe/chi_tiet_xe.html', context)
 
 @login_required
@@ -166,7 +244,6 @@ def danh_sach_xe(request):
         )
     return render(request, 'xe/danh_sach_xe.html', {'tat_ca_xe': tat_ca_xe, 'tu_khoa': tu_khoa})
 
-# ĐÃ XÓA HÀM them_xe BỊ TRÙNG LẶP
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
 def them_xe(request):
@@ -704,9 +781,6 @@ def quan_ly_ton_kho(request):
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
 def them_kho(request):
     if request.method == 'POST':
-        # ====================================================
-        # TRƯỜNG HỢP 1: NHẬP BẰNG FILE EXCEL
-        # ====================================================
         if 'excel_file' in request.FILES:
             try:
                 cua_hang_id = request.POST.get('cua_hang_excel')
@@ -729,7 +803,6 @@ def them_kho(request):
                         continue
 
                     xe_id_raw = row[0]
-                    # Linh hoạt lấy Cột C hoặc Cột B
                     so_luong_raw = row[2] if len(row) >= 3 else (row[1] if len(row) >= 2 else 0)
                     
                     try:
@@ -775,10 +848,6 @@ def them_kho(request):
             except Exception as e:
                 messages.error(request, f"Lỗi xử lý file Excel: {e}")
                 return redirect('them_kho')
-                
-        # ====================================================
-        # TRƯỜNG HỢP 2: NHẬP BẰNG GIAO DIỆN WEB (Như cũ)
-        # ====================================================
         else:
             form = PhieuNhapKhoForm(request.POST)
             formset = ChiTietPhieuNhapFormSet(request.POST)
@@ -863,11 +932,8 @@ def xoa_feedback(request, feedback_id):
 
 
 # ==========================================
-# CÁC API & TỰ ĐỘNG KHÔNG ĐỔI
+# 10. CÁC API & HỆ THỐNG LIVE CHAT
 # ==========================================
-
-# LƯU Ý: ĐÃ XÓA HÀM tru_kho_khi_dat_hang Ở ĐÂY VÌ ĐÃ CÓ TRONG FILE signals.py
-
 @csrf_exempt
 def get_nearest_tram(request):
     if request.method == 'POST':
@@ -930,7 +996,15 @@ def lich_su_sac_khach_hang(request):
 
 def san_pham_tai_chi_nhanh(request, pk):
     chi_nhanh = get_object_or_404(CuaHang, pk=pk)
-    danh_sach_xe = chi_nhanh.danh_sach_xe.all()
+    danh_sach_xe_goc = chi_nhanh.danh_sach_xe.filter(trang_thai=True)
+    
+    # 2. KIỂM TRA XEM TẠI ĐÚNG CHI NHÁNH NÀY CÒN XE KHÔNG
+    danh_sach_xe = []
+    for xe in danh_sach_xe_goc:
+        kho = KhoHang.objects.filter(xe=xe, cua_hang=chi_nhanh).first()
+        xe.ton_kho_tai_chi_nhanh = kho.so_luong if kho else 0 # Gắn thêm biến tạm
+        danh_sach_xe.append(xe)
+        
     return render(request, 'pages/san_pham_chi_nhanh.html', {
         'chi_nhanh': chi_nhanh,
         'danh_sach_xe': danh_sach_xe
@@ -939,28 +1013,76 @@ def san_pham_tai_chi_nhanh(request, pk):
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
 def tai_file_mau_excel(request):
-    # Tạo một file Excel mới bằng code
     wb = openpyxl.Workbook()
     sheet = wb.active
     sheet.title = "Mau_Nhap_Kho"
-
-    # 1. Tạo Dòng 1: Tiêu đề các cột
     sheet.append(["ID Xe (KHÔNG SỬA)", "Tên Dòng Xe (Chỉ để xem)", "Số Lượng Nhập"])
 
-    # 2. Quét database, in toàn bộ xe đang bán ra Excel
     xe_dien_list = XeDien.objects.filter(trang_thai=True).order_by('id')
     for xe in xe_dien_list:
-        # Cột A: ID | Cột B: Tên xe | Cột C: Để trống cho nhân viên tự nhập
         sheet.append([xe.id, xe.ten_xe, ""]) 
 
-    # 3. Canh chỉnh độ rộng cột cho đẹp
     sheet.column_dimensions['A'].width = 20
     sheet.column_dimensions['B'].width = 40
     sheet.column_dimensions['C'].width = 20
 
-    # 4. Trả file về cho trình duyệt tải xuống
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename=Mau_Nhap_Kho_EVStore.xlsx'
     wb.save(response)
     
     return response
+
+# 1. API ĐỂ KHUNG CHAT CỦA KHÁCH TỰ ĐỘNG TẢI TIN NHẮN
+@login_required
+def api_load_chat(request):
+    tin_nhans = TinNhanChat.objects.filter(khach_hang=request.user).order_by('thoi_gian')
+    data = []
+    for tn in tin_nhans:
+        data.append({
+            'noi_dung': tn.noi_dung,
+            'is_admin': tn.nguoi_gui.is_staff,
+        })
+    return JsonResponse({'messages': data})
+
+# 2. API ĐỂ KHÁCH GỬI TIN NHẮN TỪ KHUNG CHAT
+@login_required
+@csrf_exempt
+def gui_ho_tro_nhanh(request):
+    if request.method == 'POST':
+        noi_dung = request.POST.get('noi_dung')
+        if noi_dung:
+            TinNhanChat.objects.create(khach_hang=request.user, nguoi_gui=request.user, noi_dung=noi_dung)
+            return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'})
+
+# 3. GIAO DIỆN QUẢN LÝ CHAT DÀNH CHO ADMIN
+@login_required
+@phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
+def quan_ly_ho_tro(request):
+    # Lấy danh sách khách & ĐẾM số tin nhắn khách gửi mà admin chưa đọc
+    danh_sach_khach = User.objects.filter(chat_cua_khach__isnull=False).annotate(
+        tin_moi_nhat=Max('chat_cua_khach__thoi_gian'),
+        so_tin_chua_doc=Count('chat_cua_khach', filter=Q(chat_cua_khach__da_doc=False, chat_cua_khach__nguoi_gui__is_staff=False))
+    ).distinct().order_by('-tin_moi_nhat')
+    
+    khach_dang_chon = request.GET.get('khach_id')
+    tin_nhans = []
+    
+    if khach_dang_chon:
+        tin_nhans = TinNhanChat.objects.filter(khach_hang_id=khach_dang_chon).order_by('thoi_gian')
+        # Khi admin bấm vào xem -> Tự động chuyển toàn bộ tin của khách này thành "Đã đọc"
+        tin_nhans.filter(nguoi_gui__is_staff=False, da_doc=False).update(da_doc=True)
+
+    # Khi Admin gõ câu trả lời và bấm Gửi
+    if request.method == 'POST':
+        noi_dung = request.POST.get('noi_dung')
+        if noi_dung and khach_dang_chon:
+            khach = User.objects.get(id=khach_dang_chon)
+            TinNhanChat.objects.create(khach_hang=khach, nguoi_gui=request.user, noi_dung=noi_dung)
+            return redirect(f"{request.path}?khach_id={khach_dang_chon}")
+
+    return render(request, 'ho_tro/quan_ly_chat.html', {
+        'danh_sach_khach': danh_sach_khach,
+        'khach_dang_chon': int(khach_dang_chon) if khach_dang_chon else None,
+        'tin_nhans': tin_nhans
+    })

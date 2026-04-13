@@ -10,174 +10,480 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
-        body {
-            background-color: #f8f9fa;
-        }
+        body { background-color: #f3f4f6; }
 
-        .product-img {
-            height: 200px;
-            object-fit: contain;
-            padding: 10px;
-            background: white;
-            border-radius: 10px 10px 0 0;
-        }
-
-        .filter-sidebar {
-            background: white;
+        /* THANH LỌC NGANG STYLE TGDD */
+        .quick-filter-bar {
+            background: #fff;
+            padding: 15px;
             border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
         }
+        .filter-btn {
+            border: 1px solid #e0e0e0;
+            color: #333;
+            border-radius: 6px;
+            padding: 6px 15px;
+            background: #fff;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+        .filter-btn:hover { border-color: #198754; color: #198754; }
+        .filter-btn.active { border-color: #198754; color: #198754; background: #e8f5e9; }
+        
+        .quick-brand-list {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            scrollbar-width: none;
+        }
+        .quick-brand-list::-webkit-scrollbar { display: none; }
 
-        /* Hiệu ứng di chuột vào xe */
+        /* SẢN PHẨM CARD */
         .product-card {
+            border-radius: 12px;
+            border: 1px solid #efefef;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: #fff;
+            overflow: hidden;
         }
-
         .product-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
         }
-
-        /* CSS TRỢ GIÚP CHO KHỐI NHÃN DÁN */
+        .product-img {
+            height: 220px;
+            object-fit: contain;
+            padding: 15px;
+            background: #fff;
+        }
         .badge-container {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            top: 10px; left: 10px;
             z-index: 2;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            align-items: flex-start;
+            display: flex; flex-direction: column; gap: 5px;
         }
-    </style>
+        .cursor-pointer { cursor: pointer; }
+
+        /* MODAL BỘ LỌC TÙY CHỈNH */
+        .modal-filter-title { font-weight: 700; font-size: 15px; margin-bottom: 10px; color: #444; }
+        .filter-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .filter-box {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: #333;
+            background: #fff;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .filter-box input:checked + span { color: #198754; font-weight: bold; }
+        .filter-box:has(input:checked) { border-color: #198754; background: #f0fdf4; }
+   
+        /* CSS THANH TRƯỢT GIÁ (ĐÃ FIX LỖI KẸT NÚT) */
+        .range-slider-container {
+            position: relative;
+            width: 100%;
+            height: 6px;
+            margin: 25px 0 30px 0;
+            background: #e0e0e0;
+            border-radius: 5px;
+        }
+        .slider-track-fill {
+            height: 100%;
+            background: #198754;
+            position: absolute;
+            border-radius: 5px;
+            z-index: 1;
+        }
+        .range-slider-container input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            background: transparent;
+            position: absolute;
+            top: -7px;
+            margin: 0;
+            pointer-events: none; /* Khóa bắt sự kiện lên thanh nền */
+            z-index: 3;
+        }
+        .range-slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 22px;
+            width: 22px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #198754;
+            cursor: pointer;
+            pointer-events: auto; /* Mở khóa bắt sự kiện tại vị trí Nút bấm */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .range-slider-container input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+        .range-slider-container input[type="range"]::-webkit-slider-thumb:active {
+            background: #e8f5e9;
+        }
+   </style>
 </head>
 
 <body>
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow sticky-top">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{% url 'trang_chu' %}"><i
-                    class="bi bi-lightning-charge-fill text-warning"></i> EV STORE</a>
+            <a class="navbar-brand fw-bold" href="{% url 'trang_chu' %}">
+                <i class="bi bi-lightning-charge-fill text-warning"></i> EV STORE
+            </a>
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link" href="{% url 'trang_chu' %}">Trang chủ</a></li>
-                    <li class="nav-item"><a class="nav-link active fw-bold" href="{% url 'danh_sach_san_pham' %}">Sản
-                            phẩm</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm sạc</a></li>
+                    <li class="nav-item"><a class="nav-link active fw-bold" href="{% url 'danh_sach_san_pham' %}">Sản phẩm</a></li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container my-5">
-        <div class="row">
+    <div class="container my-4">
+        <form method="GET" id="filterForm">
+            
+            <div class="quick-filter-bar">
+                
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <button type="button" class="btn filter-btn d-flex align-items-center fw-bold" data-bs-toggle="modal" data-bs-target="#filterModal">
+                        <i class="bi bi-funnel me-2 fs-5"></i> Lọc
+                    </button>
 
-            <div class="col-md-3 mb-4">
-                <div class="filter-sidebar sticky-top shadow-sm border rounded p-3"
-                    style="top: 90px; background: white;">
-                    <h5 class="fw-bold mb-3 text-success"><i class="bi bi-funnel-fill me-2"></i>Bộ lọc xe</h5>
-
-                    <p class="fw-bold mb-2 small text-uppercase text-muted">Kiểu dáng xe</p>
-                    <div class="list-group list-group-flush mb-4">
-                        <a href="{% url 'danh_sach_san_pham' %}"
-                            class="list-group-item list-group-item-action {% if not pk_chon and not hang_chon %}active bg-success border-success{% endif %} small">
-                            Tất cả kiểu dáng
-                        </a>
-                        {% for pk in cac_phan_khuc %}
-                        <a href="?phan_khuc={{ pk.id }}{% if hang_chon %}&thuong_hieu={{ hang_chon }}{% endif %}"
-                            class="list-group-item list-group-item-action {% if pk_chon == pk.id %}active bg-success border-success{% endif %} small">
-                            {{ pk.ten_danh_muc }}
-                        </a>
-                        {% endfor %}
-                    </div>
-
-                    <p class="fw-bold mb-2 small text-uppercase text-muted">Thương hiệu</p>
-                    <div class="list-group list-group-flush">
+                    <div class="quick-brand-list flex-grow-1">
+                        <label class="filter-btn cursor-pointer {% if not hang_chon %}active{% endif %} text-nowrap">
+                            <input type="radio" name="thuong_hieu" value="" class="d-none" onchange="this.form.submit()" {% if not hang_chon %}checked{% endif %}>
+                            Tất cả
+                        </label>
                         {% for hang in cac_hang_xe %}
                         {% if hang %}
-                        <a href="?thuong_hieu={{ hang }}{% if pk_chon %}&phan_khuc={{ pk_chon }}{% endif %}"
-                            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if hang_chon == hang %}active bg-success border-success{% endif %} small">
+                        <label class="filter-btn cursor-pointer {% if hang_chon == hang %}active{% endif %} text-nowrap">
+                            <input type="radio" name="thuong_hieu" value="{{ hang }}" class="d-none" onchange="this.form.submit()" {% if hang_chon == hang %}checked{% endif %}>
                             {{ hang }}
-                        </a>
+                        </label>
                         {% endif %}
                         {% endfor %}
                     </div>
+                </div>
 
-                    {% if hang_chon or pk_chon %}
-                    <div class="mt-4 pt-3 border-top">
-                        <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-sm btn-outline-danger w-100 fw-bold">
-                            <i class="bi bi-x-circle me-1"></i> Xóa tất cả bộ lọc
-                        </a>
+                <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted small me-2">Sắp xếp theo:</span>
+                        <label class="cursor-pointer text-dark small fw-medium {% if sort_by == 'gia_tang' %}text-success fw-bold{% endif %}">
+                            <input type="radio" name="sort" value="gia_tang" class="d-none" onchange="this.form.submit()" {% if sort_by == 'gia_tang' %}checked{% endif %}>
+                            <i class="bi bi-sort-up"></i> Giá thấp - cao
+                        </label>
+                        <span class="text-muted mx-1">|</span>
+                        <label class="cursor-pointer text-dark small fw-medium {% if sort_by == 'gia_giam' %}text-success fw-bold{% endif %}">
+                            <input type="radio" name="sort" value="gia_giam" class="d-none" onchange="this.form.submit()" {% if sort_by == 'gia_giam' %}checked{% endif %}>
+                            <i class="bi bi-sort-down"></i> Giá cao - thấp
+                        </label>
                     </div>
+
+                    {% if hang_chon or pk_chon or tieu_chi or sort_by or khoang_gia or gia_min or gia_max %}
+                        <a href="{% url 'danh_sach_san_pham' %}" class="text-danger small text-decoration-none fw-bold">
+                            <i class="bi bi-x-circle me-1"></i>Xóa tất cả lọc
+                        </a>
                     {% endif %}
                 </div>
             </div>
 
-            <div class="col-md-9">
-                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-                    <h4 class="fw-bold text-dark mb-0">
-                        {% if hang_chon %}Xe điện {{ hang_chon|title }}{% else %}Tất cả xe điện{% endif %}
-                    </h4>
-                    <span class="text-muted small">Hiển thị {{ danh_sach_xe.count }} sản phẩm</span>
-                </div>
-
-                <div class="row g-4">
-                    {% for xe in danh_sach_xe %}
-                    <div class="col-md-4 col-sm-6">
-                        <div class="card product-card h-100 shadow-sm border-0 rounded-3 position-relative">
-
-                            <div class="badge-container">
-                                {% if xe.noi_bat %}
-                                <span class="badge bg-warning text-dark shadow-sm border border-warning">
-                                    <i class="bi bi-star-fill text-danger me-1"></i> Nổi bật
-                                </span>
-                                {% endif %}
-
-                                {% if xe.sap_ve %}
-                                <span class="badge bg-info text-dark shadow-sm border border-info">
-                                    <i class="bi bi-clock-history me-1"></i> Sắp về
-                                </span>
-                                {% endif %}
+            <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content border-0 rounded-4">
+                        <div class="modal-header border-bottom-0 pb-0">
+                            <h5 class="modal-title fw-bold mx-auto" id="filterModalLabel">Tất cả bộ lọc</h5>
+                            <button type="button" class="btn-close m-0 position-absolute end-0 me-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body px-4 py-4">
+                            
+                            <div class="mb-4 border-bottom pb-4">
+                                <div class="modal-filter-title">Hãng xe</div>
+                                <div class="filter-grid">
+                                    <label class="filter-box">
+                                        <input type="radio" name="thuong_hieu" value="" class="d-none" {% if not hang_chon %}checked{% endif %}>
+                                        <span>Tất cả</span>
+                                    </label>
+                                    {% for hang in cac_hang_xe %}
+                                    {% if hang %}
+                                    <label class="filter-box">
+                                        <input type="radio" name="thuong_hieu" value="{{ hang }}" class="d-none" {% if hang_chon == hang %}checked{% endif %}>
+                                        <span>{{ hang }}</span>
+                                    </label>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
                             </div>
 
-                            {% if xe.hinh_anh %}
-                            <img src="{{ xe.hinh_anh.url }}" class="card-img-top product-img" alt="{{ xe.ten_xe }}">
-                            {% else %}
-                            <img src="https://via.placeholder.com/300x200?text=Chưa+có+ảnh"
-                                class="card-img-top product-img">
-                            {% endif %}
-
-                            <div class="card-body text-center d-flex flex-column">
-                                <p class="text-muted small mb-1">{{ xe.hang_san_xuat }}</p>
-                                <h5 class="card-title fw-bold text-truncate" title="{{ xe.ten_xe }}">{{ xe.ten_xe }}
-                                </h5>
-
-                                <p class="text-danger fw-bold mt-2 mb-3 fs-5">{{ xe.gia|intcomma }} VNĐ</p>
-
-                                <div class="mt-auto">
-                                    <a href="{% url 'chi_tiet_xe' xe.id %}"
-                                        class="btn btn-outline-success w-100 fw-bold">
-                                        <i class="bi bi-eye me-1"></i> Xem chi tiết
-                                    </a>
+                            <div class="mb-4 border-bottom pb-4">
+                                <div class="modal-filter-title">Mức giá</div>
+                                
+                                <div class="px-2 position-relative" style="height: 40px;">
+                                    <div class="range-slider-container" style="position: absolute; width: 100%; top: 15px; height: 6px; background: #e0e0e0; border-radius: 5px;">
+                                        <div class="slider-track-fill" id="sliderTrack" style="height: 100%; background: #198754; position: absolute; border-radius: 5px; z-index: 1;"></div>
+                                        <input type="range" min="0" max="5000000000" step="10000000" value="{{ gia_min|default:'0' }}" id="sliderMin" style="position: absolute; top: -7px; width: 100%; -webkit-appearance: none; background: transparent; pointer-events: none; z-index: 3;">
+                                        <input type="range" min="0" max="5000000000" step="10000000" value="{{ gia_max|default:'5000000000' }}" id="sliderMax" style="position: absolute; top: -7px; width: 100%; -webkit-appearance: none; background: transparent; pointer-events: none; z-index: 4;">
+                                    </div>
                                 </div>
+                                
+                                <style>
+                                    input[type=range]::-webkit-slider-thumb {
+                                        pointer-events: all;
+                                        width: 20px; height: 20px;
+                                        -webkit-appearance: none;
+                                        background: white; border: 2px solid #198754; border-radius: 50%;
+                                        cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                                    }
+                                </style>
+
+                                <div class="d-flex align-items-center justify-content-between gap-2 mt-2">
+                                    
+                                    <input type="hidden" name="gia_min" id="realMin" value="{{ gia_min }}">
+                                    <input type="hidden" name="gia_max" id="realMax" value="{{ gia_max }}">
+
+                                    <div class="position-relative w-100">
+                                        <span class="position-absolute top-50 start-0 translate-middle-y ms-2 text-muted small">Từ</span>
+                                        <input type="text" id="displayMin" class="form-control form-control-sm border-success text-end pe-2 fw-bold text-success" style="padding-left: 30px;" placeholder="0">
+                                    </div>
+                                    <span class="text-muted fw-bold">-</span>
+                                    <div class="position-relative w-100">
+                                        <span class="position-absolute top-50 start-0 translate-middle-y ms-2 text-muted small">Đến</span>
+                                        <input type="text" id="displayMax" class="form-control form-control-sm border-success text-end pe-2 fw-bold text-success" style="padding-left: 35px;" placeholder="5,000,000,000">
+                                    </div>
+                                </div>
+                                <div class="text-end mt-1"><small class="text-muted fst-italic">(Đơn vị: VNĐ)</small></div>
+
+                                <div class="filter-grid mt-3">
+                                    <label class="filter-box"><input type="radio" name="khoang_gia" value="" class="d-none" {% if not khoang_gia %}checked{% endif %}><span>Tất cả mức giá</span></label>
+                                    <label class="filter-box"><input type="radio" name="khoang_gia" value="duoi_500" class="d-none" {% if khoang_gia == 'duoi_500' %}checked{% endif %}><span>Dưới 500 triệu</span></label>
+                                    <label class="filter-box"><input type="radio" name="khoang_gia" value="500_1000" class="d-none" {% if khoang_gia == '500_1000' %}checked{% endif %}><span>Từ 500tr - 1 Tỷ</span></label>
+                                    <label class="filter-box"><input type="radio" name="khoang_gia" value="1000_2000" class="d-none" {% if khoang_gia == '1000_2000' %}checked{% endif %}><span>Từ 1 Tỷ - 2 Tỷ</span></label>
+                                    <label class="filter-box"><input type="radio" name="khoang_gia" value="tren_2000" class="d-none" {% if khoang_gia == 'tren_2000' %}checked{% endif %}><span>Trên 2 Tỷ</span></label>
+                                </div>
+                            </div>
+
+                            <div class="mb-4 border-bottom pb-4">
+                                <div class="modal-filter-title">Nhu cầu (Phân loại)</div>
+                                <div class="filter-grid">
+                                    <label class="filter-box">
+                                        <input type="radio" name="tieu_chi" value="" class="d-none" {% if not tieu_chi %}checked{% endif %}>
+                                        <span>Tất cả</span>
+                                    </label>
+                                    <label class="filter-box">
+                                        <input type="radio" name="tieu_chi" value="noi_bat" class="d-none" {% if tieu_chi == 'noi_bat' %}checked{% endif %}>
+                                        <span><i class="bi bi-star-fill text-warning me-1"></i> Nổi bật</span>
+                                    </label>
+                                    <label class="filter-box">
+                                        <input type="radio" name="tieu_chi" value="ban_chay" class="d-none" {% if tieu_chi == 'ban_chay' %}checked{% endif %}>
+                                        <span><i class="bi bi-fire text-danger me-1"></i> Bán chạy</span>
+                                    </label>
+                                    <label class="filter-box">
+                                        <input type="radio" name="tieu_chi" value="moi_ve" class="d-none" {% if tieu_chi == 'moi_ve' %}checked{% endif %}>
+                                        <span><i class="bi bi-box2-heart text-primary me-1"></i> Mới về</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="mb-2">
+                                <div class="modal-filter-title">Kiểu dáng xe</div>
+                                <div class="filter-grid">
+                                    <label class="filter-box">
+                                        <input type="radio" name="phan_khuc" value="" class="d-none" {% if not pk_chon %}checked{% endif %}>
+                                        <span>Tất cả kiểu dáng</span>
+                                    </label>
+                                    {% for pk in cac_phan_khuc %}
+                                    <label class="filter-box">
+                                        <input type="radio" name="phan_khuc" value="{{ pk.id }}" class="d-none" {% if pk_chon == pk.id %}checked{% endif %}>
+                                        <span>{{ pk.ten_danh_muc }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="modal-footer justify-content-center border-top-0 pt-0 pb-4">
+                            <button type="button" class="btn btn-outline-danger fw-bold px-4 py-2 me-2" onclick="window.location.href='{% url 'danh_sach_san_pham' %}'">Bỏ chọn</button>
+                            <button type="submit" id="btnSubmitFilter" class="btn btn-success fw-bold px-5 py-2">
+                                Xem {{ danh_sach_xe.count }} kết quả
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3">
+                {% for xe in danh_sach_xe %}
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="card product-card h-100 position-relative">
+
+                        <div class="badge-container">
+                            {% if xe.noi_bat %}
+                            <span class="badge bg-warning text-dark shadow-sm border border-warning"><i class="bi bi-star-fill text-danger me-1"></i> Nổi bật</span>
+                            {% endif %}
+                            {% if xe.moi_ve %}
+                            <span class="badge bg-primary text-white shadow-sm border border-primary"><i class="bi bi-box2-heart-fill me-1"></i> Mới về</span>
+                            {% endif %}
+                            {% if xe.ban_chay %}
+                            <span class="badge bg-danger text-white shadow-sm border border-danger"><i class="bi bi-fire text-warning me-1"></i> Bán chạy</span>
+                            {% endif %}
+                            {% if xe.sap_ve %}
+                            <span class="badge bg-info text-dark shadow-sm border border-info"><i class="bi bi-clock-history me-1"></i> Sắp về</span>
+                            {% endif %}
+                        </div>
+
+                        {% if xe.hinh_anh %}
+                        <img src="{{ xe.hinh_anh.url }}" class="card-img-top product-img" alt="{{ xe.ten_xe }}">
+                        {% else %}
+                        <img src="https://via.placeholder.com/300x200?text=Chưa+có+ảnh" class="card-img-top product-img bg-light">
+                        {% endif %}
+
+                        <div class="card-body text-center d-flex flex-column border-top">
+                            <p class="text-muted small mb-1">{{ xe.hang_san_xuat }}</p>
+                            <h6 class="card-title fw-bold text-truncate" title="{{ xe.ten_xe }}">{{ xe.ten_xe }}</h6>
+                            <p class="text-danger fw-bold mt-2 mb-3 fs-6">{{ xe.gia|intcomma }} VNĐ</p>
+                            
+                            <div class="mt-auto">
+                                <a href="{% url 'chi_tiet_xe' xe.id %}" class="btn btn-outline-success btn-sm w-100 fw-bold rounded-pill">
+                                    Xem chi tiết
+                                </a>
                             </div>
                         </div>
                     </div>
-                    {% empty %}
-                    <div class="col-12 text-center text-muted py-5 mt-4 bg-white rounded shadow-sm border">
-                        <i class="bi bi-search fs-1 d-block mb-3 text-secondary"></i>
-                        <h5 class="fw-bold">Không tìm thấy xe nào!</h5>
-                        <p>Vui lòng thử chọn kiểu dáng hoặc thương hiệu khác.</p>
-                        <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-success mt-2 fw-bold">Xem tất cả xe</a>
-                    </div>
-                    {% endfor %}
                 </div>
+                {% empty %}
+                <div class="col-12 text-center text-muted py-5 mt-3 bg-white rounded shadow-sm border">
+                    <i class="bi bi-search fs-1 d-block mb-3 text-secondary"></i>
+                    <h5 class="fw-bold">Không tìm thấy xe nào phù hợp!</h5>
+                    <p>Vui lòng thử bỏ bớt các tiêu chí lọc.</p>
+                    <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-success mt-2 fw-bold shadow-sm">Xóa lọc để xem tất cả</a>
+                </div>
+                {% endfor %}
             </div>
 
-        </div>
+        </form>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            
+            // 1. CHỨC NĂNG ĐẾM KẾT QUẢ TRỰC TIẾP (AJAX LIVE COUNT)
+            const filterForm = document.getElementById('filterForm');
+            const btnSubmitFilter = document.getElementById('btnSubmitFilter');
+
+            function fetchLiveCount() {
+                const formData = new FormData(filterForm);
+                const searchParams = new URLSearchParams(formData).toString();
+
+                // Hiển thị hiệu ứng tải trên nút
+                btnSubmitFilter.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang đếm...';
+                btnSubmitFilter.classList.add('disabled');
+
+                fetch(window.location.pathname + '?' + searchParams, {
+                    headers: { 'x-requested-with': 'XMLHttpRequest' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Update nút với kết quả mới
+                    btnSubmitFilter.innerHTML = `Xem <b>${data.count}</b> kết quả`;
+                    btnSubmitFilter.classList.remove('disabled');
+                })
+                .catch(error => {
+                    btnSubmitFilter.innerHTML = `Xem kết quả`;
+                    btnSubmitFilter.classList.remove('disabled');
+                });
+            }
+
+            // Gắn event onChange cho tất cả input trong form để gọi AJAX
+            filterForm.querySelectorAll('input').forEach(input => {
+                input.addEventListener('change', function(e) {
+                    if(e.target.type !== 'range') fetchLiveCount();
+                });
+            });
+
+          // 2. CHỨC NĂNG THANH TRƯỢT KÉP (DUAL RANGE SLIDER)
+            const sliderMin = document.getElementById("sliderMin");
+            const sliderMax = document.getElementById("sliderMax");
+            const displayMin = document.getElementById("displayMin"); // Ô hiển thị
+            const displayMax = document.getElementById("displayMax"); // Ô hiển thị
+            const realMin = document.getElementById("realMin");       // Ô chứa data sạch gửi đi
+            const realMax = document.getElementById("realMax");       // Ô chứa data sạch gửi đi
+            const sliderTrack = document.getElementById("sliderTrack");
+            const maxAllowed = parseInt(sliderMax.max);
+            const gap = 10000000; 
+
+            // Hàm định dạng số có dấu phẩy: 1000000 -> 1,000,000
+            const formatMoney = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            // Hàm xóa dấu phẩy để tính toán: 1,000,000 -> 1000000
+            const parseMoney = (str) => parseInt(str.toString().replace(/,/g, '')) || 0;
+
+            function updateSliderVisuals(isFromSlider = false) {
+                let val1 = parseInt(sliderMin.value);
+                let val2 = parseInt(sliderMax.value);
+
+                if (val2 - val1 <= gap) {
+                    if (this.id === "sliderMin") {
+                        sliderMin.value = val2 - gap;
+                        val1 = parseInt(sliderMin.value);
+                    } else {
+                        sliderMax.value = val1 + gap;
+                        val2 = parseInt(sliderMax.value);
+                    }
+                }
+
+                // Cập nhật ô hiển thị (Có dấu phẩy)
+                displayMin.value = formatMoney(val1);
+                displayMax.value = formatMoney(val2);
+                
+                // Cập nhật ô ẩn (Không có phẩy - gửi về server)
+                realMin.value = val1;
+                realMax.value = val2;
+
+                let percent1 = (val1 / maxAllowed) * 100;
+                let percent2 = (val2 / maxAllowed) * 100;
+                sliderTrack.style.left = percent1 + "%";
+                sliderTrack.style.width = (percent2 - percent1) + "%";
+
+                if(isFromSlider) {
+                    document.querySelectorAll('input[name="khoang_gia"]').forEach(r => r.checked = false);
+                }
+            }
+
+            function updateInputsToSlider() {
+                // Lấy dữ liệu từ ô hiển thị, bỏ dấu phẩy đi để tính toán
+                let val1 = parseMoney(displayMin.value);
+                let val2 = parseMoney(displayMax.value);
+
+                if (val1 < 0) val1 = 0;
+                if (val2 > maxAllowed) val2 = maxAllowed;
+                if (val2 - val1 <= gap) val1 = val2 - gap;
+
+                sliderMin.value = val1;
+                sliderMax.value = val2;
+                
+                updateSliderVisuals();
+                fetchLiveCount();
+            }
+
+            sliderMin.addEventListener("input", function() { updateSliderVisuals.call(this, true); });
+            sliderMax.addEventListener("input", function() { updateSliderVisuals.call(this, true); });
+            sliderMin.addEventListener("change", fetchLiveCount);
+            sliderMax.addEventListener("change", fetchLiveCount);
+
+            // Khi người dùng gõ tay vào ô và bấm chuột ra ngoài (change) -> Tự động thêm phẩy
+            displayMin.addEventListener("change", updateInputsToSlider);
+            displayMax.addEventListener("change", updateInputsToSlider);
+
+            updateSliderVisuals();
+        });
+    </script>
 </body>
 
 </html>

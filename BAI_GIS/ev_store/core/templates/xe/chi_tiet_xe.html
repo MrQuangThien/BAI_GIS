@@ -31,6 +31,9 @@
         .mySwiper .swiper-slide { width: 25%; height: 100%; opacity: 0.4; cursor: pointer; border-radius: 8px; overflow: hidden; border: 2px solid transparent; transition: all 0.3s ease; background: white;}
         .mySwiper .swiper-slide-thumb-active { opacity: 1; border-color: #198754; }
         .mySwiper .swiper-slide img { display: block; width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Tùy chỉnh dropdown chọn chi nhánh */
+        .branch-select:focus { box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15); border-color: #198754;}
     </style>
 </head>
 <body>
@@ -120,51 +123,38 @@
                         <span class="text-muted">Tầm di chuyển:</span>
                         <strong class="text-dark">{{ xe.tam_di_chuyen }} km</strong>
                     </li>
-                    
-                    <li class="list-group-item d-flex justify-content-between px-0 bg-transparent">
-                        <span class="text-muted">Trạng thái:</span>
-                        <span class="fw-bold">
-                            {% if xe.sap_ve %}
-                                <span class="text-info"><i class="bi bi-clock-history me-1"></i> Sắp về (Pre-order)</span>
-                            {% elif tong_ton_kho > 0 %}
-                                <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Còn hàng </span>
-                            {% else %}
-                                <span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i> Tạm hết hàng</span>
-                            {% endif %}
-                        </span>
-                    </li>
-                    
-                    <li class="list-group-item d-flex justify-content-between align-items-start px-0 bg-transparent">
-                        <span class="text-muted mt-1">Cửa hàng phân phối:</span>
-                        <div class="text-end">
-                            {% for ch in xe.cua_hang.all %}
-                                <strong class="text-primary d-block mb-1"><i class="bi bi-geo-alt-fill me-1"></i>{{ ch.ten_cua_hang }}</strong>
-                            {% empty %}
-                                <span class="text-muted fst-italic">Chưa có thông tin</span>
-                            {% endfor %}
-                        </div>
-                    </li>
                 </ul>
+
+                <div class="bg-light border rounded-4 p-3 mb-4">
+                    <label class="fw-bold text-dark mb-2"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Chọn chi nhánh kiểm tra hàng:</label>
+                    <select id="branchSelect" class="form-select form-select-lg branch-select fw-semibold text-dark mb-1">
+                        <option value="">-- Vui lòng chọn chi nhánh gần bạn nhất --</option>
+                        {% for item in chi_tiet_ton_kho %}
+                            <option value="{{ item.so_luong }}">{{ item.ten_cua_hang }}</option>
+                        {% empty %}
+                            <option value="" disabled>Sản phẩm chưa được phân phối tới chi nhánh nào</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <div id="branchStatus" class="d-none rounded-3 p-2 text-center mt-2 border"></div>
+                </div>
                 
                 <div class="mt-auto pt-3 border-top">
+                    <input type="hidden" id="urlDatHang" value="{% url 'tao_don_hang' xe.id %}">
+                    
                     {% if cho_phep_dat %}
-                        {% if xe.sap_ve %}
-                            <a href="{% url 'tao_don_hang' xe.id %}" class="btn btn-info btn-lg w-100 fw-bold text-dark shadow py-3 rounded-pill">
-                                <i class="bi bi-clock-history me-2 fs-5"></i> ĐẶT CỌC GIỮ CHỖ NGAY
-                            </a>
-                        {% else %}
-                            <a href="{% url 'tao_don_hang' xe.id %}" class="btn btn-success btn-lg w-100 fw-bold shadow py-3 rounded-pill">
-                                <i class="bi bi-cart-plus-fill me-2 fs-5"></i> ĐẶT MUA NGAY
-                            </a>
-                        {% endif %}
+                        <a id="btnDatHang" class="btn btn-secondary btn-lg w-100 fw-bold shadow-sm py-3 rounded-pill transition-all disabled" style="pointer-events: none;">
+                            <i class="bi bi-shop me-2 fs-5"></i> VUI LÒNG CHỌN CHI NHÁNH
+                        </a>
                     {% else %}
-                        <button class="btn btn-secondary btn-lg w-100 fw-bold shadow-sm py-3 rounded-pill" disabled>
+                        <button id="btnDatHang" class="btn btn-secondary btn-lg w-100 fw-bold shadow-sm py-3 rounded-pill" disabled>
                             <i class="bi bi-x-octagon me-2"></i> TẠM THỜI HẾT HÀNG
                         </button>
-                        <div class="text-center mt-3 small text-danger fw-semibold bg-danger-subtle p-2 rounded">
-                            Sản phẩm đã bán hết hoặc đang được khách khác giữ chỗ. Vui lòng quay lại sau!
-                        </div>
                     {% endif %}
+                    
+                    <div id="outOfStockMsg" class="text-center mt-3 small text-danger fw-semibold bg-danger-subtle p-2 rounded d-none">
+                        Chi nhánh này đã hết xe. Vui lòng chọn chi nhánh khác!
+                    </div>
                 </div>
 
             </div>
@@ -243,14 +233,124 @@
         
     </div>
 
+    {% if xe_tuong_tu %}
+        <div class="row bg-white shadow-sm p-4 p-md-5 rounded-4 mt-4 mb-5">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center border-bottom border-success pb-3 mb-4">
+                    <h4 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-collection-play text-success me-2"></i>Có thể bạn cũng thích
+                    </h4>
+                    <a href="{% url 'danh_sach_san_pham' %}?thuong_hieu={{ xe.hang_san_xuat }}" class="text-success fw-bold text-decoration-none">
+                        Xem thêm xe {{ xe.hang_san_xuat }} <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                
+                <div class="row g-4">
+                    {% for sp in xe_tuong_tu %}
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card h-100 shadow-sm border border-light rounded-4 overflow-hidden product-card position-relative">
+                            
+                            <div class="position-absolute top-0 start-0 m-2 z-3 d-flex flex-column gap-1">
+                                {% if sp.noi_bat %}
+                                    <span class="badge bg-warning text-dark shadow-sm"><i class="bi bi-star-fill text-danger me-1"></i> Nổi bật</span>
+                                {% endif %}
+                                {% if sp.sap_ve %}
+                                    <span class="badge bg-info text-dark shadow-sm"><i class="bi bi-clock-history me-1"></i> Sắp về</span>
+                                {% endif %}
+                            </div>
+
+                            {% if sp.hinh_anh %}
+                                <img src="{{ sp.hinh_anh.url }}" class="card-img-top bg-white p-3" style="height: 180px; object-fit: contain;" alt="{{ sp.ten_xe }}">
+                            {% else %}
+                                <img src="https://via.placeholder.com/300x200?text=Chưa+có+ảnh" class="card-img-top bg-light" style="height: 180px; object-fit: cover;">
+                            {% endif %}
+                            
+                            <div class="card-body text-center d-flex flex-column border-top bg-light">
+                                <p class="text-muted small mb-1">{{ sp.hang_san_xuat }}</p>
+                                <h6 class="fw-bold mb-2 text-truncate" title="{{ sp.ten_xe }}">{{ sp.ten_xe }}</h6>
+                                <p class="text-danger fw-bold fs-6 mt-auto mb-3">{{ sp.gia|intcomma }} VNĐ</p>
+                                <a href="{% url 'chi_tiet_xe' sp.id %}" class="btn btn-outline-success btn-sm w-100 rounded-pill fw-bold">Xem chi tiết</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        </div> <footer class="bg-dark text-white text-center py-4 mt-auto">
+
     <footer class="bg-dark text-white text-center py-4 mt-auto">
         <p class="mb-0 text-white-50">© 2026 EV STORE - Hệ thống kinh doanh xe điện hàng đầu</p>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+    
     <script>
-        // Khởi tạo slider ảnh nhỏ (Thumbnails)
+        document.addEventListener("DOMContentLoaded", function() {
+            const branchSelect = document.getElementById('branchSelect');
+            const branchStatus = document.getElementById('branchStatus');
+            const btnDatHang = document.getElementById('btnDatHang');
+            const outOfStockMsg = document.getElementById('outOfStockMsg');
+            
+            // Lấy href gốc của nút đặt mua (để phục hồi lại khi chi nhánh có hàng)
+            const originalBtnHref = btnDatHang && btnDatHang.tagName === 'A' ? btnDatHang.getAttribute('href') : '#';
+            // Cờ xác định xem xe này có phải là dòng "Sắp về" hay không
+            const isSapVe = {% if xe.sap_ve %}true{% else %}false{% endif %};
+
+            if(branchSelect) {
+                branchSelect.addEventListener('change', function() {
+                    const qty = this.value;
+                    
+                    // Nếu quay về mục "-- Chọn chi nhánh --" thì ẩn thông báo đi
+                    if (qty === "") {
+                        branchStatus.classList.add('d-none');
+                        return;
+                    }
+                    
+                    branchStatus.classList.remove('d-none');
+                    
+                    if (isSapVe) {
+                        // Xe Pre-order (Được phép đặt cọc bất chấp tồn kho)
+                        branchStatus.className = 'rounded-3 p-2 text-center mt-2 border border-info bg-info-subtle';
+                        branchStatus.innerHTML = '<span class="fw-bold text-info-emphasis"><i class="bi bi-clock-history me-1"></i> Hàng sắp về (Hỗ trợ đặt cọc tại đây)</span>';
+                    } 
+                    else if (parseInt(qty) > 0) {
+                        // Chi nhánh CÒN HÀNG -> Hiện màu xanh, mở khóa nút Mua
+                        branchStatus.className = 'rounded-3 p-2 text-center mt-2 border border-success bg-success-subtle';
+                        branchStatus.innerHTML = `<span class="fw-bold text-success"><i class="bi bi-check-circle-fill me-1"></i> Chi nhánh hiện có sẵn ${qty} chiếc</span>`;
+                        
+                        if(btnDatHang) {
+                            btnDatHang.classList.remove('disabled', 'btn-secondary');
+                            btnDatHang.classList.add('btn-success');
+                            btnDatHang.innerHTML = '<i class="bi bi-cart-plus-fill me-2 fs-5"></i> ĐẶT MUA NGAY';
+                            
+                            // Phục hồi lại thẻ <a href> để bấm được
+                            if (btnDatHang.tagName === 'A') btnDatHang.setAttribute('href', originalBtnHref);
+                            if(outOfStockMsg) outOfStockMsg.classList.add('d-none');
+                        }
+                    } 
+                    else {
+                        // Chi nhánh HẾT HÀNG -> Hiện màu đỏ, Khóa cứng nút Mua
+                        branchStatus.className = 'rounded-3 p-2 text-center mt-2 border border-danger bg-danger-subtle';
+                        branchStatus.innerHTML = '<span class="fw-bold text-danger"><i class="bi bi-x-circle-fill me-1"></i> Chi nhánh này đã tạm hết hàng</span>';
+                        
+                        if(btnDatHang) {
+                            btnDatHang.classList.add('disabled', 'btn-secondary');
+                            btnDatHang.classList.remove('btn-success', 'btn-info');
+                            btnDatHang.innerHTML = '<i class="bi bi-x-octagon me-2"></i> TẠM HẾT HÀNG TẠI ĐÂY';
+                            
+                            // Vô hiệu hóa thẻ <a> để không thể click
+                            if (btnDatHang.tagName === 'A') btnDatHang.removeAttribute('href');
+                            if(outOfStockMsg) outOfStockMsg.classList.remove('d-none');
+                        }
+                    }
+                });
+            }
+        });
+
+        // Khởi tạo slider ảnh (Giữ nguyên)
         var swiper = new Swiper(".mySwiper", {
             spaceBetween: 10,
             slidesPerView: 4,
@@ -258,16 +358,10 @@
             watchSlidesProgress: true,
         });
         
-        // Khởi tạo slider ảnh lớn liên kết với ảnh nhỏ
         var swiper2 = new Swiper(".mySwiper2", {
             spaceBetween: 10,
-            navigation: {
-                nextEl: ".swiper-button-next",
-                prevEl: ".swiper-button-prev",
-            },
-            thumbs: {
-                swiper: swiper,
-            },
+            navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
+            thumbs: { swiper: swiper },
             effect: "fade", 
             fadeEffect: { crossFade: true }
         });

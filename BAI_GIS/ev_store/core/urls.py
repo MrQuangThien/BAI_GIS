@@ -111,4 +111,10 @@ urlpatterns = [
     path('tram_sac/lich-su-sac/', views.lich_su_sac, name='lich_su_sac'),
     path('users/user_sac/', views.lich_su_sac_khach_hang, name='user_sac'),
     path('tim-kiem/', views.tim_kiem, name='tim_kiem'),
+
+    # === CHĂM SÓC KHÁCH HÀNG ===
+# Bỏ đường dẫn 'ho-tro/' cũ đi, thay bằng:
+    path('api/load-chat/', views.api_load_chat, name='api_load_chat'),
+    path('api/ho-tro-nhanh/', views.gui_ho_tro_nhanh, name='gui_ho_tro_nhanh'),
+    path('quan-ly-ho-tro/', views.quan_ly_ho_tro, name='quan_ly_ho_tro'),
 ]

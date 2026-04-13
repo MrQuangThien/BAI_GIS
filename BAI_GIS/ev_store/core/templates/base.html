@@ -61,13 +61,11 @@
             <div class="collapse navbar-collapse" id="menu">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'trang_chu' %}">Trang chủ</a></li>
-
                     <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'gioi_thieu' %}">Giới thiệu</a></li>
-
                     <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'danh_sach_san_pham' %}">Sản phẩm</a></li>
+                    <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm sạc</a></li>
                     
-                    <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm
-                            sạc</a></li>
+                
                     {% if user.is_authenticated and user.is_staff %}
                     <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
                         <a class="nav-link text-warning fw-bold bg-dark bg-opacity-25 rounded px-3"
@@ -78,11 +76,9 @@
                     {% endif %}
                 </ul>
 
-                <form action="{% url 'tim_kiem' %}" method="GET" class="d-flex mx-lg-3 my-2 my-lg-0 w-100"
-                    style="max-width: 400px;">
+                <form action="{% url 'tim_kiem' %}" method="GET" class="d-flex mx-lg-3 my-2 my-lg-0 w-100" style="max-width: 400px;">
                     <div class="input-group shadow-sm">
-                        <input type="text" name="q" class="form-control" placeholder="Tìm kiếm xe, trạm sạc..."
-                            value="{{ request.GET.q }}" required>
+                        <input type="text" name="q" class="form-control" placeholder="Tìm kiếm xe, trạm sạc..." value="{{ request.GET.q }}" required>
                         <button class="btn btn-warning text-dark fw-bold" type="submit">
                             <i class="bi bi-search"></i>
                         </button>
@@ -92,8 +88,7 @@
                 <div class="d-flex align-items-center mt-2 mt-lg-0">
                     {% if user.is_authenticated %}
                     <div class="dropdown">
-                        <button class="btn btn-light dropdown-toggle fw-bold rounded-pill px-3 shadow-sm" type="button"
-                            data-bs-toggle="dropdown">
+                        <button class="btn btn-light dropdown-toggle fw-bold rounded-pill px-3 shadow-sm" type="button" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle me-1 text-success"></i> {{ user.username }}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
@@ -121,8 +116,7 @@
                         </ul>
                     </div>
                     {% else %}
-                    <a href="{% url 'login' %}" class="btn btn-success me-2 fw-bold shadow-sm border border-light">Đăng
-                        nhập</a>
+                    <a href="{% url 'login' %}" class="btn btn-success me-2 fw-bold shadow-sm border border-light">Đăng nhập</a>
                     <a href="{% url 'register' %}" class="btn btn-light fw-bold text-success shadow-sm">Đăng ký</a>
                     {% endif %}
                 </div>
@@ -133,10 +127,8 @@
     {% if messages %}
     <div class="position-fixed top-0 end-0 p-3" style="z-index: 1100; margin-top: 60px;">
         {% for message in messages %}
-        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show shadow-lg border-0"
-            role="alert">
-            <i
-                class="bi {% if message.tags == 'error' %}bi-exclamation-triangle{% else %}bi-check-circle{% endif %} me-2 fs-5 align-middle"></i>
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show shadow-lg border-0" role="alert">
+            <i class="bi {% if message.tags == 'error' %}bi-exclamation-triangle{% else %}bi-check-circle{% endif %} me-2 fs-5 align-middle"></i>
             <strong>{{ message }}</strong>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -157,8 +149,7 @@
                         <i class="bi bi-lightning-charge-fill me-2 text-warning"></i>EV STORE
                     </h5>
                     <p class="text-white-50 text-justify">
-                        Đại lý phân phối xe điện chính hãng hàng đầu. Chúng tôi cam kết mang đến những sản phẩm chất
-                        lượng, thân thiện với môi trường cùng dịch vụ bảo hành tận tâm.
+                        Đại lý phân phối xe điện chính hãng hàng đầu. Chúng tôi cam kết mang đến những sản phẩm chất lượng, thân thiện với môi trường cùng dịch vụ bảo hành tận tâm.
                     </p>
                 </div>
 
@@ -175,13 +166,12 @@
                     <p><a href="#">Chính sách bảo hành</a></p>
                     <p><a href="#">Hướng dẫn mua trả góp</a></p>
                     <p><a href="#">Chính sách giao nhận xe</a></p>
-                    <p><a href="#">Câu hỏi thường gặp (FAQ)</a></p>
+                    <p><a href="#" onclick="toggleChat(); return false;"><i class="bi bi-chat-dots me-1"></i> Chat với nhân viên hỗ trợ</a></p>
                 </div>
 
                 <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mt-3">
                     <h6 class="text-uppercase mb-4 fw-bold text-white">Liên hệ</h6>
-                    <p class="text-light"><i class="bi bi-house-door-fill me-3 text-success"></i> Số 236B, Đường Lê Văn
-                        Sỹ, Quận Tân Bình, TP. HCM</p>
+                    <p class="text-light"><i class="bi bi-house-door-fill me-3 text-success"></i> Số 236B, Đường Lê Văn Sỹ, Quận Tân Bình, TP. HCM</p>
                     <p class="text-light"><i class="bi bi-envelope-fill me-3 text-success"></i> cskh@evstore.vn</p>
                     <p class="text-light"><i class="bi bi-telephone-fill me-3 text-success"></i> Hotline: 1900 1234</p>
 
@@ -198,16 +188,12 @@
 
             <div class="row align-items-center">
                 <div class="col-md-7 col-lg-8">
-
                 </div>
                 <div class="col-md-5 col-lg-4">
                     <div class="text-center text-md-end">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal"
-                            height="20" class="me-2 bg-white px-1 rounded">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" alt="Visa" height="20"
-                            class="me-2 bg-white px-1 rounded">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg"
-                            alt="MasterCard" height="20" class="bg-white px-1 rounded">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" height="20" class="me-2 bg-white px-1 rounded">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" alt="Visa" height="20" class="me-2 bg-white px-1 rounded">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="MasterCard" height="20" class="bg-white px-1 rounded">
                     </div>
                 </div>
             </div>
@@ -226,6 +212,134 @@
             }, 4000);
         });
     </script>
+
+    {% if request.user.is_authenticated and not request.user.is_staff %}
+    <style>
+        .chat-widget { position: fixed; bottom: 20px; right: 20px; z-index: 1050; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+        .chat-box { width: 350px; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border-radius: 12px; overflow: hidden; background: #fff; transition: all 0.3s ease;}
+        .chat-header { background: #198754; color: white; padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;}
+        .chat-body { padding: 15px; height: 300px; overflow-y: auto; background: #f8f9fa; display: flex; flex-direction: column;}
+        .chat-footer { padding: 10px; background: #fff; border-top: 1px solid #ddd; }
+        
+        .chat-btn-toggle { width: 60px; height: 60px; border-radius: 50%; background: #198754; color: white; font-size: 26px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; float: right; transition: transform 0.2s; display: flex; align-items: center; justify-content: center;}
+        .chat-btn-toggle:hover { transform: scale(1.1); }
+        
+        .msg-user { background: #198754; color: white; padding: 10px 14px; border-radius: 15px 15px 0 15px; margin-bottom: 10px; max-width: 85%; align-self: flex-end; word-wrap: break-word;}
+        .msg-admin { background: #e9ecef; color: #333; padding: 10px 14px; border-radius: 15px 15px 15px 0; margin-bottom: 10px; max-width: 85%; align-self: flex-start; word-wrap: break-word; font-size: 0.95rem;}
+        
+        /* Làm đẹp thanh cuộn */
+        .chat-body::-webkit-scrollbar { width: 6px; }
+        .chat-body::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 10px; }
+    </style>
+
+    <div class="chat-widget">
+        <div class="chat-box" id="chatBox">
+            <div class="chat-header" onclick="toggleChat()">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-robot me-2"></i>Hỗ Trợ EV STORE</h6>
+                <i class="bi bi-x-lg"></i>
+            </div>
+            <div class="chat-body" id="chatBody">
+                <div class="msg-admin">
+                    👋 Chào <b>{{ request.user.username }}</b>!<br>
+                    Bạn cần tư vấn về dòng xe nào hay có thắc mắc gì không? Hãy nhắn cho mình nhé!
+                </div>
+            </div>
+            <div class="chat-footer">
+                <div class="input-group">
+                    <input type="text" id="chatInput" class="form-control border-success" placeholder="Nhập tin nhắn..." autocomplete="off">
+                    <button class="btn btn-success fw-bold" id="btnSendChat"><i class="bi bi-send-fill"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        <button class="chat-btn-toggle mt-3" id="chatToggleBtn" onclick="toggleChat()">
+            <i class="bi bi-chat-dots-fill"></i>
+        </button>
+    </div>
+
+    <script>
+        let messageCount = 0; // Biến đếm số lượng tin nhắn
+
+        function toggleChat() {
+            const box = document.getElementById('chatBox');
+            const btn = document.getElementById('chatToggleBtn');
+            if (box.style.display === 'none' || box.style.display === '') {
+                box.style.display = 'block';
+                btn.style.display = 'none';
+                document.getElementById('chatInput').focus();
+                loadChat(); // Tải tin nhắn ngay khi mở
+            } else {
+                box.style.display = 'none';
+                btn.style.display = 'flex';
+            }
+        }
+
+        // TẢI TIN NHẮN TỰ ĐỘNG
+        function loadChat() {
+            if (document.getElementById('chatBox').style.display !== 'block') return; // Chỉ quét khi đang mở khung chat
+            
+            fetch("{% url 'api_load_chat' %}")
+            .then(res => res.json())
+            .then(data => {
+                // Nếu có tin nhắn mới thì mới vẽ lại HTML để tránh bị giật màn hình
+                if (data.messages.length > messageCount) {
+                    messageCount = data.messages.length;
+                    let html = `<div class="msg-admin">👋 Chào <b>{{ request.user.username }}</b>!<br>Bạn cần tư vấn về dòng xe nào hay có thắc mắc gì không? Mình đang online đây!</div>`;
+                    
+                    data.messages.forEach(msg => {
+                        if (msg.is_admin) {
+                            html += `<div class="msg-admin">${msg.noi_dung}</div>`;
+                        } else {
+                            html += `<div class="msg-user">${msg.noi_dung}</div>`;
+                        }
+                    });
+                    
+                    const body = document.getElementById('chatBody');
+                    body.innerHTML = html;
+                    body.scrollTop = body.scrollHeight; // Tự động cuộn xuống dòng mới nhất
+                }
+            });
+        }
+
+        // Tự động quét tin nhắn mới mỗi 3 giây
+        setInterval(loadChat, 3000);
+
+        // KHÁCH GỬI TIN NHẮN
+        document.getElementById("chatInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                document.getElementById("btnSendChat").click();
+            }
+        });
+
+        document.getElementById('btnSendChat').addEventListener('click', function() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            
+            if(msg) {
+                // Tạm in lên màn hình cho nhanh
+                const body = document.getElementById('chatBody');
+                body.innerHTML += `<div class="msg-user">${msg}</div>`;
+                input.value = '';
+                body.scrollTop = body.scrollHeight;
+
+                const formData = new FormData();
+                formData.append('noi_dung', msg);
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+                fetch("{% url 'gui_ho_tro_nhanh' %}", {
+                    method: 'POST',
+                    body: formData
+                }).then(() => {
+                    messageCount++; // Tăng biến đếm
+                    loadChat(); // Bắt hệ thống quét lại DB
+                });
+            }
+        });
+    </script>
+    {% endif %}
+
+    {% block extra_js %}{% endblock %}
 </body>
 
 </html>

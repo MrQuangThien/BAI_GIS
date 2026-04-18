@@ -23,15 +23,17 @@
     /* Nội dung CKEditor */
     .ckeditor-content {
         line-height: 1.8;
-        font-size: 1.1rem;
-        color: #343a40;
+        font-size: 1.05rem;
+        color: #495057;
     }
 
-    .ckeditor-content img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 8px;
-        margin: 15px 0;
+    /* ĐÃ BỔ SUNG: Ép đoạn text mô tả chỉ hiện tối đa 3 dòng cho đều thẻ */
+    .text-line-clamp {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;  
+        overflow: hidden;
+        margin-bottom: 0;
     }
 
     /* Card Chi nhánh */
@@ -45,12 +47,6 @@
         border-left-color: #198754;
         transform: translateY(-5px);
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12) !important;
-    }
-
-    .branch-card img {
-        border-radius: 0;
-        object-fit: cover;
-        height: 100%;
     }
 
     /* Nút hành động */
@@ -68,11 +64,23 @@
         background: #198754;
         color: #fff;
     }
+
+    /* ĐÃ BỔ SUNG: Tối ưu nút bấm trên Mobile (< 768px) */
+    @media (max-width: 767px) {
+        .btn-mobile-w100 {
+            width: 100%;
+            margin-bottom: 10px;
+            justify-content: center;
+        }
+        .action-buttons {
+            flex-direction: column;
+            gap: 0 !important;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
 <section class="about-hero mb-5">
     <div class="container">
         <h1 class="display-4 fw-bold mb-3">Về EV STORE</h1>
@@ -83,7 +91,6 @@
     </div>
 </section>
 
-<!-- Danh sách chi nhánh -->
 <div class="container mb-5 pb-5">
     <h2 class="fw-bold text-center mb-5">
         <i class="bi bi-buildings text-success me-2"></i>Hệ thống Chi nhánh của chúng tôi
@@ -93,22 +100,21 @@
         {% for ch in danh_sach_cua_hang %}
         <div class="col-12">
             <div class="card branch-card shadow-sm border-0 overflow-hidden">
-                <div class="row g-0">
-                    <!-- Hình ảnh chi nhánh -->
+                <div class="row g-0 h-100">
                     <div class="col-md-4 bg-light d-flex align-items-center justify-content-center">
                         {% if ch.hinh_anh %}
                         <img src="{{ ch.hinh_anh.url }}" class="img-fluid h-100 w-100"
-                             style="object-fit: cover; min-height: 250px;" alt="{{ ch.ten_cua_hang }}">
+                             style="object-fit: cover; min-height: 280px;" alt="{{ ch.ten_cua_hang }}">
                         {% else %}
-                        <div class="text-center text-muted py-5">
+                        <div class="text-center text-muted py-5 w-100 h-100 d-flex flex-column justify-content-center align-items-center border-end">
                             <i class="bi bi-shop display-1 opacity-25"></i>
+                            <span class="mt-2 opacity-50 small">Chưa có hình ảnh</span>
                         </div>
                         {% endif %}
                     </div>
 
-                    <!-- Nội dung chi nhánh -->
                     <div class="col-md-8">
-                        <div class="card-body p-4 p-md-5">
+                        <div class="card-body p-4 p-md-5 d-flex flex-column h-100">
                             <h3 class="fw-bold text-success mb-3">{{ ch.ten_cua_hang }}</h3>
 
                             <div class="d-flex flex-wrap gap-3 mb-4 border-bottom pb-3">
@@ -120,31 +126,25 @@
                                 </span>
                             </div>
 
-                            {% if ch.bai_gioi_thieu %}
-                            <div class="ckeditor-content mb-3">
-                                {{ ch.bai_gioi_thieu|truncatewords_html:40|safe }}
+                            <div class="ckeditor-content mb-4 flex-grow-1">
+                                {% if ch.bai_gioi_thieu %}
+                                <div class="text-line-clamp">
+                                    {{ ch.bai_gioi_thieu|striptags }}
+                                </div>
+                                {% else %}
+                                <p class="text-muted fst-italic mb-0">Chi nhánh hiện đại, trang bị đầy đủ trạm sạc và dịch vụ bảo dưỡng tiêu chuẩn...</p>
+                                {% endif %}
                             </div>
 
-                            <div class="d-flex flex-wrap gap-2 mt-3">
-                                <a href="{% url 'chi_tiet_cua_hang' ch.id %}" class="btn btn-success rounded-pill px-4 shadow-sm">
-                                    Đọc thêm <i class="bi bi-arrow-right"></i>
+                            <div class="d-flex flex-wrap gap-2 mt-auto action-buttons">
+                                <a href="{% url 'chi_tiet_cua_hang' ch.id %}" class="btn btn-success rounded-pill px-4 shadow-sm btn-mobile-w100 fw-bold d-flex align-items-center">
+                                    Xem chi tiết <i class="bi bi-arrow-right ms-2"></i>
                                 </a>
-                                <a href="{% url 'san_pham_tai_chi_nhanh' ch.id %}" class="btn btn-outline-success rounded-pill px-4">
-                                    Xem xe tại chi nhánh này
+                                <a href="{% url 'san_pham_tai_chi_nhanh' ch.id %}" class="btn btn-outline-success rounded-pill px-4 btn-mobile-w100 fw-bold d-flex align-items-center">
+                                    <i class="bi bi-car-front me-2"></i> Xe tại chi nhánh
                                 </a>
                             </div>
-                            {% else %}
-                            <p class="text-muted fst-italic mb-3">Chi nhánh hiện đại, trang bị đầy đủ trạm sạc...</p>
 
-                            <div class="d-flex flex-wrap gap-2 mt-3">
-                                <a href="{% url 'chi_tiet_cua_hang' ch.id %}" class="btn btn-outline-success rounded-pill px-4 shadow-sm">
-                                    Xem chi tiết
-                                </a>
-                                <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-success rounded-pill px-4 shadow-sm">
-                                    Xem xe tại chi nhánh này
-                                </a>
-                            </div>
-                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -152,6 +152,7 @@
         </div>
         {% empty %}
         <div class="col-12 text-center py-5">
+            <i class="bi bi-buildings fs-1 text-muted opacity-50 mb-3 d-block"></i>
             <p class="text-muted fs-5">Hệ thống đang cập nhật danh sách chi nhánh...</p>
         </div>
         {% endfor %}

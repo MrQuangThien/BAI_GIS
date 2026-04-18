@@ -1,4 +1,5 @@
 {% extends 'base_admin.html' %}
+{% load humanize %}
 {% load static %}
 
 {% block title %}Phiên Sạc | EV STORE{% endblock %}
@@ -27,10 +28,10 @@
                                     <tr>
                                         <th width="5%" class="text-center px-3">#</th>
                                         <th width="15%">Khách Hàng</th> 
-                                        <th width="20%">Thông Tin Trạm Sạc</th>
+                                        <th width="22%">Thông Tin Trạm Sạc</th>
                                         <th width="18%">Thời Gian Sạc</th>
                                         <th width="12%" class="text-center">Điện Năng</th>
-                                        <th width="15%" class="text-end">Tổng Tiền</th>
+                                        <th width="13%" class="text-end">Tổng Tiền</th>
                                         <th width="15%" class="text-center px-3">Trạng Thái</th>
                                     </tr>
                                 </thead>
@@ -70,17 +71,20 @@
                                             </div>
                                         </td>
 
-                                        <td class="text-center fw-bold text-primary">
-                                            {% if p.dien_nang_tieu_thu %}
-                                                {{ p.dien_nang_tieu_thu|floatformat:1 }} <span class="small text-muted fw-normal">kWh</span>
-                                            {% else %}
-                                                <span class="text-muted">—</span>
-                                            {% endif %}
+                                        <td class="text-center">
+                                            <div class="fw-bold text-primary fs-6">
+                                                {% if p.dien_nang_tieu_thu %}
+                                                    {{ p.dien_nang_tieu_thu|floatformat:1 }} <span class="small text-muted fw-normal">kWh</span>
+                                                {% else %}
+                                                    <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="small text-muted mt-1 fst-italic">3.500đ/kWh</div>
                                         </td>
 
                                         <td class="text-end fw-bold text-danger fs-6">
                                             {% if p.tong_tien %}
-                                                {{ p.tong_tien|floatformat:"0g" }} <span class="small text-muted fw-normal">đ</span>
+                                                {{ p.tong_tien|intcomma }} <span class="small text-muted fw-normal">đ</span>
                                             {% else %}
                                                 <span class="text-muted">—</span>
                                             {% endif %}

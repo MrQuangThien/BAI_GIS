@@ -1,61 +1,270 @@
 {% extends 'base_admin.html' %}
-
-{% block title %}Chi Tiết Đơn Hàng | EV STORE{% endblock %}
+{% load humanize %} {% block title %}Chi Tiết Đơn Hàng | EV STORE{% endblock %}
 
 {% block content %}
+
+
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold text-dark"><i class="bi bi-file-earmark-text-fill me-2 text-warning"></i>Chi tiết Đơn hàng #DH{{ don_hang.id }}</h3>
-    <a href="{% url 'danh_sach_don_hang' %}" class="btn btn-outline-secondary fw-bold"><i class="bi bi-arrow-left me-1"></i> Quay lại</a>
+    <h3 class="fw-bold text-dark">
+        <i class="bi bi-file-earmark-text text-warning me-2"></i>Chi tiết Đơn hàng #DH{{ don_hang.id }}
+    </h3>
+    <div class="d-flex gap-2">
+        <button type="button" onclick="printInvoice()" class="btn btn-outline-dark fw-bold shadow-sm">
+            <i class="bi bi-printer-fill me-2"></i>In hóa đơn
+        </button>
+        
+        <a href="{% url 'danh_sach_don_hang' %}" class="btn btn-outline-secondary fw-bold shadow-sm">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại
+        </a>
+    </div>
 </div>
 
 {% if messages %}
     {% for message in messages %}
-        <div class="alert alert-success fw-bold"><i class="bi bi-check-circle me-2"></i>{{ message }}</div>
+    <div class="alert alert-success fw-bold"><i class="bi bi-check-circle me-2"></i>{{ message }}</div>
     {% endfor %}
 {% endif %}
 
 <div class="row">
     <div class="col-md-6 mb-3">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-white fw-bold text-primary">Thông Tin Khách Hàng</div>
+        <div class="card shadow-sm border-0 h-100 rounded-4">
+            <div class="card-header bg-white fw-bold text-primary pt-3 pb-2 border-bottom-0">
+                <i class="bi bi-person-vcard-fill me-2"></i>Thông Tin Khách Hàng
+            </div>
             <div class="card-body">
                 <p><strong>Họ tên:</strong> {{ don_hang.ho_ten }}</p>
                 <p><strong>SĐT:</strong> {{ don_hang.so_dien_thoai }}</p>
-                <p><strong>Email:</strong> {{ don_hang.email }}</p>
+                <p><strong>Email:</strong> {{ don_hang.email|default:"Không có" }}</p>
                 <p><strong>Địa chỉ:</strong> {{ don_hang.dia_chi }}</p>
+                
+                <hr class="opacity-25">
+                
+                <p><strong>Hình thức nhận:</strong> 
+                    {% if don_hang.hinh_thuc_nhan == 'Giao_tan_noi' %}
+                        <span class="badge bg-primary text-white px-2 py-1"><i class="bi bi-truck me-1"></i> Giao tận nơi</span>
+                    {% else %}
+                        <span class="badge bg-secondary text-white px-2 py-1"><i class="bi bi-shop me-1"></i> Nhận tại cửa hàng</span>
+                    {% endif %}
+                </p>
+                <p class="mb-0"><strong>Chi nhánh xuất xe:</strong> <span class="fw-bold text-success">{{ don_hang.cua_hang.ten_cua_hang|default:"Chưa xác định" }}</span></p>
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-6 mb-3">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-white fw-bold text-success">Thông Tin Sản Phẩm</div>
+        <div class="card shadow-sm border-0 h-100 rounded-4">
+            <div class="card-header bg-white pt-3 pb-2 border-bottom-0">
+                <h5 class="fw-bold text-success mb-0"><i class="bi bi-box-seam me-2"></i>Thông Tin Sản Phẩm</h5>
+            </div>
             <div class="card-body">
-                <p><strong>Xe đặt mua:</strong> {{ don_hang.xe.ten_xe }}</p>
-                <p><strong>Hình thức:</strong> {{ don_hang.get_loai_don_display }}</p>
-                <p><strong>Ngày đặt:</strong> {{ don_hang.ngay_dat|date:"d/m/Y H:i" }}</p>
-                <p><strong>Cần thanh toán:</strong> <span class="text-danger fw-bold">{{ don_hang.tong_tien }} VNĐ</span></p>
+                
+                <div class="d-flex align-items-center mb-4 p-3 bg-light rounded-3 border border-secondary-subtle">
+                    {% if don_hang.xe.hinh_anh %}
+                        <img src="{{ don_hang.xe.hinh_anh.url }}" class="rounded-3 border border-secondary-subtle object-fit-cover me-3 bg-white" style="width: 120px; height: 80px;" alt="{{ don_hang.xe.ten_xe }}">
+                    {% else %}
+                        <div class="bg-white rounded-3 border border-secondary-subtle me-3 d-flex align-items-center justify-content-center text-muted" style="width: 120px; height: 80px;">
+                            <i class="bi bi-car-front fs-2"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">{{ don_hang.xe.ten_xe }}</h5>
+                        <p class="text-muted small mb-0">Thương hiệu: {{ don_hang.xe.hang_san_xuat }}</p>
+                    </div>
+                </div>
+
+                <ul class="list-group list-group-flush text-dark">
+                    <li class="list-group-item d-flex justify-content-between px-0 bg-transparent py-2">
+                        <span class="text-muted">Hình thức mua:</span>
+                        <span class="fw-semibold">{{ don_hang.get_loai_don_display }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0 bg-transparent py-2">
+                        <span class="text-muted">Tổng giá trị xe:</span>
+                        <span class="fw-bold text-dark">{{ don_hang.tong_tien|intcomma }} ₫</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0 bg-transparent py-2">
+                        <span class="text-muted">Đã thanh toán (Cọc):</span>
+                        <span class="fw-bold text-primary">{{ don_hang.so_tien_tra_truoc|intcomma }} ₫</span>
+                    </li>
+                    
+                    <li class="list-group-item d-flex justify-content-between px-0 bg-transparent mt-2 border-top border-2 border-success pt-3">
+                        <span class="fw-bold text-dark fs-6">Cần thu thêm lúc giao xe:</span>
+                        
+                        {% if don_hang.trang_thai == 'Paid' %}
+                            <span class="fw-bold text-success fs-5">0 ₫ <i class="bi bi-check-circle-fill ms-1"></i></span>
+                        {% elif don_hang.trang_thai == 'Cancelled' %}
+                            <span class="fw-bold text-secondary fs-5">0 ₫ <small class="fw-normal">(Đơn đã hủy)</small></span>
+                        {% else %}
+                            <span class="fw-bold text-danger fs-5">{{ don_hang.so_tien_con_lai|intcomma }} ₫</span>
+                        {% endif %}
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
 
     <div class="col-md-12 mt-3">
-        <div class="card shadow-sm border-0 bg-light">
-            <div class="card-body">
-                <form method="POST" class="d-flex align-items-end">
+        <div class="card shadow-sm border-0 bg-light rounded-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-arrow-repeat me-2 text-primary"></i>Cập Nhật Trạng Thái Đơn Hàng</h5>
+                
+                <form method="POST">
                     {% csrf_token %}
-                    <div class="flex-grow-1 me-3">
-                        <label class="form-label fw-bold">Cập Nhật Trạng Thái Đơn Hàng</label>
-                        <select name="trang_thai" class="form-select border-warning">
-                            {% for key, value in trang_thai_choices %}
-                                <option value="{{ key }}" {% if don_hang.trang_thai == key %}selected{% endif %}>{{ value }}</option>
-                            {% endfor %}
+                    <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                        
+                        <select name="trang_thai" class="form-select form-select-lg border-secondary-subtle fw-semibold" {% if don_hang.trang_thai == 'Paid' or don_hang.trang_thai == 'Cancelled' %}disabled{% endif %}>
+                            
+                            {% if don_hang.trang_thai == 'Pending' %}
+                                <option value="Pending" selected>Pending (Đang chờ xử lý)</option>
+                                <option value="Deposit Paid">Deposit Paid (Đã thu tiền đặt cọc)</option>
+                                <option value="Paid">Paid (Đã thanh toán đủ 100%)</option>
+                                <option value="Cancelled">Hủy đơn hàng này</option>
+                            
+                            {% elif don_hang.trang_thai == 'Deposit Paid' %}
+                                <option value="Deposit Paid" selected>Deposit Paid (Đã thu tiền đặt cọc)</option>
+                                <option value="Paid">Paid (Đã thanh toán đủ 100%)</option>
+                                <option value="Cancelled">Hủy đơn hàng này</option>
+                            
+                            {% elif don_hang.trang_thai == 'Paid' %}
+                                <option value="Paid" selected>Paid (Đã thanh toán đủ 100%)</option>
+                            
+                            {% elif don_hang.trang_thai == 'Cancelled' %}
+                                <option value="Cancelled" selected>Cancelled (Đơn đã hủy)</option>
+                            {% endif %}
+
                         </select>
+                        
+                        {% if don_hang.trang_thai != 'Paid' and don_hang.trang_thai != 'Cancelled' %}
+                            <button type="submit" class="btn btn-warning fw-bold px-5 fs-5">
+                                Cập Nhật Ngay
+                            </button>
+                        {% else %}
+                            <button type="button" class="btn btn-secondary fw-bold px-5 fs-5 disabled">
+                                <i class="bi bi-lock-fill me-1"></i> Đã Khóa
+                            </button>
+                        {% endif %}
+
                     </div>
-                    <button type="submit" class="btn btn-warning fw-bold">Cập Nhật Ngay</button>
                 </form>
+
             </div>
         </div>
     </div>
 </div>
+
+<div id="invoiceTemplate" style="display: none;">
+    <div style="padding: 40px; font-family: sans-serif; color: #333; line-height: 1.6;">
+        <div style="text-align: center; border-bottom: 2px solid #198754; padding-bottom: 20px; margin-bottom: 30px;">
+            <h1 style="color: #198754; margin: 0; font-size: 28px;">EV STORE</h1>
+            <p style="margin: 5px 0; color: #555;">Hệ thống Showroom Xe Điện Hàng Đầu Việt Nam</p>
+            <p style="font-size: 13px; color: #777;">Ngày in: <span id="inv_date"></span></p>
+        </div>
+        
+        <h2 style="text-align: center; text-transform: uppercase; font-size: 22px; margin-bottom: 5px;">Hóa Đơn Mua Hàng</h2>
+
+
+        <table style="width: 100%; margin-top: 30px; font-size: 15px;">
+            <tr>
+                <td style="width: 50%;"><strong>Khách hàng:</strong> {{ don_hang.ho_ten }}</td>
+                <td><strong>Điện thoại:</strong> {{ don_hang.so_dien_thoai }}</td>
+            </tr>
+            <tr>
+                <td colspan="2" style="padding-top: 8px;"><strong>Địa chỉ:</strong> {{ don_hang.dia_chi }}</td>
+            </tr>
+            <tr>
+                <td style="width: 50%; padding-top: 8px;">
+                    <strong>Chi nhánh xuất xe:</strong> {{ don_hang.cua_hang.ten_cua_hang|default:"Hệ thống EV Store" }}
+                </td>
+                <td style="padding-top: 8px;">
+                    <strong>Ngày nhận xe:</strong> 
+                    <span style="color: #d63384; font-weight: bold;">
+                        {% if don_hang.ngay_giao_xe %}
+                            {{ don_hang.ngay_giao_xe|date:"d/m/Y" }}
+                        {% else %}
+                            Lấy xe ngay
+                        {% endif %}
+                    </span>
+                </td>
+            </tr>
+        </table>
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 30px;">
+            <thead>
+                <tr style="background: #f4f4f4;">
+                    <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Sản phẩm</th>
+                    <th style="border: 1px solid #ddd; padding: 12px; text-align: right;">Đơn giá</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 12px;"><strong>{{ don_hang.xe.ten_xe }}</strong><br><small>Loại đơn: {{ don_hang.get_loai_don_display }}</small></td>
+                    <td style="border: 1px solid #ddd; padding: 12px; text-align: right; vertical-align: top;">{{ don_hang.tong_tien|intcomma }} ₫</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="margin-top: 30px; text-align: right; font-size: 15px;">
+            <p style="margin: 5px 0;"><strong>Tổng giá trị:</strong> {{ don_hang.tong_tien|intcomma }} ₫</p>
+            <p style="margin: 5px 0;"><strong>Đã thanh toán:</strong> {{ don_hang.so_tien_tra_truoc|intcomma }} ₫</p>
+            <p style="font-size: 1.3em; color: #d63384; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                <strong>Cần thu thêm:</strong> <span class="js-tinh-tien-thieu"></span> ₫
+            </p>
+        </div>
+
+<div style="margin-top: 60px; display: flex; justify-content: space-between;">
+            <div style="text-align: center; width: 40%;">
+                <p><strong>Nhân viên lập phiếu</strong></p>
+                <br><br><br><br>
+                <p>
+                    {% if don_hang.nhan_vien_tao %}
+                        {{ don_hang.nhan_vien_tao.get_full_name|default:don_hang.nhan_vien_tao.username }}
+                    {% else %}
+                        <span style="color: #6c757d; font-style: italic;">Hệ thống tự động</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div style="text-align: center; width: 40%;">
+                <p><strong>Khách hàng ký nhận</strong></p>
+                <br><br><br><br>
+                <p>{{ don_hang.ho_ten }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function printInvoice() {
+        // Cập nhật giờ in thực tế
+        document.getElementById('inv_date').innerText = new Date().toLocaleString('vi-VN');
+        
+        // Tính tiền còn thiếu bằng JS
+        const tongTien = parseInt("{{ don_hang.tong_tien|default:'0' }}".replace(/\D/g, ''), 10);
+        const traTruoc = parseInt("{{ don_hang.so_tien_tra_truoc|default:'0' }}".replace(/\D/g, ''), 10);
+        const conThieu = Math.max(0, tongTien - traTruoc);
+        
+        document.querySelector('.js-tinh-tien-thieu').innerText = new Intl.NumberFormat('vi-VN').format(conThieu);
+
+        // Mở cửa sổ in ảo và kích hoạt lệnh in
+        const printWindow = window.open('', '_blank');
+        
+        // 🔥 ĐÃ THÊM CSS @page ĐỂ XÓA HEADER/FOOTER CỦA TRÌNH DUYỆT
+        printWindow.document.write('<html><head><title>Hóa đơn #DH{{ don_hang.id }}</title>');
+        printWindow.document.write('<style>');
+        printWindow.document.write('@media print {');
+        printWindow.document.write('  @page { margin: 0; }'); /* Ép lề giấy về 0 để xóa chữ của trình duyệt */
+        printWindow.document.write('  body { padding: 2cm; }'); /* Đẩy nội dung hóa đơn vào trong 2cm cho đẹp */
+        printWindow.document.write('}');
+        printWindow.document.write('</style>');
+        printWindow.document.write('</head><body>');
+        
+        printWindow.document.write(document.getElementById('invoiceTemplate').innerHTML);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+
+        // Đợi 200ms cho DOM render xong rồi gọi lệnh in
+        setTimeout(function () { 
+            printWindow.print(); 
+        }, 200);
+    }
+</script>
+
 {% endblock %}

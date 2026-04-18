@@ -6,6 +6,18 @@
 <style>
     .ckeditor-content { line-height: 1.8; font-size: 1.1rem; color: #495057; }
     .ckeditor-content img { max-width: 100%; height: auto; border-radius: 10px; margin: 20px 0; }
+    
+    /* ========================================== */
+    /* ĐÃ THÊM: CSS CHO HIỆU ỨNG BÁM DÍNH (STICKY) */
+    /* ========================================== */
+    .sticky-sidebar {
+        position: sticky;
+        /* Cách khoảng 100px từ đỉnh để không bị lấp dưới thanh Menu (Navbar) */
+        top: 100px; 
+        z-index: 10;
+        /* Hiệu ứng chuyển động mượt mà nếu có thay đổi */
+        transition: all 0.3s ease; 
+    }
 </style>
 {% endblock %}
 
@@ -20,19 +32,24 @@
     </nav>
 
     <div class="row bg-white p-4 p-md-5 rounded-4 shadow-sm border border-light">
+        
         <div class="col-md-5 mb-4 mb-md-0">
-            {% if ch.hinh_anh %}
-                <img src="{{ ch.hinh_anh.url }}" class="img-fluid w-100 rounded-4 shadow-sm" style="object-fit: cover; max-height: 400px;" alt="{{ ch.ten_cua_hang }}">
-            {% else %}
-                <div class="text-center text-muted py-5 border rounded-4 bg-light h-100 d-flex align-items-center justify-content-center">
-                    <i class="bi bi-shop display-1 opacity-25"></i>
+            <div class="sticky-sidebar">
+                
+                {% if ch.hinh_anh %}
+                    <img src="{{ ch.hinh_anh.url }}" class="img-fluid w-100 rounded-4 shadow-sm" style="object-fit: cover; max-height: 400px;" alt="{{ ch.ten_cua_hang }}">
+                {% else %}
+                    <div class="text-center text-muted py-5 border rounded-4 bg-light h-100 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-shop display-1 opacity-25"></i>
+                    </div>
+                {% endif %}
+                
+                <div class="mt-4 bg-light p-4 rounded-4 border">
+                    <h5 class="fw-bold text-success mb-3">Thông tin liên hệ</h5>
+                    <p class="mb-2"><i class="bi bi-geo-alt-fill text-danger me-2"></i><strong>Địa chỉ:</strong> {{ ch.dia_chi }}</p>
+                    <p class="mb-0"><i class="bi bi-telephone-fill text-primary me-2"></i><strong>Hotline:</strong> {{ ch.so_dien_thoai }}</p>
                 </div>
-            {% endif %}
-            
-            <div class="mt-4 bg-light p-4 rounded-4">
-                <h5 class="fw-bold text-success mb-3">Thông tin liên hệ</h5>
-                <p class="mb-2"><i class="bi bi-geo-alt-fill text-danger me-2"></i><strong>Địa chỉ:</strong> {{ ch.dia_chi }}</p>
-                <p class="mb-0"><i class="bi bi-telephone-fill text-primary me-2"></i><strong>Hotline:</strong> {{ ch.so_dien_thoai }}</p>
+
             </div>
         </div>
 
@@ -43,10 +60,14 @@
                 {% if ch.bai_gioi_thieu %}
                     {{ ch.bai_gioi_thieu|safe }}
                 {% else %}
-                    <p class="text-muted fst-italic">Thông tin giới thiệu chi tiết về chi nhánh đang được cập nhật...</p>
+                    <div class="text-center text-muted py-5 bg-light rounded-4">
+                        <i class="bi bi-journal-text fs-1 mb-3 d-block opacity-50"></i>
+                        <p class="fst-italic mb-0">Thông tin giới thiệu chi tiết về chi nhánh đang được cập nhật...</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
+
     </div>
 </div>
 {% endblock %}

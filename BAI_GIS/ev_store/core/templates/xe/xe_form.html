@@ -3,6 +3,8 @@
 {% block title %}{{ title }} | EV STORE{% endblock %}
 
 {% block content %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 <style>
     /* CSS TRÀN MÀN HÌNH & TỐI GIẢN */
     body {
@@ -16,7 +18,7 @@
 
     .full-width-container {
         width: 100% !important;
-        padding: 0 20px; /* Chỉ để lại một chút lề nhỏ để không dính sát chữ vào mép */
+        padding: 0 20px;
     }
 
     .sticky-header {
@@ -28,7 +30,7 @@
         padding: 1rem 1.5rem;
         margin-bottom: 1.5rem;
         border-bottom: 1px solid #e5e7eb;
-        margin-left: -20px; /* Bù trừ để thanh bar tràn sang hai bên */
+        margin-left: -20px; 
         margin-right: -20px;
     }
 
@@ -59,23 +61,61 @@
         margin-bottom: 0.5rem;
     }
 
-    .form-control, .form-select {
-        border-radius: 6px;
+    /* ĐÃ NÂNG CẤP: LÀM TO VÀ BO GÓC CÁC Ô NHẬP LIỆU */
+    .form-control, .form-select,
+    .card-body-custom input[type="text"],
+    .card-body-custom input[type="number"],
+    .card-body-custom input[type="file"],
+    .card-body-custom select {
+        border-radius: 10px; /* Bo góc tròn trịa */
         border: 1px solid #d1d5db;
-        padding: 0.6rem 0.75rem;
-        font-size: 0.875rem;
+        padding: 0.75rem 1rem; /* Làm ô nhập to và rộng hơn */
+        font-size: 0.95rem;
+        transition: all 0.2s ease-in-out;
+        width: 100%;
     }
 
-    .form-control:focus, .form-select:focus {
-        border-color: #10b981;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    /* HIỆU ỨNG FOCUS KHI NHẤP VÀO CHUẨN XANH LÁ */
+    .form-control:focus, .form-select:focus,
+    .card-body-custom input:focus,
+    .card-body-custom select:focus {
+        border-color: #198754;
+        box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.15);
         outline: none;
+    }
+
+    /* ĐÃ NÂNG CẤP: CSS CHO Ô TÌM KIẾM CHI NHÁNH (SELECT2) */
+    .select2-container .select2-selection--multiple {
+        min-height: 48px;
+        border-radius: 10px !important;
+        border: 1px solid #d1d5db !important;
+        padding: 4px 8px;
+    }
+    .select2-container--focus .select2-selection--multiple {
+        border-color: #198754 !important;
+        box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.15) !important;
+    }
+    .select2-selection__choice {
+        background-color: #198754 !important; /* Tag màu xanh lá */
+        color: white !important;
+        border: none !important;
+        border-radius: 6px !important;
+        padding: 5px 10px !important;
+        margin-top: 6px !important;
+    }
+    .select2-selection__choice__remove {
+        color: white !important;
+        margin-right: 8px !important;
+    }
+    .select2-selection__choice__remove:hover {
+        background-color: transparent !important;
+        color: #ffcccc !important;
     }
 
     /* Khung tải ảnh phẳng */
     .upload-box {
         border: 2px dashed #d1d5db;
-        border-radius: 8px;
+        border-radius: 10px; /* Sửa bo góc đồng bộ */
         padding: 2rem 1rem;
         text-align: center;
         background-color: #fafafa;
@@ -95,27 +135,28 @@
         border-bottom: 1px solid #f3f4f6;
     }
 
-    /* TỐI ƯU CKEDITOR TRÀN VIỀN */
-    .ck-editor {
-        width: 100% !important;
+    /* TỐI ƯU CKEDITOR TRÀN VIỀN & TO RÕ */
+    .ck.ck-editor {
+        width: 245% !important; /* Ép tràn 100% chiều ngang card */
     }
 
     .ck-editor__editable_inline {
-        min-height: 300px !important;
-        border-radius: 0 0 8px 8px !important;
-        padding: 2rem 5rem !important; /* Dãn rộng nội dung viết */
+        min-height: 400px !important; /* Cho khung gõ cao lên 400px */
+        border-radius: 0 0 10px 10px !important;
+        padding: 2rem !important; /* Căn lề chữ bên trong cho thoáng */
         font-size: 1.05rem;
-        width: 259% !important;
     }
 
     .ck-toolbar {
-        border-radius: 8px 8px 0 0 !important;
+        border-radius: 10px 10px 0 0 !important;
         border: 1px solid #d1d5db !important;
         background: #f9fafb !important;
+        padding: 8px !important;
     }
 </style>
 
-<div class="container-fluid px-0"> <form method="POST" enctype="multipart/form-data" id="xeDienForm">
+<div class="container-fluid px-0"> 
+    <form method="POST" enctype="multipart/form-data" id="xeDienForm">
         {% csrf_token %}
 
         <div class="sticky-header">
@@ -166,7 +207,7 @@
                                     <label class="form-label">Giá bán chính thức (VNĐ)</label>
                                     <div class="input-group">
                                         {{ form.gia }}
-                                        <span class="input-group-text bg-light fw-bold text-danger">VNĐ</span>
+                                        <span class="input-group-text bg-light fw-bold text-danger" style="border-radius: 0 10px 10px 0;">VNĐ</span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -194,7 +235,7 @@
                                 <label class="form-label">Kiểu dáng (Danh mục)</label>
                                 {{ form.danh_muc }}
                             </div>
-                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mt-4">
                                 <span class="fw-bold text-success">Kinh doanh công khai</span>
                                 <div class="form-check form-switch m-0 fs-4">{{ form.trang_thai }}</div>
                             </div>
@@ -205,7 +246,7 @@
                         <div class="card-heading">Điểm phân phối</div>
                         <div class="card-body-custom">
                             {{ form.cua_hang }}
-                            <small class="text-muted d-block mt-2 fst-italic">Cửa hàng hiện đang có sẵn mẫu xe này.</small>
+                            <small class="text-muted d-block mt-2 fst-italic">Nhấp vào ô trên để tìm và phân bổ xe về chi nhánh.</small>
                         </div>
                     </div>
 
@@ -239,7 +280,8 @@
                 <div class="col-12">
                     <div class="admin-panel-card">
                         <div class="card-heading"><i class="bi bi-layout-text-window me-2"></i>Nội dung mô tả chi tiết sản phẩm</div>
-                        <div class="card-body-custom p-0"> {{ form.mo_ta }}
+                        <div class="card-body-custom p-0"> 
+                            {{ form.mo_ta }}
                         </div>
                     </div>
                 </div>
@@ -248,14 +290,35 @@
     </form>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
+    $(document).ready(function() {
+        // 1. KÍCH HOẠT THANH TÌM KIẾM CHI NHÁNH
+        $('#id_cua_hang').select2({
+            placeholder: "🔍 Bấm để chọn hoặc gõ tên chi nhánh...",
+            allowClear: true,
+            closeOnSelect: false, 
+            width: '100%',
+            language: {
+                noResults: function () {
+                    return "Không tìm thấy chi nhánh nào";
+                }
+            }
+        });
+
+        // 2. KÍCH HOẠT KHUNG SOẠN THẢO CKEDITOR
         const moTaTextarea = document.querySelector('#id_mo_ta');
         if (moTaTextarea) {
             ClassicEditor
                 .create(moTaTextarea, {
                     toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'undo', 'redo']
+                })
+                .then(editor => {
+                    // Ép chiều cao tối thiểu bằng Javascript cho chắc ăn
+                    editor.ui.view.editable.element.style.minHeight = '400px';
                 })
                 .catch(error => { console.error(error); });
         }

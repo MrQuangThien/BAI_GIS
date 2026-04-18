@@ -1,5 +1,5 @@
 {% extends 'base_admin.html' %}
-
+{% load humanize %}
 {% block title %}Quản Lý Đơn Hàng | EV STORE{% endblock %}
 
 {% block content %}
@@ -8,19 +8,30 @@
         <i class="bi bi-receipt-cutoff me-2 text-warning"></i>Danh Sách Đơn Hàng
     </h3>
 
-    <!-- FORM SEARCH -->
-    <form method="GET" class="d-flex" style="max-width: 350px;">
-        <input type="text" name="q" value="{{ tu_khoa }}" 
-               class="form-control me-2" 
-               placeholder="Tìm đơn hàng...">
-        <button class="btn btn-dark">
+    <form method="GET" class="d-flex gap-2" style="max-width: 550px;">
+        <input type="text" name="q" value="{{ tu_khoa }}" class="form-control" placeholder="Tên, SĐT...">
+        
+        <input type="date" name="ngay_dat" value="{{ ngay_dat }}" class="form-control" title="Chọn ngày đặt để lọc">
+        
+        <button class="btn btn-dark px-3">
             <i class="bi bi-search"></i>
         </button>
+        
+        {% if tu_khoa or ngay_dat %}
+            <a href="{% url 'danh_sach_don_hang' %}" class="btn btn-outline-danger" title="Xóa bộ lọc">
+                <i class="bi bi-arrow-clockwise"></i>
+            </a>
+        {% endif %}
     </form>
 
-    <a href="{% url 'tao_don_hang_offline' %}" class="btn btn-warning fw-bold shadow-sm text-dark">
-        <i class="bi bi-plus-circle text-dark me-1"></i> Tạo Đơn Tại Quầy
-    </a>
+    <div>
+        <a href="{% url 'tao_don_hang_offline' %}" class="btn btn-warning fw-bold shadow-sm text-dark me-2">
+            <i class="bi bi-plus-circle text-dark me-1"></i> Tạo Đơn Quầy
+        </a>
+        <a href="{% url 'xuat_excel_don_hang' %}" class="btn btn-success fw-bold shadow-sm rounded-pill">
+            <i class="bi bi-file-earmark-excel me-1"></i> Xuất Báo Cáo
+        </a>
+    </div>
 </div>
 
 {% if messages %}
@@ -33,98 +44,142 @@
 {% endif %}
 
 <div class="card shadow-sm border-0 rounded-3 p-3">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-dark">
-                <tr>
-                    <th width="8%">Mã Đơn</th>
-                    <th width="15%">Khách Hàng</th>
-                    <th width="15%">Nhân viên tạo</th>
-                    <th width="20%">Sản Phẩm</th>
-                    <th width="15%">Loại Đơn</th>
-                    <th width="12%">Tổng tiền</th>
-                    <th width="10%">Trạng Thái</th>
-                    <th width="5%" class="text-center">Chi Tiết</th>
+    <div class="table-responsive" style="max-height: 65vh; overflow-y: auto;">
+        <table class="table table-hover align-middle border shadow-sm rounded-3 overflow-hidden mb-0">
+            <thead class="table-dark sticky-top">
+                <tr class="text-nowrap">
+                    <th>Khách Hàng</th>
+                    <th>Người Tạo</th>
+                    <th>Ngày Đặt</th> <th>Sản Phẩm</th>
+                    <th>Ngày Nhận</th>
+                    <th>Chi Nhánh</th>
+                    <th>Tổng Tiền</th>
+                    <th>Trạng Thái</th>
+                    <th class="text-center">Hành động</th>
                 </tr>
             </thead>
-            <tbody>
-                {% for don in danh_sach_don_hang %}
-                <tr class="{% if don.xe.sap_ve %}table-warning{% endif %}">
-                    
-                    <td class="fw-bold text-muted">#DH{{ don.id }}</td>
-                    
-                    <td>
+            <tbody class="bg-white">
+                {% for don in page_obj %} 
+                <tr>
+                    <td class="text-nowrap">
                         <div class="fw-bold text-dark">{{ don.ho_ten }}</div>
-                        <small class="text-muted"><i class="bi bi-telephone-fill me-1"></i>{{ don.so_dien_thoai }}</small>
+                        <div class="small text-muted"><i class="bi bi-telephone-fill me-1"></i>{{ don.so_dien_thoai }}</div>
                     </td>
 
                     <td>
                         {% if don.nhan_vien_tao %}
-                            <span class="badge bg-light text-dark border shadow-sm px-2 py-1">
-                                <i class="bi bi-person-badge text-primary me-1"></i> 
-                               {{ don.nhan_vien_tao.get_full_name|default:don.nhan_vien_tao.username }}
-                            </span>
-                        {% else %}
-                            <span class="badge bg-success bg-opacity-10 text-success border border-success shadow-sm px-2 py-1">
-                                <i class="bi bi-globe me-1"></i> Khách tự đặt Web
-                            </span>
-                        {% endif %}
-                    </td>
-
-                    <td>
-                        <div class="text-success fw-bold fs-6">{{ don.xe.ten_xe }}</div>
-                        {% if don.xe.sap_ve %}
-                            <span class="badge bg-warning text-dark mt-1 border border-warning shadow-sm" style="font-size: 0.75rem;">
-                                <i class="bi bi-clock-history me-1"></i> Xe sắp về (Pre-order)
-                            </span>
-                        {% else %}
-                            <span class="badge bg-light text-secondary mt-1 border" style="font-size: 0.75rem;">
-                                <i class="bi bi-car-front me-1"></i> Xe có sẵn
-                            </span>
-                        {% endif %}
-                    </td>
-
-                    <td>
-                        <span class="badge bg-info bg-opacity-10 text-dark border border-info shadow-sm text-wrap text-start lh-base">
-                            {{ don.get_loai_don_display }}
+                        <span class="badge bg-light text-primary border border-primary">
+                            <i class="bi bi-person-badge me-1"></i>{{ don.nhan_vien_tao.username }}
                         </span>
-                    </td>
-                    
-                    <td class="text-danger fw-bold fs-6">
-                        {{ don.tong_tien|floatformat:"0g" }} <span class="small text-muted fw-normal">đ</span>
+                        {% else %}
+                        <span class="badge bg-light text-success border border-success">
+                            <i class="bi bi-globe me-1"></i>Khách tự đặt
+                        </span>
+                        {% endif %}
                     </td>
 
                     <td>
-                        {% if don.trang_thai == 'Pending' %}
-                            <span class="badge bg-secondary shadow-sm px-2 py-1"><i class="bi bi-hourglass-split me-1"></i>Chờ duyệt</span>
-                        {% elif don.trang_thai == 'Paid' %}
-                            <span class="badge bg-success shadow-sm px-2 py-1"><i class="bi bi-check2-circle me-1"></i>Đã thanh toán</span>
-                        {% elif don.trang_thai == 'Deposit Paid' %}
-                            <span class="badge bg-primary shadow-sm px-2 py-1"><i class="bi bi-cash-coin me-1"></i>Đã đặt cọc</span>
-                        {% elif don.trang_thai == 'Cancelled' %}
-                            <span class="badge bg-danger shadow-sm px-2 py-1"><i class="bi bi-x-circle me-1"></i>Đã hủy</span>
+                        <div class="fw-bold text-dark">{{ don.ngay_dat|date:"d/m/Y" }}</div>
+                        <div class="small text-muted">{{ don.ngay_dat|date:"H:i" }}</div>
+                    </td>
+
+                    <td>
+                        <div class="fw-bold text-success">{{ don.xe.ten_xe }}</div>
+                        <div class="small text-muted">{{ don.get_loai_don_display }}</div>
+                    </td>
+
+                    <td>
+                        {% if don.ngay_giao_xe %}
+                        <span class="badge bg-info text-dark rounded-pill px-3 py-2">
+                            <i class="bi bi-calendar-event me-1"></i> {{ don.ngay_giao_xe|date:"d/m/Y" }}
+                        </span>
                         {% else %}
-                            <span class="badge bg-dark shadow-sm px-2 py-1">{{ don.trang_thai }}</span>
+                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                            <i class="bi bi-lightning-fill me-1"></i> Lấy xe ngay
+                        </span>
                         {% endif %}
                     </td>
-                    
+
+                    <td>
+                        {% if don.cua_hang %}
+                        <span class="badge bg-primary rounded-pill px-3 py-2">
+                            <i class="bi bi-shop me-1"></i> {{ don.cua_hang.ten_cua_hang|default:don.cua_hang }}
+                        </span>
+                        {% else %}
+                        <span class="badge bg-secondary rounded-pill px-3 py-2">
+                            <i class="bi bi-question-circle me-1"></i> Chờ phân bổ
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <td class="text-nowrap">
+                        <span class="fw-bold text-danger">{{ don.tong_tien|intcomma }} ₫</span>
+                    </td>
+
+                    <td>
+                        {% if don.trang_thai == 'Paid' %}
+                        <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i> Đã thanh toán</span>
+                        {% elif don.trang_thai == 'Deposit Paid' %}
+                        <span class="badge bg-primary"><i class="bi bi-shield-check me-1"></i> Đã đặt cọc</span>
+                        {% else %}
+                        <span class="badge bg-secondary"><i class="bi bi-hourglass-split me-1"></i> Chờ xử lý</span>
+                        {% endif %}
+                    </td>
+
                     <td class="text-center">
-                        <a href="{% url 'chi_tiet_don_hang' don.id %}" class="btn btn-sm btn-outline-dark bg-white shadow-sm" title="Xem chi tiết">
+                        <a href="{% url 'chi_tiet_don_hang' don.id %}" class="btn btn-sm btn-outline-dark" title="Xem chi tiết">
                             <i class="bi bi-eye"></i>
                         </a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8" class="text-center py-5 text-muted">
+                    <td colspan="9" class="text-center py-5 text-muted">
                         <i class="bi bi-receipt fs-1 d-block mb-3 opacity-50"></i>
-                        <h5>Chưa có đơn hàng nào</h5>
-                        <p class="mb-0">Các đơn hàng mới sẽ hiển thị tại đây.</p>
+                        <h5 class="fw-bold">Không tìm thấy đơn hàng phù hợp</h5>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+        <div class="text-muted small">
+            Trang <strong>{{ page_obj.number }}</strong> / {{ page_obj.paginator.num_pages }} 
+        </div>
+        
+        <nav>
+            <ul class="pagination pagination-sm mb-0 shadow-sm">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link text-success" href="?{% if tu_khoa %}q={{ tu_khoa }}&{% endif %}{% if ngay_dat %}ngay_dat={{ ngay_dat }}&{% endif %}page={{ page_obj.previous_page_number }}">Trước</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Trước</span></li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link bg-success border-success">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link text-success" href="?{% if tu_khoa %}q={{ tu_khoa }}&{% endif %}{% if ngay_dat %}ngay_dat={{ ngay_dat }}&{% endif %}page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link text-success" href="?{% if tu_khoa %}q={{ tu_khoa }}&{% endif %}{% if ngay_dat %}ngay_dat={{ ngay_dat }}&{% endif %}page={{ page_obj.next_page_number }}">Sau</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Sau</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

@@ -1,0 +1,123 @@
+{% extends 'base_admin.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="bi bi-calendar-check me-2"></i>Quản lý Đăng ký Lái thử</h2>
+        <a href="{% url 'xuat_excel_lai_thu' %}" class="btn btn-success fw-bold shadow-sm">
+            <i class="bi bi-file-earmark-excel me-2"></i>Xuất Báo cáo Tháng {{ now.month }}
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4 bg-light">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">Xem theo ngày hẹn:</label>
+                    <input type="date" name="ngay" class="form-control border-success" value="{{ query_date }}">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold text-muted">Tìm khách hàng (Tên/SĐT):</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                        <input type="text" name="q" class="form-control border-start-0" 
+                               placeholder="Nhập tên khách (ví dụ: An)..." value="{{ query_name }}">
+                    </div>
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary fw-bold flex-grow-1">
+                        <i class="bi bi-filter me-1"></i> Lọc
+                    </button>
+                    <a href="{% url 'quan_ly_lai_thu' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise"></i> Làm mới
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <p class="small text-muted mb-3">
+        Tìm thấy <strong>{{ danh_sach|length }}</strong> lịch hẹn 
+        {% if query_date %} trong ngày <strong>{{ query_date }}</strong>{% endif %}
+        {% if query_name %} có tên/SĐT khớp với <strong>"{{ query_name }}"</strong>{% endif %}.
+    </p>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Khách hàng</th>
+                            <th>Liên hệ</th>
+                            <th>Mẫu xe</th>
+                            <th>Chi nhánh</th>
+                            <th>Ngày hẹn</th>
+                            <th>Trạng thái</th>
+                            <th class="pe-4">Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in danh_sach %}
+                        <tr>
+                            <td class="ps-4"><strong>{{ item.ho_ten }}</strong></td>
+                            <td>{{ item.so_dien_thoai }}</td>
+                            <td><span class="badge bg-info text-dark">{{ item.xe_quan_tam }}</span></td>
+                            <td>{{ item.cua_hang }}</td>
+                            <td>{{ item.ngay_hen|date:"d/m/Y" }}</td>
+                            <td>
+                                <form action="{% url 'cap_nhat_trang_thai' item.id %}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <select name="trang_thai" onchange="this.form.submit()"
+                                        class="form-select form-select-sm w-auto d-inline" 
+                                        {% if item.trang_thai == 'hoan_thanh' or item.trang_thai == 'huy' %}disabled{% endif %}>
+
+                                        <option value="cho_xac_nhan" 
+                                            {% if item.trang_thai == 'cho_xac_nhan' %}selected{% endif %} 
+                                            {% if item.trang_thai != 'cho_xac_nhan' %}disabled{% endif %}>
+                                            Chờ xác nhận
+                                        </option>
+
+                                        <option value="da_xac_nhan" 
+                                            {% if item.trang_thai == 'da_xac_nhan' %}selected{% endif %} 
+                                            {% if item.trang_thai == 'hoan_thanh' or item.trang_thai == 'huy' %}disabled{% endif %}>
+                                            Đã xác nhận lịch
+                                        </option>
+
+                                        <option value="hoan_thanh" {% if item.trang_thai == 'hoan_thanh' %}selected{% endif %}>
+                                            Khách đã đến
+                                        </option>
+
+                                        <option value="huy" {% if item.trang_thai == 'huy' %}selected{% endif %}>
+                                            Đã hủy
+                                        </option>
+                                    </select>
+                                </form>
+                            </td>
+                            <td class="pe-4">
+                                <small class="text-muted">
+                                    {% if item.ghi_chu %}
+                                    {{ item.ghi_chu|truncatechars:50 }}
+                                    {% else %}
+                                    <span class="fst-italic opacity-50">Không có ghi chú</span>
+                                    {% endif %}
+                                </small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                        {% if not danh_sach %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                Không tìm thấy lịch hẹn nào phù hợp.
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -38,7 +38,7 @@ urlpatterns = [
     path('register/', views.dang_ky_view, name='register'),
     path('xac-thuc-otp/', views.xac_thuc_otp, name='xac_thuc_otp'), 
     path('tai-khoan/', views.tai_khoan, name='tai_khoan'),
-    path('tai-khoan/don-hang/<int:don_hang_id>/', views.chi_tiet_don_hang_khach, name='chi_tiet_don_hang_khach'),
+    path('tai-khoan/don-hang/<int:don_hang_id>/', views.chi_tiet_don_khach, name='chi_tiet_don_khach'),
     path('profile/', views.profile, name='profile'),
 
     # ==================== ĐẶT HÀNG & FEEDBACK ====================
@@ -55,6 +55,11 @@ urlpatterns = [
     path('danh_sach_xe/them/', them_xe, name='them_xe'),
     path('danh_sach_xe/sua/<int:pk>/', sua_xe, name='sua_xe'),
     path('danh_sach_xe/xoa/<int:pk>/', xoa_xe, name='xoa_xe'),
+    # Nhớ import hàm dang_ky_lai_thu từ views
+    path('xe/<int:xe_id>/dang-ky-lai-thu/', views.dang_ky_lai_thu, name='dang_ky_lai_thu'),
+    path('xe/lai-thu/', views.quan_ly_lai_thu, name='quan_ly_lai_thu'),
+    path('xe/lai-thu/xuat-excel/', views.xuat_excel_lai_thu, name='xuat_excel_lai_thu'),
+    path('admin/lai-thu/cap-nhat/<int:lich_id>/', views.cap_nhat_trang_thai_lai_thu, name='cap_nhat_trang_thai'),
 
     # Quản lý Trạm Sạc
     path("quan-ly-tram-sac/", quan_ly_tram_sac, name='quan_ly_tram_sac'),
@@ -74,7 +79,7 @@ urlpatterns = [
     path('quan-ly-don-hang/', views.danh_sach_don_hang, name='danh_sach_don_hang'),
     path('quan-ly-don-hang/<int:don_id>/', views.chi_tiet_don_hang, name='chi_tiet_don_hang'),
     path('quan-ly-don-hang/tao-don-tai-quay/', views.tao_don_hang_offline, name='tao_don_hang_offline'),
-
+    path('admin/don-hang/xuat-excel/', views.xuat_excel_don_hang, name='xuat_excel_don_hang'),
 
     # Quản lý Danh Mục
     path('quan-ly-danh-muc/', views.quan_ly_danh_muc, name='quan_ly_danh_muc'),
@@ -92,10 +97,13 @@ urlpatterns = [
     # 1. Trang Lịch sử nhập kho (Mới thêm)
     path('quan-ly-phieu-nhap/', views.quan_ly_phieu_nhap, name='quan_ly_phieu_nhap'),
     path('them-phieu-nhap/', views.them_kho, name='them_kho'),
-    path('tai-file-mau-excel/', views.tai_file_mau_excel, name='tai_file_mau_excel'),
+    path('lich-su-nhap-kho/xuat-excel/', views.xuat_excel_nhap_kho, name='xuat_excel_nhap_kho'),
+
     
     # 2. Trang Báo cáo tồn kho (Đã có sẵn, đổi tên path cho chuẩn)
     path('bao-cao-ton-kho/', views.quan_ly_ton_kho, name='quan_ly_ton_kho'),
+    path('bao-cao-ton-kho/xuat-excel/', views.xuat_excel_ton_kho, name='xuat_excel_ton_kho'),
+    path('tai-file-mau-excel/', views.tai_file_mau_excel, name='tai_file_mau_excel'),
 
     # Quản lý Phiên Sạc
     path('phien-sac/', views.danh_sach_phien_sac, name='danh_sach_phien_sac'),
@@ -111,10 +119,20 @@ urlpatterns = [
     path('tram_sac/lich-su-sac/', views.lich_su_sac, name='lich_su_sac'),
     path('users/user_sac/', views.lich_su_sac_khach_hang, name='user_sac'),
     path('tim-kiem/', views.tim_kiem, name='tim_kiem'),
-
+    # API nhận dữ liệu ngầm từ bản đồ
+    path('api/luu-danh-gia/', views.luu_danh_gia_api, name='luu_danh_gia_api'),
+    # Trang giao diện cho Admin xem danh sách đánh giá
+    path('quan-ly-danh-gia/', views.quan_ly_danh_gia, name='quan_ly_danh_gia'),
+    path('xoa-danh-gia/<int:danh_gia_id>/', views.xoa_danh_gia, name='xoa_danh_gia'),
+    
     # === CHĂM SÓC KHÁCH HÀNG ===
 # Bỏ đường dẫn 'ho-tro/' cũ đi, thay bằng:
     path('api/load-chat/', views.api_load_chat, name='api_load_chat'),
     path('api/ho-tro-nhanh/', views.gui_ho_tro_nhanh, name='gui_ho_tro_nhanh'),
     path('quan-ly-ho-tro/', views.quan_ly_ho_tro, name='quan_ly_ho_tro'),
+    path('api/chat/<int:khach_id>/', views.api_lay_tin_nhan_moi, name='api_chat_moi'),
+
+    #Thông báo
+    path('thong-bao/doc/<int:thong_bao_id>/', views.doc_thong_bao, name='doc_thong_bao'),
+    path('thong-bao/doc-tat-ca/', views.danh_dau_tat_ca, name='danh_dau_tat_ca'),
 ]

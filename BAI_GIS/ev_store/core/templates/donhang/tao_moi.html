@@ -1,94 +1,515 @@
 {% extends 'base_admin.html' %}
+{% load humanize %}
 
 {% block title %}Tạo Đơn Tại Quầy | EV STORE{% endblock %}
 
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 <style>
-    .select2-selection__rendered { font-weight: bold; color: #198754 !important; }
-    #id_tong_tien, #id_so_tien_tra_truoc { background-color: #e9ecef; } /* Làm mờ ô tiền vì nó tự nhập */
+    /* CSS gốc giữ nguyên */
+    #id_tong_tien,
+    #id_so_tien_tra_truoc,
+    #id_trang_thai,
+    #id_con_thieu {
+        background-color: #f8f9fa;
+        pointer-events: none;
+        border: 1px solid #dee2e6;
+    }
+
+    .car-preview {
+        width: 100%;
+        height: 180px;
+        object-fit: contain;
+        border-radius: 12px;
+        border: 2px dashed #e0e0e0;
+        padding: 10px;
+        background: #fff;
+    }
+
+    .radio-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        width: 100%;
+        margin: 0;
+    }
+
+    input[type="radio"]:checked+.radio-label {
+        color: #198754;
+        font-weight: bold;
+    }
+
+    .radio-card:has(input:checked) {
+        border-color: #198754;
+        background-color: #f1f8f4;
+        box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.1);
+    }
+
+    /* ĐÃ BỔ SUNG: CSS ép giao diện Select2 cho giống Bootstrap 5 */
+    .select2-container .select2-selection--single {
+        height: 38px !important;
+        border: 1px solid #dee2e6 !important;
+        border-radius: 6px !important;
+        display: flex;
+        align-items: center;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #212529 !important;
+        font-weight: 500;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: #86b7fe !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold text-dark"><i class="bi bi-cart-plus-fill me-2 text-warning"></i>Tạo Đơn Hàng Tại Quầy</h3>
-    <a href="{% url 'danh_sach_don_hang' %}" class="btn btn-outline-secondary fw-bold"><i class="bi bi-arrow-left me-1"></i> Quay lại</a>
+    <h3 class="fw-bold text-dark mb-0"><i class="bi bi-cart-plus-fill me-2 text-warning"></i>Tạo Đơn Hàng Tại Quầy</h3>
+    <div class="d-flex gap-2">
+        <a href="{% url 'danh_sach_don_hang' %}" class="btn btn-outline-secondary fw-bold"><i
+                class="bi bi-arrow-left me-1"></i> Quay lại</a>
+    </div>
 </div>
 
-<div class="card shadow-sm border-0 rounded-3 p-4 w-75 mx-auto">
+<div class="card shadow-sm border-0 rounded-4 p-4 mx-auto mb-5" style="max-width: 950px;">
     <form method="POST" id="orderForm">
         {% csrf_token %}
-        <div class="row g-3">
-            {% for field in form %}
-                <div class="{% if field.name == 'xe' %}col-md-12{% else %}col-md-6{% endif %} mb-2">
-                    <label class="form-label fw-bold text-muted">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors }}</div>{% endif %}
+        <div class="row g-4">
+            
+            <div class="col-md-12 mb-2">
+                <div class="p-3 border border-primary rounded-3 d-flex align-items-center shadow-sm" style="background-color: #f0f7ff;">
+                    <i class="bi bi-shop fs-3 me-3 text-primary"></i>
+                    <div class="flex-grow-1">
+                        <label class="fw-bold mb-1 text-primary">Cửa hàng phụ trách xuất xe *</label>
+                        {{ form.cua_hang }}
+                    </div>
                 </div>
-            {% endfor %}
+            </div>
+
+            <div class="col-md-12 bg-light p-3 rounded-4 border mb-2">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold text-success fs-5">1. Chọn dòng xe *</label>
+                        {{ form.xe }}
+                    </div>
+                    <div class="col-md-4 text-center mt-3 mt-md-0">
+                        <img id="carImagePreview" src="https://via.placeholder.com/300x150?text=Chưa+chọn+xe"
+                            class="car-preview shadow-sm" alt="Preview Xe">
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-bold small text-muted">Họ tên khách hàng *</label>
+                {{ form.ho_ten }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold small text-muted">Số điện thoại *</label>
+                {{ form.so_dien_thoai }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold small text-muted">Email thông báo</label>
+                {{ form.email }}
+            </div>
+
+            <div class="col-md-12 mt-4 border-top pt-4">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-geo-alt-fill text-danger me-2"></i>2. Hình thức giao/nhận xe</h6>
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <div class="d-flex gap-2">
+                            <label class="radio-card d-flex align-items-center">
+                                <input type="radio" name="phuong_thuc_nhan" value="tai_cua_hang"
+                                    class="form-check-input m-0" checked>
+                                <span class="radio-label ms-2">Tại cửa hàng</span>
+                            </label>
+                            <label class="radio-card d-flex align-items-center">
+                                <input type="radio" name="phuong_thuc_nhan" value="giao_tan_noi"
+                                    class="form-check-input m-0">
+                                <span class="radio-label ms-2">Giao tận nơi</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        {{ form.dia_chi }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12 mt-3">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-calendar-event text-warning me-2"></i>3. Thời gian nhận xe</h6>
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-5">
+                        <div class="d-flex gap-2">
+                            <label class="radio-card d-flex align-items-center">
+                                <input type="radio" name="thoi_gian_nhan" id="radio_giao_ngay" value="ngay"
+                                    class="form-check-input m-0 text-danger" checked>
+                                <span class="radio-label ms-2">Lấy xe ngay</span>
+                            </label>
+                            <label class="radio-card d-flex align-items-center">
+                                <input type="radio" name="thoi_gian_nhan" id="radio_giao_sau" value="ngay_khac"
+                                    class="form-check-input m-0 text-primary">
+                                <span class="radio-label ms-2">Hẹn ngày nhận</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-7" id="ngay_giao_container" style="display: none;">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="bi bi-calendar-check"></i></span>
+                            <input type="date" name="ngay_giao_xe" id="id_ngay_giao_xe"
+                                class="form-control fw-bold text-primary border-primary">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12 mt-4 border-top pt-4">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-wallet-fill text-success me-2"></i>4. Thanh toán & Trạng thái</h6>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-bold small text-muted">Mức độ thanh toán *</label>
+                {{ form.loai_don }}
+                <div id="loai_don_hint" class="alert alert-info py-2 px-3 mt-2 mb-0 small" style="display:none;">
+                    <i class="bi bi-info-circle me-1"></i> Nhận xe ngay: Bắt buộc thanh toán 100%.
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-bold small text-muted">Trạng thái đơn (Tự động)</label>
+                {{ form.trang_thai }}
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-bold small text-muted">Tổng giá trị xe</label>
+                <div class="input-group">
+                    {{ form.tong_tien }}
+                    <span class="input-group-text fw-bold">₫</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-primary small">Số tiền ĐÃ TRẢ</label>
+                <div class="input-group">
+                    {{ form.so_tien_tra_truoc }}
+                    <span class="input-group-text fw-bold text-primary">₫</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-danger small">Số tiền CÒN THIẾU</label>
+                <div class="input-group">
+                    <input type="text" id="id_con_thieu" class="form-control fw-bold text-danger" readonly value="0">
+                    <span class="input-group-text fw-bold text-danger">₫</span>
+                </div>
+            </div>
         </div>
-        <div class="text-end mt-4 pt-3 border-top">
-            <button type="submit" class="btn btn-warning px-5 fw-bold text-dark"><i class="bi bi-cart-check-fill me-1"></i> Chốt Đơn Hàng</button>
+
+        <div class="d-flex justify-content-end gap-3 mt-5 pt-3 border-top no-print">
+            <button type="submit" class="btn btn-success px-5 fw-bold shadow"><i
+                    class="bi bi-check-circle-fill me-2"></i> CHỐT ĐƠN HÀNG</button>
         </div>
     </form>
+</div>
+
+<div id="invoiceTemplate" style="display: none;">
+    <div style="padding: 40px; font-family: sans-serif; color: #333; line-height: 1.6;">
+        <div style="text-align: center; border-bottom: 2px solid #198754; padding-bottom: 20px; margin-bottom: 30px;">
+            <h1 style="color: #198754; margin: 0;">EV STORE</h1>
+            <p style="margin: 5px 0;">Hệ thống Showroom Xe Điện Hàng Đầu Việt Nam</p>
+            <p style="font-size: 12px;">Ngày in: <span id="inv_date"></span></p>
+        </div>
+        <h2 style="text-align: center; text-transform: uppercase;">Phiếu Xác Nhận Đơn Hàng</h2>
+        <table style="width: 100%; margin-top: 20px;">
+            <tr>
+                <td style="width: 50%;"><strong>Khách hàng:</strong> <span id="inv_name"></span></td>
+                <td><strong>Điện thoại:</strong> <span id="inv_phone"></span></td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>Địa chỉ:</strong> <span id="inv_addr"></span></td>
+            </tr>
+        </table>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 30px;">
+            <thead>
+                <tr style="background: #f4f4f4;">
+                    <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Sản phẩm</th>
+                    <th style="border: 1px solid #ddd; padding: 12px; text-align: right;">Đơn giá</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 12px;"><span id="inv_xe"></span></td>
+                    <td style="border: 1px solid #ddd; padding: 12px; text-align: right;"><span id="inv_price"></span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="margin-top: 30px; text-align: right;">
+            <p><strong>Tổng cộng:</strong> <span id="inv_total"></span></p>
+            <p><strong>Đã thanh toán:</strong> <span id="inv_paid"></span></p>
+            <p style="font-size: 1.2em; color: #d63384;"><strong>Còn thiếu:</strong> <span id="inv_debt"></span></p>
+        </div>
+        <div style="margin-top: 50px; display: flex; justify-content: space-between;">
+            <div style="text-align: center; width: 40%;">
+                <p><strong>Nhân viên lập phiếu</strong></p>
+                <br><br><br>
+                <p>{{ request.user.get_full_name }}</p>
+            </div>
+            <div style="text-align: center; width: 40%;">
+                <p><strong>Khách hàng ký tên</strong></p>
+                <br><br><br>
+                <p><span id="inv_name_sign"></span></p>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-    $(document).ready(function() {
-        // 1. Khởi tạo dữ liệu giá xe từ Django
-        // Chúng ta tạo một object JS chứa ID xe và giá tương ứng
-        const xePrices = {
-            {% for x in form.fields.xe.queryset %}
-                "{{ x.id }}": {{ x.gia }},
-            {% endfor %}
-        };
+    function printInvoice() {
+        const xeSelect = document.querySelector('select[name="xe"]');
+        if (!xeSelect.value) { alert("Vui lòng chọn xe để có thông tin in hóa đơn!"); return; }
 
-        // 2. Cấu hình Select2 cho ô chọn xe
-        $('#id_xe').select2({
-            theme: 'bootstrap-5',
-            placeholder: "🔍 Gõ để tìm kiếm tên xe...",
+        document.getElementById('inv_date').innerText = new Date().toLocaleString('vi-VN');
+
+        const elName = document.querySelector('input[name="ho_ten"]');
+        document.getElementById('inv_name').innerText = elName ? elName.value : "......................";
+        document.getElementById('inv_name_sign').innerText = elName ? elName.value : "";
+
+        const elPhone = document.querySelector('input[name="so_dien_thoai"]');
+        document.getElementById('inv_phone').innerText = elPhone ? elPhone.value : "......................";
+
+        const elDiaChi = document.querySelector('textarea[name="dia_chi"]') || document.querySelector('input[name="dia_chi"]');
+        document.getElementById('inv_addr').innerText = (elDiaChi && elDiaChi.value) ? elDiaChi.value : "Nhận tại Showroom";
+
+        document.getElementById('inv_xe').innerText = xeSelect.options[xeSelect.selectedIndex].text;
+
+        const rawTotal = document.getElementById('id_tong_tien').value.replace(/\D/g, '');
+        const rawPaid = document.getElementById('id_so_tien_tra_truoc').value.replace(/\D/g, '');
+        const rawDebt = document.getElementById('id_con_thieu').value.replace(/\D/g, '');
+
+        document.getElementById('inv_price').innerText = new Intl.NumberFormat('vi-VN').format(rawTotal) + " ₫";
+        document.getElementById('inv_total').innerText = new Intl.NumberFormat('vi-VN').format(rawTotal) + " ₫";
+        document.getElementById('inv_paid').innerText = new Intl.NumberFormat('vi-VN').format(rawPaid) + " ₫";
+        document.getElementById('inv_debt').innerText = new Intl.NumberFormat('vi-VN').format(rawDebt) + " ₫";
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write('<html><head><title>Hóa đơn EV STORE</title></head><body>');
+        printWindow.document.write(document.getElementById('invoiceTemplate').innerHTML);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+
+        setTimeout(function () { printWindow.print(); }, 200);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        
+        // ĐÃ BỔ SUNG: Kích hoạt Select2 cho thẻ Cửa Hàng và Thẻ Xe
+        $('select[name="cua_hang"]').select2({
+            placeholder: "Gõ để tìm kiếm chi nhánh...",
+            allowClear: true,
+            width: '100%' // Đảm bảo tự động co giãn full viền
+        });
+        
+        $('select[name="xe"]').select2({
+            placeholder: "Gõ để tìm kiếm tên xe, phiên bản...",
             allowClear: true,
             width: '100%'
         });
 
-        // 3. Hàm xử lý tính toán tiền
-        function updatePrices() {
-            const xeId = $('#id_xe').val();
-            const loaiDon = $('#id_loai_don').val(); // 'D' là 100%, 'E' là cọc
-            
-            if (xeId && xePrices[xeId]) {
-                const giaGoc = xePrices[xeId];
-                
-                // Gán tổng tiền (Luôn là giá gốc của xe)
-                $('#id_tong_tien').val(giaGoc);
+        // ==========================================
+        // KHU VỰC JAVASCRIPT GỐC CỦA BẠN BÊN DƯỚI
+        // ==========================================
+        const xeData = {
+            {% for x in form.fields.xe.queryset %}
+            "{{ x.id }}": {
+                gia: parseInt("{{ x.gia|default:'0' }}".replace(/\D/g, '') || "0", 10),
+                anh: "{% if x.hinh_anh %}{{ x.hinh_anh.url|escapejs }}{% else %}{% endif %}" 
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        };
 
-                if (loaiDon === 'D') {
-                    // Thanh toán 100% -> Trả trước = Tổng tiền
-                    $('#id_so_tien_tra_truoc').val(giaGoc);
-                    $('#id_trang_thai').val('Paid');
-                } else if (loaiDon === 'E') {
-                    // Đặt cọc tại quầy -> Trả trước 10% (Hoặc con số bạn muốn)
-                    const coc = giaGoc * 0.1; 
-                    $('#id_so_tien_tra_truoc').val(coc);
-                    $('#id_trang_thai').val('Deposit Paid');
+        const inventoryData = [
+            {% for kho in danh_sach_kho %}
+                { branchId: "{{ kho.cua_hang.id }}", carId: "{{ kho.xe.id }}" },
+            {% endfor %}
+        ];
+
+        const elCuaHang = document.querySelector('select[name="cua_hang"]');
+        const elXe = document.querySelector('select[name="xe"]');
+        const elLoaiDon = document.querySelector('select[name="loai_don"]');
+        const elTrangThai = document.querySelector('select[name="trang_thai"]');
+        const elTongTien = document.getElementById('id_tong_tien');
+        const elTraTruoc = document.getElementById('id_so_tien_tra_truoc');
+        const elConThieu = document.getElementById('id_con_thieu');
+        const imgPreview = document.getElementById('carImagePreview');
+        const boxNgayGiao = document.getElementById('ngay_giao_container');
+        const inputNgayGiao = document.getElementById('id_ngay_giao_xe');
+        const hintLoaiDon = document.getElementById('loai_don_hint');
+        const elDiaChi = document.querySelector('textarea[name="dia_chi"]') || document.querySelector('input[name="dia_chi"]');
+
+        const radiosPhuongThuc = document.querySelectorAll('input[name="phuong_thuc_nhan"]');
+        const radiosThoiGian = document.querySelectorAll('input[name="thoi_gian_nhan"]');
+
+        if (elTongTien) elTongTien.type = 'text';
+        if (elTraTruoc) elTraTruoc.type = 'text';
+        const formatVN = (num) => new Intl.NumberFormat('vi-VN').format(num);
+
+        const originalXeOptions = Array.from(elXe.options);
+
+        function filterCarsByBranch() {
+            if (!elCuaHang || !elXe) return;
+            
+            const selectedBranch = elCuaHang.value;
+            
+            // Xóa sạch xe trong giao diện UI của Select2
+            $(elXe).empty(); 
+
+            if (!selectedBranch) {
+                $(elXe).append(new Option("--- Chọn chi nhánh xuất xe ---", ""));
+                $(elXe).trigger('change'); // Gọi reload UI
+                updateFinance();
+                return;
+            }
+
+            const validCarIds = inventoryData
+                .filter(item => item.branchId === selectedBranch)
+                .map(item => item.carId);
+
+            let count = 0;
+            originalXeOptions.forEach(opt => {
+                if (opt.value === "" || validCarIds.includes(opt.value)) {
+                    // Dùng jQuery append cho Select2
+                    $(elXe).append(new Option(opt.text, opt.value, false, false));
+                    if (opt.value !== "") count++;
+                }
+            });
+
+            if (count === 0) {
+                $(elXe).append(new Option("--- ⚠️ Chi nhánh này đã hết sạch xe ---", ""));
+            }
+
+            // Gọi reload UI của Select2 sau khi đã thay đổi xong Option
+            $(elXe).trigger('change'); 
+            
+            updateFinance(); 
+        }
+
+        function updateFinance() {
+            if (!elXe || !elLoaiDon) return;
+            const xeId = elXe.value;
+            const loaiDonValue = elLoaiDon.value; 
+
+            if (xeId && xeData[xeId]) {
+                const info = xeData[xeId];
+                
+                if (info.anh && info.anh !== "") {
+                    imgPreview.src = info.anh;
+                    imgPreview.style.display = 'inline-block';
+                } else {
+                    imgPreview.style.display = 'none'; 
+                }
+
+                elTongTien.value = formatVN(info.gia);
+
+                if (loaiDonValue === 'DatCoc') {
+                    const tienCoc = 20000000; 
+                    elTraTruoc.value = formatVN(tienCoc);
+                    elConThieu.value = formatVN(info.gia - tienCoc);
+                    
+                    if (elTrangThai) elTrangThai.value = 'Deposit Paid';
+                } else {
+                    elTraTruoc.value = formatVN(info.gia);
+                    elConThieu.value = 0;
+                    
+                    if (elTrangThai) elTrangThai.value = 'Paid';
                 }
             } else {
-                $('#id_tong_tien').val(0);
-                $('#id_so_tien_tra_truoc').val(0);
+                imgPreview.src = "https://via.placeholder.com/300x150?text=Chưa+chọn+xe";
+                elTongTien.value = "0";
+                elTraTruoc.value = "0";
+                elConThieu.value = "0";
             }
         }
 
-        // 4. Lắng nghe sự kiện thay đổi
-        $('#id_xe, #id_loai_don').on('change', function() {
-            updatePrices();
+        function toggleLogic() {
+            const elThoiGian = document.querySelector('input[name="thoi_gian_nhan"]:checked');
+            const elPhuongThuc = document.querySelector('input[name="phuong_thuc_nhan"]:checked');
+            
+            if(!elThoiGian || !elPhuongThuc) return;
+            
+            const isGiaoNgay = elThoiGian.value === 'ngay';
+            const isNhanQuay = elPhuongThuc.value === 'tai_cua_hang';
+
+            if (isGiaoNgay) {
+                boxNgayGiao.style.display = 'none';
+                if (inputNgayGiao) inputNgayGiao.required = false; 
+                if(hintLoaiDon) hintLoaiDon.style.display = 'block';
+
+                Array.from(elLoaiDon.options).forEach(opt => {
+                    if (opt.text.toLowerCase().includes('cọc')) {
+                        opt.disabled = true;
+                        opt.hidden = true;
+                        opt.style.display = 'none';
+                    } else {
+                        opt.disabled = false;
+                        opt.hidden = false;
+                        opt.style.display = '';
+                        elLoaiDon.value = opt.value;
+                    }
+                });
+            } else {
+                boxNgayGiao.style.display = 'block';
+                if(hintLoaiDon) hintLoaiDon.style.display = 'none';
+
+                Array.from(elLoaiDon.options).forEach(opt => {
+                    opt.disabled = false;
+                    opt.hidden = false;
+                    opt.style.display = '';
+                });
+            }
+
+            if (elDiaChi) {
+                if (isNhanQuay) {
+                    elDiaChi.value = 'Nhận xe trực tiếp tại cửa hàng';
+                    elDiaChi.readOnly = true;
+                    elDiaChi.required = false;
+                } else {
+                    if (elDiaChi.value === 'Nhận xe trực tiếp tại cửa hàng') elDiaChi.value = '';
+                    elDiaChi.readOnly = false;
+                    elDiaChi.required = true; 
+                    elDiaChi.placeholder = 'Nhập địa chỉ giao xe cụ thể...';
+                }
+            }
+            updateFinance();
+        }
+
+        document.getElementById('orderForm').addEventListener('submit', function () {
+            if (elDiaChi) elDiaChi.required = false;
+            if (elTongTien) elTongTien.value = elTongTien.value.replace(/\D/g, '');
+            if (elTraTruoc) elTraTruoc.value = elTraTruoc.value.replace(/\D/g, '');
         });
+
+        // ĐÃ SỬA: Lắng nghe sự kiện change từ jQuery cho Select2 thay vì DOM thuần
+        $('select[name="xe"]').on('change', updateFinance);
+        if (elLoaiDon) elLoaiDon.addEventListener('change', updateFinance);
+        radiosPhuongThuc.forEach(r => r.addEventListener('change', toggleLogic));
+        radiosThoiGian.forEach(r => r.addEventListener('change', toggleLogic));
+        
+        // Lắng nghe Select2 Chi nhánh thay đổi
+        $('select[name="cua_hang"]').on('change', filterCarsByBranch);
+        
+        // Khởi động
+        setTimeout(filterCarsByBranch, 100); 
+        toggleLogic();
     });
 </script>
 {% endblock %}

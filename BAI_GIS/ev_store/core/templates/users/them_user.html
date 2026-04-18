@@ -1,6 +1,6 @@
 {% extends 'base_admin.html' %}
 
-{% block title %}Cập Nhật Tài Khoản | EV STORE{% endblock %}
+{% block title %}Quản Lý Tài Khoản | EV STORE{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -10,22 +10,35 @@
     </button>
 </div>
 
-<div class="card shadow-sm border-0 rounded-3 p-4 w-75 mx-auto">
-    <form method="POST" id="userForm">
+<div class="card shadow-sm border-0 rounded-4 p-4 w-100 mx-auto" style="max-width: 900px;">
+    <form method="POST" id="userForm" enctype="multipart/form-data">
         {% csrf_token %}
-        <div class="row g-3">
+        <div class="row g-4">
             {% for field in form %}
-                <div class="col-md-12 mb-2">
-                    <label class="form-label fw-bold text-muted">{{ field.label }}</label>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted">{{ field.label }} 
+                        {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                    </label>
+                    
                     <div class="mt-1">
                         {{ field }}
                     </div>
-                    {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors }}</div>{% endif %}
+                    
+                    {% if field.help_text %}
+                        <small class="text-muted fst-italic mt-1 d-block">{{ field.help_text|safe }}</small>
+                    {% endif %}
+                    
+                    {% if field.errors %}
+                        <div class="text-danger small mt-1 fw-semibold"><i class="bi bi-exclamation-circle me-1"></i>{{ field.errors|striptags }}</div>
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>
-        <div class="text-end mt-4 pt-3 border-top">
-            <button type="submit" class="btn btn-primary px-5 fw-bold"><i class="bi bi-save me-1"></i> Lưu thông tin</button>
+        
+        <div class="text-end mt-5 pt-4 border-top">
+            <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm">
+                <i class="bi bi-save me-2"></i> Lưu thông tin
+            </button>
         </div>
     </form>
 </div>
@@ -34,11 +47,27 @@
 {% block extra_js %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        let textInputs = document.querySelectorAll('#userForm input[type="text"], #userForm input[type="email"], #userForm input[type="password"]');
-        textInputs.forEach(input => input.classList.add('form-control'));
+        // 1. Tự động thêm class cho TẤT CẢ các loại ô nhập (Text, Email, Password, Number, File Avatar...)
+        let inputs = document.querySelectorAll('#userForm input:not([type="checkbox"]):not([type="radio"]), #userForm textarea');
+        inputs.forEach(input => {
+            input.classList.add('form-control');
+        });
 
+        // 2. Tự động thêm class Bootstrap chuẩn cho Dropdown (Vai trò, Chi nhánh)
+        let selects = document.querySelectorAll('#userForm select');
+        selects.forEach(select => {
+            select.classList.add('form-select', 'fw-semibold');
+        });
+
+        // 3. Làm đẹp cho các Checkbox thành nút gạt (Switch)
         let checkboxes = document.querySelectorAll('#userForm input[type="checkbox"]');
-        checkboxes.forEach(cb => cb.classList.add('form-check-input', 'border-secondary', 'fs-5'));
+        checkboxes.forEach(cb => {
+            cb.classList.add('form-check-input', 'border-secondary');
+            let parent = cb.parentElement;
+            if (!parent.classList.contains('form-check')) {
+                parent.classList.add('form-check', 'form-switch', 'fs-5');
+            }
+        });
     });
 </script>
 {% endblock %}

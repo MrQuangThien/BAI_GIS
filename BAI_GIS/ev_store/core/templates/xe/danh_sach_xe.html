@@ -36,7 +36,6 @@
         background-color: #f8f9fa;
     }
     
-    /* Thêm CSS cho phần thông số đẹp hơn */
     .spec-badge {
         font-size: 0.8rem;
         padding: 4px 8px;
@@ -47,30 +46,30 @@
 
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold text-dark m-0">
-        <i class="bi bi-car-front-fill text-success me-2"></i>Danh Sách Xe Điện
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <h2 class="fw-bold text-dark m-0 fs-3 fs-md-2">
+        <i class="bi bi-car-front-fill text-success me-2"></i>Danh Sách Xe
     </h2>
 
     <a href="{% url 'them_xe' %}" class="btn btn-success fw-bold shadow-sm px-3">
         <i class="bi bi-plus-circle me-1"></i> Thêm Xe
     </a>
 </div>
+
 <form method="GET" class="mb-3">
-    <div class="input-group shadow-sm">
-        <input type="text" name="q" class="form-control" placeholder="🔍 Tìm kiếm..." value="{{ request.GET.q }}">
-        <button class="btn btn-success fw-bold">
-            <i class="bi bi-search"></i> Tìm
-        </button>
+    <div class="input-group shadow-sm" style="max-width: 100%; width: 400px;">
+        <input type="text" name="q" class="form-control" placeholder="🔍 Tìm tên, hãng, danh mục..." value="{{ tu_khoa }}">
+        <button class="btn btn-success fw-bold">Tìm kiếm</button>
     </div>
 </form>
+
 <div class="card shadow-sm border-0 table-container">
     <div class="card-body p-0">
 
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
+        <div class="table-responsive" style="max-height: 65vh; overflow-y: auto;">
+            <table class="table align-middle mb-0 text-nowrap">
 
-                <thead class="table-dark text-center">
+                <thead class="table-dark text-center sticky-top">
                     <tr>
                         <th class="ps-4 text-start">Xe</th>
                         <th>Hãng</th>
@@ -84,7 +83,7 @@
                 </thead>
 
                 <tbody>
-                    {% for xe in tat_ca_xe %}
+                    {% for xe in page_obj %}
                     <tr>
 
                         <td class="ps-4">
@@ -115,73 +114,79 @@
 
                         <td class="text-center small">
                             <div class="d-flex flex-column gap-1 align-items-center">
-                                {% for ch in xe.cua_hang.all %}
-                                    <span class="badge bg-light text-secondary border border-secondary-subtle">
-                                        <i class="bi bi-shop text-primary me-1"></i>{{ ch.ten_cua_hang }}
-                                    </span>
-                                {% empty %}
-                                    <span class="text-muted fst-italic" style="font-size: 0.8rem;">Chưa phân bổ</span>
-                                {% endfor %}
+                                {% with cac_chi_nhanh=xe.cua_hang.all %} 
+                                    {% if cac_chi_nhanh|length == 0 %}
+                                        <span class="text-muted fst-italic" style="font-size: 0.8rem;">Chưa phân bổ</span>
+                                    {% else %}
+                                        {% for ch in cac_chi_nhanh|slice:":2" %}
+                                            <span class="badge bg-light text-secondary border border-secondary-subtle">
+                                                <i class="bi bi-shop text-primary me-1"></i>{{ ch.ten_cua_hang }}
+                                            </span>
+                                        {% endfor %}
+                                        
+                                        {% if cac_chi_nhanh|length > 2 %}
+                                            <div class="dropdown mt-1">
+                                                <span class="badge bg-secondary dropdown-toggle shadow-sm" style="cursor: pointer; padding: 6px 10px;" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    +{{ cac_chi_nhanh|length|add:"-2" }} chi nhánh khác
+                                                </span>
+                                                
+                                                <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="min-width: 220px;">
+                                                    <li class="dropdown-header text-dark fw-bold border-bottom pb-2 mb-2 px-3">
+                                                        <i class="bi bi-list-ul me-1"></i> Danh sách chi nhánh:
+                                                    </li>
+                                                    {% for ch in cac_chi_nhanh|slice:'2:' %}
+                                                        <li>
+                                                            <span class="dropdown-item py-2">
+                                                                <i class="bi bi-shop text-primary me-2"></i>{{ ch.ten_cua_hang|default:ch }}
+                                                            </span>
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endwith %}
                             </div>
                         </td>
 
                         <td class="text-center">
                             {% if xe.trang_thai %}
-                                <span class="badge bg-success-subtle text-success border badge-status">
-                                    Đang bán
-                                </span>
+                                <span class="badge bg-success-subtle text-success border badge-status">Đang bán</span>
                             {% else %}
-                                <span class="badge bg-danger-subtle text-danger border badge-status">
-                                    Dừng bán
-                                </span>
+                                <span class="badge bg-danger-subtle text-danger border badge-status">Dừng bán</span>
                             {% endif %}
                         </td>
 
                         <td class="text-center">
                             {% if xe.noi_bat %}
-                                <span class="badge bg-warning text-dark mb-1 d-block">
-                                    ⭐ Nổi bật
-                                </span>
+                                <span class="badge bg-warning text-dark mb-1 d-block">⭐ Nổi bật</span>
                             {% endif %}
                             {% if xe.sap_ve %}
-                                <span class="badge bg-info text-dark d-block">
-                                    ⏳ Sắp về
-                                </span>
+                                <span class="badge bg-info text-dark d-block">⏳ Sắp về</span>
                             {% endif %}
                             {% if not xe.noi_bat and not xe.sap_ve %}
-                                <span class="badge bg-light text-secondary border">
-                                    Thường
-                                </span>
+                                <span class="badge bg-light text-secondary border">Thường</span>
                             {% endif %}
                         </td>
 
                         <td class="text-center pe-4">
                             <div class="d-flex justify-content-center gap-2">
-                                <a href="{% url 'sua_xe' xe.pk %}" 
-                                   class="btn btn-outline-primary btn-sm" 
-                                   title="Sửa">
+                                <a href="{% url 'sua_xe' xe.pk %}" class="btn btn-outline-primary btn-sm" title="Sửa">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
-
-                                <a href="{% url 'xoa_xe' xe.pk %}" 
-                                   class="btn btn-outline-danger btn-sm" 
-                                   title="Xóa"
-                                   onclick="return confirm('Xóa xe {{ xe.ten_xe }}?');">
+                                <a href="{% url 'xoa_xe' xe.pk %}" class="btn btn-outline-danger btn-sm" title="Xóa" onclick="return confirm('Xóa xe {{ xe.ten_xe }}?');">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </div>
                         </td>
 
                     </tr>
-
                     {% empty %}
                     <tr>
                         <td colspan="8" class="text-center py-5">
                             <i class="bi bi-inbox display-5 text-muted d-block mb-3"></i>
                             <h6 class="text-muted">Chưa có xe nào</h6>
-                            <a href="{% url 'them_xe' %}" class="btn btn-success mt-2">
-                                Thêm xe ngay
-                            </a>
+                            <a href="{% url 'them_xe' %}" class="btn btn-success mt-2">Thêm xe ngay</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -189,6 +194,47 @@
 
             </table>
         </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="card-footer bg-white border-top d-flex flex-column flex-md-row justify-content-between align-items-center py-3 gap-3">
+            <div class="text-muted small text-center text-md-start">
+                Trang <strong>{{ page_obj.number }}</strong> / {{ page_obj.paginator.num_pages }} 
+                (Tổng {{ page_obj.paginator.count }} xe)
+            </div>
+            
+            <nav>
+                <ul class="pagination pagination-sm mb-0 shadow-sm flex-wrap justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link text-success" href="?{% if tu_khoa %}q={{ tu_khoa }}&{% endif %}page={{ page_obj.previous_page_number }}">Trước</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Trước</span></li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link bg-success border-success">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link text-success" href="?{% if tu_khoa %}q={{ tu_khoa }}&{% endif %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link text-success" href="?{% if tu_khoa %}q={{ tu_khoa }}&{% endif %}page={{ page_obj.next_page_number }}">Sau</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Sau</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
 
     </div>
 </div>

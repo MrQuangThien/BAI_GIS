@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bản đồ Hệ sinh thái EV STORE</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -16,8 +16,10 @@
 
     <style>
         body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f8f9fa; overflow: hidden; }
+        
         #map { height: calc(100vh - 56px); width: 100%; }
         
+        /* GIAO DIỆN DESKTOP */
         #sidebar {
             position: absolute; top: 70px; left: 15px; z-index: 1000; width: 380px;
             max-height: calc(100vh - 90px); background: white; border-radius: 12px;
@@ -43,24 +45,91 @@
         .timer-text { font-size: 2.2rem; font-weight: bold; color: #20c997; font-family: monospace; text-shadow: 0 0 10px rgba(32,201,151,0.4); }
         .loading-spinner { display: inline-block; width: 1rem; height: 1rem; border: 3px solid #198754; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ========================================== */
+        /* ĐÃ NÂNG CẤP: HIỆU ỨNG NGĂN KÉO CHO MOBILE (< 768px) */
+        /* ========================================== */
+        @media (max-width: 767px) {
+            #sidebar {
+                top: auto;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                max-height: 65vh; /* Nâng cao lên một chút để xem danh sách dễ hơn */
+                border-radius: 20px 20px 0 0;
+                padding: 10px 15px 30px 15px;
+                box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+                z-index: 1000;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Hiệu ứng trượt mượt mà */
+            }
+            
+            /* TRẠNG THÁI THU GỌN: Chìm xuống đáy, chỉ chừa lại Thanh Tìm Kiếm */
+            #sidebar.collapsed {
+                transform: translateY(calc(100% - 85px)); 
+            }
+            
+            /* Nút bám (Handle) để người dùng chạm vào */
+            .drawer-header {
+                cursor: pointer;
+                text-align: center;
+                padding-bottom: 10px;
+                background: transparent;
+            }
+            .drag-indicator {
+                width: 45px;
+                height: 5px;
+                background: #adb5bd;
+                border-radius: 10px;
+                margin: 0 auto 5px auto;
+            }
+            .toggle-text {
+                font-size: 0.75rem;
+                color: #6c757d;
+                font-weight: 600;
+            }
+
+            /* Đẩy nút Zoom của bản đồ lên trên để không bị Ngăn kéo đè mất */
+            .leaflet-control-container .leaflet-bottom {
+                bottom: 100px; 
+                transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            /* Khi ngăn kéo mở lên thì nút Zoom cũng chạy lên theo */
+            body.drawer-open .leaflet-control-container .leaflet-bottom {
+                bottom: 66vh;
+            }
+        }
     </style>
 </head>
 
-<body>
+<body class="drawer-open">
     <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand fw-bold" href="#">
-                <i class="bi bi-lightning-charge-fill me-1 text-warning"></i> EV STORE MAPS
+        <div class="container-fluid px-3">
+            <a class="navbar-brand fw-bold fs-5 fs-md-4 m-0" href="#">
+                <i class="bi bi-lightning-charge-fill me-1 text-warning"></i> EV MAPS
             </a>
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link fw-semibold" href="/">Về Trang Chủ</a></li>
+            
+            <a href="/" class="btn btn-sm btn-outline-light fw-bold ms-auto d-lg-none">
+                <i class="bi bi-house-door-fill"></i> Trang Chủ
+            </a>
+
+            <div class="collapse navbar-collapse d-none d-lg-block">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="btn btn-light text-success fw-bold px-4 rounded-pill shadow-sm" href="/">
+                            <i class="bi bi-house-door-fill me-1"></i> Về Trang Chủ
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
 
     <div id="sidebar">
+        <div class="drawer-header d-block d-md-none" onclick="toggleDrawer()">
+            <div class="drag-indicator"></div>
+            <div id="toggle-text" class="toggle-text">Chạm để thu gọn danh sách</div>
+        </div>
+
         <form class="search-wrapper d-flex mb-3 shadow-sm rounded-pill border bg-white" onsubmit="event.preventDefault(); timKiemDiaChi(document.getElementById('sideSearchInput').value);">
             <input id="sideSearchInput" class="form-control border-0 rounded-start-pill ps-3 bg-transparent" type="search" placeholder="📍 Nhập khu vực, tên đường..." aria-label="Search">
             <button class="btn text-success border-0 rounded-end-pill pe-3 bg-transparent" type="submit">
@@ -70,12 +139,20 @@
 
         <ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1 shadow-sm" id="mapTabs">
             <li class="nav-item">
-                <button class="nav-link active fw-bold" id="tab-tram" onclick="switchTab('tram')"><i class="bi bi-ev-station-fill me-1"></i> Trạm Sạc</button>
+                <button class="nav-link active fw-bold py-1 py-md-2" id="tab-tram" onclick="switchTab('tram')"><i class="bi bi-ev-station-fill me-1"></i> Trạm Sạc</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link fw-bold text-dark" id="tab-store" onclick="switchTab('store')"><i class="bi bi-shop me-1"></i> Chi Nhánh</button>
+                <button class="nav-link fw-bold text-dark py-1 py-md-2" id="tab-store" onclick="switchTab('store')"><i class="bi bi-shop me-1"></i> Chi Nhánh</button>
             </li>
         </ul>
+
+        <div id="filter-container" class="mb-3">
+            <select id="loai-sac-filter" class="form-select border-success shadow-sm fw-semibold text-success" onchange="renderItems()">
+                <option value="all">⚡ Tất cả loại sạc</option>
+                <option value="Nhanh">🚀 Sạc Nhanh (DC)</option> 
+                <option value="Chậm">🔋 Sạc Thường (AC)</option>
+            </select>
+        </div>
 
         <p id="status" class="text-secondary fw-semibold small mb-2"><span class="loading-spinner me-2"></span>Đang tải dữ liệu...</p>
 
@@ -93,20 +170,23 @@
         <div id="info-panel" style="display: none;">
             <div class="card shadow-sm border-success border-opacity-50 overflow-hidden">
                 <img id="item-image" src="" class="card-img-top" style="height: 160px; object-fit: cover; display: none;" alt="Ảnh minh họa">
-                <div class="card-body">
+                <div class="card-body p-3">
                     <span class="badge bg-success mb-2" id="item-type">-</span>
-                    <h6 id="item-name" class="card-title mb-2 fw-bold text-dark">-</h6>
+                    <h6 id="item-name" class="card-title mb-1 fw-bold text-dark fs-6 fs-md-5">-</h6>
+                    
+                    <div id="item-rating" class="mb-2"></div>
+                    
                     <p class="mb-1 small text-muted"><i class="bi bi-geo-alt me-1"></i> <span id="item-address">-</span></p>
                     <p class="mb-2 small fw-bold text-primary"><i class="bi bi-cursor me-1"></i> Cách bạn: <span id="item-distance">-</span></p>
                     <p class="mb-2 small" id="charge-speed" style="display: none;"></p>
                     
-                    <div class="d-grid gap-2 mt-3">
+                    <div class="d-flex flex-column gap-2 mt-3">
                         <button id="btn-draw-route" class="btn btn-primary fw-bold shadow-sm" onclick="veDuongDi()">
                             <i class="bi bi-sign-turn-right-fill me-1"></i> Vẽ đường đi
                         </button>
                         <div class="d-flex gap-2">
                             <button id="google-maps-btn" class="btn btn-outline-dark btn-sm fw-bold w-100" onclick="openGoogleMaps()">
-                                <i class="bi bi-map me-1 text-success"></i> App Google Maps
+                                <i class="bi bi-map me-1 text-success"></i> App GG Maps
                             </button>
                             <button id="btn-start-charge" class="btn btn-success btn-sm fw-bold w-100 shadow-sm" onclick="batDauSac()">
                                 <i class="bi bi-plug-fill me-1"></i> Sạc pin
@@ -133,20 +213,21 @@
 
     <div class="modal fade" id="ratingModal" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
+            <div class="modal-content border-0 shadow-lg mx-3 mx-md-0">
                 <div class="modal-header bg-success text-white border-0">
                     <h5 class="modal-title fw-bold"><i class="bi bi-receipt-cutoff me-2"></i>Biên lai Phiên sạc</h5>
                 </div>
-                <div class="modal-body text-center p-4">
+                <div class="modal-body text-center p-3 p-md-4">
                     <p class="text-muted mb-1">Tổng chi phí thanh toán</p>
-                    <h2 id="bill-total" class="text-success fw-bold mb-3">0 VNĐ</h2>
-                    <div class="bg-light rounded p-3 text-start mb-4">
-                        <p class="mb-1">Thời gian sạc: <strong id="bill-time" class="float-end">0 phút</strong></p>
-                        <p class="mb-0">Đơn giá: <span class="float-end">3,500đ / phút</span></p>
+                    <h2 id="bill-total" class="text-success fw-bold mb-3 fs-3 fs-md-2">0 VNĐ</h2>
+                    <div class="bg-light rounded p-3 text-start mb-4 shadow-sm border border-success border-opacity-25">
+                        <p class="mb-2 text-muted small">Thời gian sạc: <strong id="bill-time" class="float-end text-dark">0 phút</strong></p>
+                        <p class="mb-2 text-muted small">Điện tiêu thụ: <strong id="bill-kwh" class="float-end text-primary">0 kWh</strong></p>
+                        <p class="mb-0 text-muted small">Đơn giá điện: <span class="float-end fw-semibold text-dark">3.500đ / kWh</span></p>
                     </div>
                     <hr>
-                    <p class="fw-bold mb-2">Đánh giá chất lượng trạm sạc này:</p>
-                    <select id="station-rating" class="form-select form-select-lg w-75 mx-auto text-center font-monospace">
+                    <p class="fw-bold mb-2 small">Đánh giá chất lượng trạm sạc này:</p>
+                    <select id="station-rating" class="form-select form-select-sm w-100 mx-auto text-center font-monospace">
                         <option value="5">⭐⭐⭐⭐⭐ (Rất tốt)</option>
                         <option value="4">⭐⭐⭐⭐ (Tốt)</option>
                         <option value="3">⭐⭐⭐ (Bình thường)</option>
@@ -155,7 +236,7 @@
                     </select>
                 </div>
                 <div class="modal-footer border-0 justify-content-center pb-4">
-                    <button type="button" class="btn btn-success btn-lg px-5 fw-bold rounded-pill" data-bs-dismiss="modal" onclick="guiDanhGia()">Hoàn tất</button>
+                    <button type="button" class="btn btn-success px-5 fw-bold rounded-pill" data-bs-dismiss="modal" onclick="guiDanhGia()">Hoàn tất</button>
                 </div>
             </div>
         </div>
@@ -172,6 +253,28 @@
         
         let isCharging = false;
         let startTime, timerInterval, elapsedSeconds = 0;
+
+        // ĐÃ BỔ SUNG: Hàm Xử lý Ngăn kéo trên Mobile
+        function toggleDrawer(forceCollapse = false) {
+            const sidebar = document.getElementById('sidebar');
+            const txt = document.getElementById('toggle-text');
+            
+            if (window.innerWidth >= 768) return; // Không có tác dụng trên Desktop
+
+            if (forceCollapse) {
+                sidebar.classList.add('collapsed');
+                document.body.classList.remove('drawer-open');
+            } else {
+                sidebar.classList.toggle('collapsed');
+                document.body.classList.toggle('drawer-open', !sidebar.classList.contains('collapsed'));
+            }
+
+            if (sidebar.classList.contains('collapsed')) {
+                txt.textContent = "Chạm để xem danh sách trạm";
+            } else {
+                txt.textContent = "Chạm để thu gọn";
+            }
+        }
 
         window.onload = async () => {
             map = L.map('map').setView([userLat, userLon], 13);
@@ -220,6 +323,9 @@
                 userLat = e.latlng.lat;
                 userLon = e.latlng.lng;
                 updateUserLocation();
+                
+                // ĐÃ BỔ SUNG: Tự động thu gọn ngăn kéo khi bấm vào bản đồ (Để rộng chỗ xem)
+                toggleDrawer(true);
             });
         };
 
@@ -236,6 +342,8 @@
                     userLon = parseFloat(data[0].lon);
                     updateUserLocation();
                     document.getElementById('status').innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> Đã đến địa chỉ vừa tìm!';
+                    // Mở lại ngăn kéo sau khi tìm thấy
+                    toggleDrawer(false); 
                 } else {
                     alert("Không tìm thấy địa chỉ này! Thử gõ thêm tên Tỉnh/Thành phố nhé.");
                     document.getElementById('status').innerHTML = '<i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> Không tìm thấy địa chỉ';
@@ -277,13 +385,15 @@
             if(isCharging) { alert("Vui lòng kết thúc phiên sạc hiện tại trước khi chuyển tab!"); return; }
             
             currentTab = tabName;
-            document.getElementById('tab-tram').className = "nav-link fw-bold text-dark";
-            document.getElementById('tab-store').className = "nav-link fw-bold text-dark";
+            document.getElementById('tab-tram').className = "nav-link fw-bold text-dark py-1 py-md-2";
+            document.getElementById('tab-store').className = "nav-link fw-bold text-dark py-1 py-md-2";
 
             if(tabName === 'tram') {
                 document.getElementById('tab-tram').classList.add('active', 'bg-success', 'text-white');
+                document.getElementById('filter-container').style.display = 'block'; 
             } else {
                 document.getElementById('tab-store').classList.add('active', 'bg-info');
+                document.getElementById('filter-container').style.display = 'none'; 
             }
 
             document.getElementById('info-panel').style.display = 'none';
@@ -300,6 +410,12 @@
             let dataSource = currentTab === 'tram' ? allTrams : allStores;
             let count = 0;
 
+            let filterEl = document.getElementById('loai-sac-filter');
+            let selectedValue = filterEl ? filterEl.value.toUpperCase() : 'ALL';
+            
+            let isFilteringDC = selectedValue.includes('DC') || selectedValue.includes('NHANH');
+            let isFilteringAC = selectedValue.includes('AC') || selectedValue.includes('THƯỜNG') || selectedValue.includes('CHẬM');
+
             dataSource.forEach((item, idx) => {
                 let lat = parseFloat(item.lat);
                 let lon = parseFloat(item.lon);
@@ -308,51 +424,77 @@
                 const dist = map.distance([userLat, userLon], [lat, lon]);
 
                 if (dist <= currentRadius) {
-                    count++;
-                    const distKm = (dist / 1000).toFixed(2);
                     const isTram = currentTab === 'tram';
                     
-                    const name = isTram ? item.ten_tram : item.ten_cua_hang;
+                    if (isTram && selectedValue !== 'ALL') {
+                        let isMatch = false;
+                        let textToSearch = String((item.loai_sac || "") + " " + (item.ten_tram || "")).toUpperCase();
+                        
+                        let congSuatRaw = item.cong_suat || item.congsuat || 0;
+                        let numericPart = String(congSuatRaw).replace(/[^0-9.]/g, ''); 
+                        let congSuat = parseFloat(numericPart) || 0;
+
+                        if (isFilteringDC) {
+                            if (textToSearch.includes('DC') || textToSearch.includes('NHANH') || congSuat >= 30) isMatch = true;
+                        } 
+                        else if (isFilteringAC) {
+                            if (textToSearch.includes('AC') || textToSearch.includes('THƯỜNG') || textToSearch.includes('CHẬM') || (congSuat > 0 && congSuat < 30)) isMatch = true;
+                        }
+
+                        if (!isMatch) return; 
+                    }
+
+                    count++;
+                    const distKm = (dist / 1000).toFixed(2);
+                    
+                    const name = isTram ? (item.ten_tram || item.tentram) : (item.ten_cua_hang || item.tencuahang);
                     const address = item.dia_chi || 'Chưa cập nhật địa chỉ';
-                    const subInfo = isTram ? `${item.loai_sac} • ${item.cong_suat}kW` : `<i class="bi bi-telephone"></i> ${item.sdt || 'Đang cập nhật'}`;
+                    
+                    let loaiSacText = item.loai_sac || item.loaisac || 'Chưa rõ loại';
+                    let congSuatText = item.cong_suat || item.congsuat || 0;
+                    const subInfo = isTram ? `${loaiSacText} • ${congSuatText}kW` : `<i class="bi bi-telephone"></i> ${item.sdt || 'Đang cập nhật'}`;
+                    
                     const iconClass = isTram ? 'marker-tram' : 'marker-store';
                     const iconHtml = isTram ? '<i class="bi bi-ev-station"></i>' : '<i class="bi bi-shop"></i>';
-
                     const imgUrl = item.hinh_anh ? item.hinh_anh : (isTram ? 'https://images.unsplash.com/photo-1593941707882-a5bba14938cb?auto=format&fit=crop&q=80&w=400&h=200' : 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&q=80&w=400&h=200');
 
-                    // 1. Dựng danh sách Menu Trái
+                    let ratingHtml = '';
+                    if (isTram) {
+                        let tbSao = item.trung_binh_sao || 0;
+                        let slDanhGia = item.so_luong_danh_gia || 0;
+                        if (slDanhGia > 0) {
+                            ratingHtml = `<div class="mt-1"><span class="text-warning fw-bold"><i class="bi bi-star-fill"></i> ${tbSao}</span> <span class="text-muted small">(${slDanhGia} đánh giá)</span></div>`;
+                        } else {
+                            ratingHtml = `<div class="mt-1 text-muted small"><i class="bi bi-star"></i> Chưa có đánh giá</div>`;
+                        }
+                    }
+
+                    // 1. Tạo Giao diện Danh sách
                     const div = document.createElement('div');
                     div.className = `list-item list-group-item border-0 rounded mb-2 shadow-sm`;
                     div.innerHTML = `
-                        <div class="fw-bold text-dark">${name}</div>
-                        <div class="small text-muted text-truncate">${address}</div>
+                        <div class="fw-bold text-dark fs-6">${name}</div>
+                        ${ratingHtml}
+                        <div class="small text-muted text-truncate mt-1">${address}</div>
                         <div class="small mt-1 ${isTram ? 'text-success' : 'text-info text-dark'} fw-semibold">
                             <i class="bi bi-cursor-fill"></i> ${distKm} km | ${subInfo}
                         </div>
                     `;
-                    div.onclick = () => {
-                        document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active', 'active-store'));
-                        div.classList.add(isTram ? 'active' : 'active-store');
-                        chonItem(item, distKm, name, address, isTram, imgUrl, subInfo);
-                        
-                        document.getElementById('sidebar').scrollTop = 0;
-                    };
                     listEl.appendChild(div);
 
-                    // 2. Dựng Popup cực đẹp trên Bản Đồ
+                    // 2. Tạo Ghim (Marker) trên bản đồ
                     const marker = L.marker([lat, lon], {
                         icon: L.divIcon({ className: iconClass, html: iconHtml, iconSize: [35, 35] })
                     }).addTo(markersLayer);
 
+                    // 3. Nội dung Popup 
                     const popupHtml = `
                         <div style="text-align: center; font-family: system-ui, sans-serif;">
                             <img src="${imgUrl}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; border: 1px solid #eee;">
-                            <h6 style="margin: 0 0 5px 0; color: ${isTram ? '#198754' : '#0dcaf0'}; font-weight: bold; font-size: 15px;">${name}</h6>
-                            <p style="margin: 0 0 8px 0; font-size: 12px; color: #6c757d; line-height: 1.4;">${address}</p>
+                            <h6 style="margin: 0 0 2px 0; color: ${isTram ? '#198754' : '#0dcaf0'}; font-weight: bold; font-size: 15px;">${name}</h6>
                             
-                            <div style="margin-bottom: 10px; font-size: 13px; font-weight: bold; color: #333;">
-                                ${subInfo}
-                            </div>
+                            ${ratingHtml} <p style="margin: 8px 0; font-size: 12px; color: #6c757d; line-height: 1.4;">${address}</p>
+                            <div style="margin-bottom: 10px; font-size: 13px; font-weight: bold; color: #333;">${subInfo}</div>
                             
                             <div style="background: ${isTram ? '#e9f7ef' : '#e0f7fa'}; color: ${isTram ? '#198754' : '#087990'}; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; margin-bottom: 15px;">
                                 <i class="bi bi-cursor-fill"></i> Cách bạn: ${distKm} km
@@ -370,11 +512,28 @@
                             </div>
                         </div>
                     `;
-                    marker.bindPopup(popupHtml);
                     
-                    marker.on('click', () => {
-                        div.click();
-                    });
+                    // Khóa autoPan để bản đồ không giật lag tranh giành với lệnh flyTo của chúng ta
+                    marker.bindPopup(popupHtml, { autoPan: false });
+                    
+                    // KHI BẤM VÀO GHIM TRÊN BẢN ĐỒ -> Bôi đậm danh sách bên trái
+                    marker.on('click', () => { div.click(); });
+
+                    // KHI BẤM VÀO DANH SÁCH BÊN TRÁI -> Tự động bật Popup trên bản đồ
+                    div.onclick = () => {
+                        document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active', 'active-store'));
+                        div.classList.add(isTram ? 'active' : 'active-store');
+                        
+                        chonItem(item, distKm, name, address, isTram, imgUrl, subInfo);
+                        
+                        // Mở popup ngay lập tức
+                        marker.openPopup();
+                        
+                        // Mobile: Tự động giấu ngăn kéo xuống để xem Popup rõ hơn
+                        if (typeof toggleDrawer === "function" && window.innerWidth < 768) {
+                            toggleDrawer(true);
+                        }
+                    };
                 }
             });
 
@@ -390,6 +549,21 @@
             document.getElementById('item-address').textContent = address;
             document.getElementById('item-distance').textContent = distance + " km";
             
+            let ratingContainer = document.getElementById('item-rating');
+            if(isTram) {
+                let tbSao = item.trung_binh_sao || 0;
+                let slDanhGia = item.so_luong_danh_gia || 0;
+                if (slDanhGia > 0) {
+                    ratingContainer.innerHTML = `<span class="text-warning fw-bold"><i class="bi bi-star-fill"></i> ${tbSao}</span> <span class="text-muted small">(${slDanhGia} đánh giá)</span>`;
+                    ratingContainer.style.display = 'block';
+                } else {
+                    ratingContainer.innerHTML = `<span class="text-muted small"><i class="bi bi-star"></i> Chưa có đánh giá</span>`;
+                    ratingContainer.style.display = 'block';
+                }
+            } else {
+                ratingContainer.style.display = 'none'; 
+            }
+
             const imgEl = document.getElementById('item-image');
             imgEl.src = imgUrl;
             imgEl.style.display = 'block';
@@ -412,11 +586,33 @@
                 txtSpeed.innerHTML = `<i class="bi bi-telephone-fill me-1"></i>Hotline: <span class="text-primary fw-bold">${item.sdt || 'Đang cập nhật'}</span>`;
             }
             
+            const sidebar = document.getElementById('sidebar');
+            if(sidebar) sidebar.scrollTo({ top: 0, behavior: 'smooth' });
+
             if (routingControl) {
                 routingControl.remove();
                 routingControl = null;
             }
-            map.setView([item.lat, item.lon], 15);
+
+            // ==========================================
+            // THUẬT TOÁN LỆCH TÂM (OFFSET CENTER)
+            // ==========================================
+            const zoomLevel = 15;
+            // Chuyển tọa độ trạm thành điểm Pixel trên bản đồ
+            const targetPoint = map.project([item.lat, item.lon], zoomLevel);
+            
+            if (window.innerWidth >= 768) {
+                // Laptop: Đẩy camera sang trái & lên trên -> Trạm sạc dịch sang phải & xuống dưới (Né Sidebar & chừa chỗ cho Popup bung)
+                targetPoint.x -= 200; 
+                targetPoint.y -= 150; 
+            } else {
+                // Mobile: Đẩy camera lên trên -> Trạm sạc dịch xuống dưới màn hình
+                targetPoint.y -= 150; 
+            }
+            
+            // Chuyển Pixel ngược lại thành tọa độ LatLng để bản đồ bay tới
+            const targetLatLng = map.unproject(targetPoint, zoomLevel);
+            map.flyTo(targetLatLng, zoomLevel, { duration: 0.5 });
         }
 
         function veDuongDi() {
@@ -433,11 +629,13 @@
             }).addTo(map);
             
             map.closePopup();
+            // Tự động thu gọn ngăn kéo để xem đường đi
+            toggleDrawer(true);
         }
 
         function openGoogleMaps() {
             if (!selectedItem || !userLat || !userLon) return;
-            const url = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLon}&destination=${selectedItem.lat},${selectedItem.lon}&travelmode=driving`;
+            const url = `https://www.google.com/maps/dir/?api=1&origin=$${userLat},${userLon}&destination=${selectedItem.lat},${selectedItem.lon}&travelmode=driving`;
             window.open(url, '_blank');
         }
 
@@ -449,6 +647,8 @@
             startTime = new Date();
             
             map.closePopup(); 
+            // Mở lại ngăn kéo để khách hàng theo dõi thời gian sạc
+            toggleDrawer(false);
             
             timerInterval = setInterval(() => {
                 elapsedSeconds++;
@@ -459,7 +659,6 @@
             }, 1000); 
         }
 
-        // ĐÃ BỔ SUNG: KẾT NỐI API ĐỂ LƯU DATABASE PHIÊN SẠC
         function ketThucSac() {
             clearInterval(timerInterval);
             isCharging = false;
@@ -467,14 +666,22 @@
             document.getElementById('info-panel').style.display = 'block';
 
             let phut = Math.max(1, Math.floor(elapsedSeconds / 60)); 
-            let tien = phut * 3500; 
+            
+            let congSuatRaw = selectedItem.cong_suat || selectedItem.congsuat || 60;
+            let numericPart = String(congSuatRaw).replace(/[^0-9.]/g, ''); 
+            let congSuat = parseFloat(numericPart) || 60;
+
+            let dienNang = (phut / 60) * congSuat;
+            dienNang = Math.round(dienNang * 10) / 10; 
+
+            let tien = Math.floor(dienNang * 3500);
 
             document.getElementById('bill-time').textContent = phut + " phút";
+            document.getElementById('bill-kwh').textContent = dienNang.toFixed(1) + " kWh";
             document.getElementById('bill-total').textContent = tien.toLocaleString('vi-VN') + " VNĐ";
             
             new bootstrap.Modal(document.getElementById('ratingModal')).show();
 
-            // Gói dữ liệu gửi về Django
             let payload = {
                 tram_id: selectedItem.id,
                 thoi_gian_bat_dau: startTime.toISOString(),
@@ -483,7 +690,6 @@
                 tong_tien: tien
             };
 
-            // Gọi API lưu Phiên sạc
             fetch("{% url 'ket_thuc_sac_api' %}", {
                 method: 'POST',
                 headers: {
@@ -497,17 +703,50 @@
                 if (data.status === 'success') {
                     console.log("Hệ thống: " + data.message);
                 } else {
-                    alert("Lưu ý: " + data.message); // Báo lỗi nếu khách chưa đăng nhập
+                    alert("Lưu ý: " + data.message); 
                 }
             })
             .catch(e => console.log("Gửi API lưu phiên sạc thất bại", e));
         }
 
         function guiDanhGia() {
-            alert("Đã ghi nhận đánh giá " + document.getElementById('station-rating').value + " sao. Cảm ơn bạn!");
+            let ratingValue = document.getElementById('station-rating').value;
+            
+            if (!selectedItem || !selectedItem.id) {
+                alert("❌ Lỗi: Không xác định được trạm sạc đang chọn!");
+                return;
+            }
+
+            let danhGiaPayload = {
+                tram_id: selectedItem.id,
+                so_sao: ratingValue,
+            };
+
+            fetch("{% url 'luu_danh_gia_api' %}", { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(danhGiaPayload)
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Lỗi HTTP: " + res.status);
+                return res.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    alert("✅ THÀNH CÔNG: Đã lưu đánh giá " + ratingValue + " sao vào trạm sạc này");
+                } else {
+                    alert("❌ Server báo lỗi: " + data.message);
+                }
+            })
+            .catch(e => {
+                console.error("Chi tiết lỗi:", e);
+                alert("❌ LỖI KẾT NỐI API! (Vui lòng bấm F12 -> sang tab Console để xem chi tiết)");
+            });
         }
 
-        // HÀM LẤY COOKIE BẢO MẬT CỦA DJANGO ĐỂ CHO PHÉP GỬI DỮ LIỆU
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {

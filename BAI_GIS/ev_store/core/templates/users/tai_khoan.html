@@ -1,221 +1,303 @@
+{% extends 'base.html' %}
 {% load static %}
-{% load humanize %}
-<!DOCTYPE html>
-<html lang="vi">
+{% load humanize %} 
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tài khoản của tôi | EV STORE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <style>
-        body {
-            background: #f4f6f9;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
+{% block title %}Tài khoản của tôi | EV STORE{% endblock %}
 
-        .navbar-brand {
-            font-weight: bold;
-            font-size: 22px;
-        }
-
-        .profile-header {
-            background: linear-gradient(135deg, #198754 0%, #146c43 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 10px 10px 0 0;
-        }
-
-        .avatar-circle {
-            width: 80px;
-            height: 80px;
-            background: white;
-            color: #198754;
-            font-size: 35px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-            font-weight: bold;
-        }
-
-        .btn-back {
-            transition: all 0.3s ease;
-        }
-
-        .btn-back:hover {
-            background-color: #e9ecef;
-            transform: translateX(-3px);
-        }
-    </style>
-</head>
-
-<body>
-
-    {% if request.user.is_authenticated %}
-
-    <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow sticky-top">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="{% url 'trang_chu' %}">
-                <i class="bi bi-lightning-charge-fill text-warning"></i> EV STORE
-            </a>
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link fw-semibold" href="{% url 'trang_chu' %}">Trang chủ</a></li>
-                    <li class="nav-item"><a class="nav-link fw-semibold" href="{% url 'ban_do_tram_sac' %}">Bản đồ trạm
-                            sạc</a></li>
-                </ul>
-                <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm fw-bold">
-                    <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container my-5 flex-grow-1">
-
-        <div class="mb-4">
-            <a href="{% url 'trang_chu' %}"
-                class="btn btn-light border shadow-sm fw-bold text-secondary rounded-pill px-4 btn-back">
-                <i class="bi bi-arrow-left me-2"></i> Quay lại trang chủ
-            </a>
-        </div>
-
-        <div class="row g-4">
-
-            <!-- Profile -->
-            <div class="col-lg-4">
-                <div class="card shadow-sm border-0 rounded-4 h-100">
-                    <div class="profile-header text-center">
-                        <div class="avatar-circle shadow-sm">
-                            {{ request.user.username|default:"U"|slice:":1"|upper }}
-                        </div>
-                        <h4 class="fw-bold mb-0">{{ request.user.username }}</h4>
-                        
-                    </div>
-
-                    <div class="card-body p-4">
-                        <ul class="list-group list-group-flush mb-3">
-                            <li class="list-group-item px-0 d-flex justify-content-between bg-transparent border-0">
-                                <span class="text-muted"><i class="bi bi-envelope me-2"></i>Email:</span>
-                                <strong>{{ request.user.email|default:"Chưa cập nhật" }}</strong>
-                            </li>
-                        </ul>
-
-                        <div class="mt-2 pt-3 border-top text-center">
-                            {% if request.user.is_staff %}
-                            <a href="{% url 'danh_sach_don_hang' %}" class="btn btn-outline-success w-100 fw-bold mb-3">
-                                <i class="bi bi-speedometer2 me-1"></i> Trang quản trị
-                            </a>
-                            {% endif %}
-
-                            <a href="{% url 'password_reset' %}" class="btn btn-outline-secondary w-100 fw-bold">
-                                <i class="bi bi-shield-lock me-1"></i> Đổi mật khẩu
-                            </a>
-                        </div>
-                    </div>
+{% block content %}
+<div class="container my-4 my-md-5">
+    <div class="row">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-4 shadow-sm" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="col-md-4 col-lg-3 mb-4">
+            
+            <div class="card border-0 shadow-sm rounded-4 text-center p-3 p-md-4 mb-3">
+                <div class="position-relative d-inline-block mx-auto mb-2">
+                    {% if user.userprofile.avatar %}
+                        <img src="{{ user.userprofile.avatar.url }}" id="avatarPreviewMenu" class="rounded-circle border border-3 border-success object-fit-cover" style="width: 100px; height: 100px; md-width: 120px; md-height: 120px;">
+                    {% else %}
+                        <img src="https://via.placeholder.com/150" id="avatarPreviewMenu" class="rounded-circle border border-3 border-success object-fit-cover" style="width: 100px; height: 100px; md-width: 120px; md-height: 120px;">
+                    {% endif %}
+                </div>
+                
+                <label for="id_avatar" class="btn btn-outline-success btn-sm rounded-pill fw-bold mb-2 mb-md-3" style="cursor: pointer;">
+                    <i class="bi bi-camera me-1"></i> Đổi ảnh
+                </label>
+                <input type="file" name="avatar" id="id_avatar" accept="image/*" class="d-none" form="profile-form" onchange="previewImage(event)">
+
+                <h5 class="fw-bold text-dark mb-0 fs-6 fs-md-5">{{ user.last_name }} {{ user.first_name }}</h5>
+                <p class="text-muted small mb-0">@{{ user.username }}</p>
             </div>
 
-            <!-- Orders -->
-            <div class="col-lg-8">
-                <div class="card shadow-sm border-0 rounded-4 h-100">
-                    <div class="card-header bg-white p-4 border-bottom">
-                        <h4 class="fw-bold text-success mb-0">
-                            <i class="bi bi-bag-check-fill me-2"></i>Lịch sử đặt hàng
-                        </h4>
-                        <p class="text-muted mb-0 mt-1">Tổng đơn: {{ don_hang_list|length }}</p>
-                    </div>
+            <div class="nav nav-pills flex-column shadow-sm rounded-4 bg-white p-2 mobile-scroll-menu" id="account-tabs" role="tablist">
+                
+                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'profile' or not active_tab %}active{% endif %}" id="tab-profile" data-bs-toggle="pill" data-bs-target="#content-profile" type="button" role="tab">
+                    <i class="bi bi-person-lines-fill me-2"></i> Hồ sơ
+                </button>
+                
+                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'orders' %}active{% endif %}" id="tab-orders" data-bs-toggle="pill" data-bs-target="#content-orders" type="button" role="tab">
+                    <i class="bi bi-box-seam me-2"></i> Lịch sử mua
+                </button>
+                
+                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'email' %}active{% endif %}" id="tab-email" data-bs-toggle="pill" data-bs-target="#content-email" type="button" role="tab">
+                    <i class="bi bi-envelope-check me-2"></i> Đổi Email
+                </button>
 
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="ps-4">Mã</th>
-                                        <th>Sản phẩm</th>
-                                        <th>Hình thức</th>
-                                        <th>Tổng tiền</th>
-                                        <th>Trạng thái</th>
-                                        <th>Chi tiết</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for don in don_hang_list %}
-                                    <tr>
-                                        <td class="ps-4 fw-bold text-muted">#DH{{ don.id }}</td>
+                <button class="nav-link text-start fw-bold py-3 px-3 mb-0 {% if active_tab == 'security' %}active{% endif %}" id="tab-security" data-bs-toggle="pill" data-bs-target="#content-security" type="button" role="tab">
+                    <i class="bi bi-shield-lock-fill me-2"></i> Đổi mật khẩu
+                </button>
+                
+            </div>
+        </div>
 
-                                        <td>
-                                            <div class="fw-bold">{{ don.xe.ten_xe }}</div>
-                                            <small class="text-muted">{{ don.ngay_dat|date:"d/m/Y H:i" }}</small>
-                                        </td>
+        <div class="col-md-8 col-lg-9">
+            <div class="tab-content shadow-sm bg-white rounded-4 p-3 p-md-5 border-0" id="account-tab-content">
 
-                                        <td>
-                                            <span class="badge bg-light text-dark border">
-                                                {{ don.get_loai_don_display }}
-                                            </span>
-                                        </td>
+                <div class="tab-pane fade {% if active_tab == 'profile' or not active_tab %}show active{% endif %}" id="content-profile" role="tabpanel">
+                    <h4 class="fw-bold mb-3 mb-md-4 text-success border-bottom pb-2 pb-md-3 fs-5 fs-md-4"><i class="bi bi-info-circle me-2"></i>Hồ Sơ Của Tôi</h4>
+                    <form id="profile-form" method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row g-3 g-md-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">Họ (Last Name)</label>
+                                <input type="text" name="last_name" value="{{ u_form.last_name.value|default:'' }}" class="form-control form-control-md form-control-md-lg bg-light" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">Tên (First Name)</label>
+                                <input type="text" name="first_name" value="{{ u_form.first_name.value|default:'' }}" class="form-control form-control-md form-control-md-lg bg-light" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">Email đăng nhập</label>
+                                <input type="email" value="{{ u_form.email.value|default:'' }}" class="form-control form-control-md form-control-md-lg bg-secondary-subtle text-muted border-0" readonly title="Vui lòng sang tab Cài đặt Email để thay đổi">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">Số điện thoại</label>
+                                <input type="text" name="so_dien_thoai" value="{{ p_form.so_dien_thoai.value|default:'' }}" class="form-control form-control-md form-control-md-lg bg-light">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-muted">Địa chỉ liên hệ</label>
+                                <textarea name="dia_chi" class="form-control bg-light" rows="3">{{ p_form.dia_chi.value|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        <div class="text-center text-md-end mt-4 mt-md-5 pt-3 border-top">
+                            <button type="submit" name="btn_cap_nhat_thong_tin" class="btn btn-success px-5 fw-bold rounded-pill shadow-sm w-100 w-md-auto">
+                                Lưu thay đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
-                                        <td class="fw-bold text-danger">
-                                            {{ don.tong_tien|intcomma }}đ
-                                        </td>
-
-                                        <td>
-                                            {% if don.trang_thai == 'Pending' %}
-                                            <span class="badge bg-warning text-dark">Đang chờ</span>
-                                            {% elif don.trang_thai == 'Deposit Paid' %}
-                                            <span class="badge bg-info text-dark">Đặt cọc</span>
-                                            {% elif don.trang_thai == 'Paid' %}
-                                            <span class="badge bg-success">Đã thanh toán</span>
+                <div class="tab-pane fade {% if active_tab == 'orders' %}show active{% endif %}" id="content-orders" role="tabpanel">
+                    <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3 fs-5 fs-md-4"><i class="bi bi-box-seam me-2 text-primary"></i>Lịch sử mua hàng</h4>
+                    
+                    {% if danh_sach_don_hang %}
+                        <div class="d-flex flex-column gap-3">
+                        {% for don in danh_sach_don_hang %}
+                            <div class="card border border-light-subtle shadow-sm rounded-4 overflow-hidden">
+                                <div class="card-header bg-light border-bottom-0 pt-3 pb-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    <span class="text-muted small"><i class="bi bi-clock me-1"></i> Ngày đặt: <strong>{{ don.ngay_dat|date:"d/m/Y" }}</strong></span>
+                                    
+                                    {% if don.trang_thai == 'Pending' %}
+                                        <span class="badge bg-warning text-dark px-2 px-md-3 py-1 py-md-2 rounded-pill"><i class="bi bi-hourglass-split me-1"></i> Đang chờ xử lý</span>
+                                    {% elif don.trang_thai == 'Deposit Paid' %}
+                                        <span class="badge bg-info text-dark px-2 px-md-3 py-1 py-md-2 rounded-pill"><i class="bi bi-credit-card me-1"></i> Đã đặt cọc</span>
+                                    {% elif don.trang_thai == 'Paid' %}
+                                        <span class="badge bg-success px-2 px-md-3 py-1 py-md-2 rounded-pill"><i class="bi bi-check-circle me-1"></i> Đã thanh toán</span>
+                                    {% elif don.trang_thai == 'Cancelled' %}
+                                        <span class="badge bg-danger px-2 px-md-3 py-1 py-md-2 rounded-pill"><i class="bi bi-x-circle me-1"></i> Đã hủy</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary px-2 px-md-3 py-1 py-md-2 rounded-pill">{{ don.get_trang_thai_display }}</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="card-body p-3 p-md-4">
+                                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                        
+                                        <div class="d-flex align-items-center w-100 mb-3 mb-md-0">
+                                            {% if don.xe.hinh_anh %}
+                                                <img src="{{ don.xe.hinh_anh.url }}" class="rounded-3 object-fit-cover me-3 border" style="width: 100px; height: 70px; md-width: 140px; md-height: 90px;">
                                             {% else %}
-                                            <span class="badge bg-danger">{{ don.trang_thai }}</span>
+                                                <div class="bg-secondary-subtle rounded-3 me-3 d-flex align-items-center justify-content-center text-muted" style="width: 100px; height: 70px; md-width: 140px; md-height: 90px;">
+                                                    <i class="bi bi-car-front fs-4 fs-md-3"></i>
+                                                </div>
                                             {% endif %}
-                                        </td>
+                                            
+                                            <div class="flex-grow-1">
+                                                <h6 class="fw-bold mb-1 fs-6 fs-md-5 text-dark">
+                                                    {{ don.xe.ten_xe }}
+                                                </h6>
+                                                <p class="text-muted small mb-2">Thương hiệu: {{ don.xe.hang_san_xuat }}</p>
+                                                
+                                                {% if don.hinh_thuc_nhan == 'Giao_tan_noi' %}
+                                                    <p class="text-dark small mb-1 fw-semibold"><i class="bi bi-truck text-primary me-1"></i> Giao tận nhà</p>
+                                                {% else %}
+                                                    <p class="text-dark small mb-1 fw-semibold"><i class="bi bi-shop text-success me-1"></i> Nhận trực tiếp</p>
+                                                {% endif %}
 
-                                        <td>
-                                            <a href="{% url 'chi_tiet_don_hang_khach' don.id %}"
-                                                class="btn btn-sm btn-outline-success fw-bold shadow-sm">
-                                                <i class="bi bi-eye"></i> Xem
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="6" class="text-center py-5">
-                                            <i class="bi bi-cart-x text-muted display-4 d-block mb-3"></i>
-                                            <h5 class="text-muted">Bạn chưa có đơn hàng nào</h5>
-                                            <a href="{% url 'trang_chu' %}" class="btn btn-success mt-2 fw-bold">
-                                                Khám phá ngay
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                                                <span class="badge border border-success text-success bg-success-subtle mt-1">{{ don.get_loai_don_display }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="text-start text-md-end border-top border-md-top-0 border-md-start pt-3 pt-md-0 ps-md-4 ms-md-2 mt-2 mt-md-0 w-100" style="md-min-width: 160px;">
+                                            <p class="text-muted small mb-0">Tổng giá trị xe</p>
+                                            <span class="text-dark fw-bold fs-6">{{ don.tong_tien|intcomma }} ₫</span>
+                                            
+                                            <hr class="my-2 border-secondary opacity-25">
+                                            
+                                            <div class="d-flex justify-content-between d-md-block align-items-center">
+                                                <div>
+                                                    <p class="text-muted small mb-0 text-md-end">Đã thanh toán</p>
+                                                    <span class="text-danger fw-bold fs-5">{{ don.so_tien_tra_truoc|intcomma }} ₫</span>
+                                                </div>
+                                                <a href="{% url 'chi_tiet_don_khach' don.id %}" class="btn btn-outline-success btn-sm mt-0 mt-md-3 rounded-pill fw-bold">
+                                                    Chi tiết <i class="bi bi-arrow-right-short d-none d-md-inline"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
                         </div>
-                    </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted bg-light rounded-4 border border-dashed">
+                            <i class="bi bi-bag-x display-1 opacity-25 mb-3 d-block"></i>
+                            <h5 class="fw-bold fs-5 fs-md-4">Bạn chưa có đơn hàng nào</h5>
+                            <p class="small px-2">Hãy khám phá các dòng xe điện tuyệt vời của chúng tôi nhé!</p>
+                            <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-success rounded-pill px-4 mt-2 fw-bold shadow-sm">Mua sắm ngay</a>
+                        </div>
+                    {% endif %}
                 </div>
-            </div>
+                
+                <div class="tab-pane fade {% if active_tab == 'email' %}show active{% endif %}" id="content-email" role="tabpanel">
+                    <h4 class="fw-bold mb-3 mb-md-4 text-primary border-bottom pb-2 pb-md-3 fs-5 fs-md-4"><i class="bi bi-envelope-at me-2"></i>Thay đổi Email</h4>
+                    <p class="text-muted mb-4 small">Để đảm bảo an toàn cho tài khoản của bạn, vui lòng nhập mật khẩu hiện tại khi muốn đổi sang Email mới.</p>
+                    
+                    <form method="POST" class="bg-light p-3 p-md-4 rounded-4 border border-light-subtle">
+                        {% csrf_token %}
+                        <div class="row g-3 g-md-4">
+                            {% for field in email_form %}
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold small text-muted">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="text-danger small mt-1"><i class="bi bi-exclamation-triangle"></i> {{ field.errors|striptags }}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="text-center text-md-end mt-4 pt-3 border-top">
+                            <button type="submit" name="btn_doi_email" class="btn btn-primary px-5 fw-bold rounded-pill shadow-sm w-100 w-md-auto">
+                                Cập nhật Email
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
+                <div class="tab-pane fade {% if active_tab == 'security' %}show active{% endif %}" id="content-security" role="tabpanel">
+                    <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3 fs-5 fs-md-4"><i class="bi bi-shield-lock me-2 text-warning"></i>Đổi mật khẩu</h4>
+                    
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% for field in pass_form %}
+                            <div class="mb-3 mb-md-4">
+                                <label class="form-label fw-bold small text-muted">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="text-danger small mt-1"><i class="bi bi-exclamation-triangle"></i> {{ field.errors|striptags }}</div>
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <small class="text-muted fst-italic" style="font-size: 0.75rem;">{{ field.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <div class="text-center text-md-end mt-4 mt-md-5 pt-3 border-top">
+                            <button type="submit" name="btn_doi_mat_khau" class="btn btn-dark px-5 fw-bold rounded-pill shadow-sm w-100 w-md-auto">
+                                Lưu mật khẩu mới
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
         </div>
     </div>
+</div>
 
-    {% else %}
-    <div class="text-center mt-5">
-        <h5>Bạn cần đăng nhập để xem trang này</h5>
-        <a href="{% url 'login' %}" class="btn btn-success mt-3">Đăng nhập</a>
-    </div>
-    {% endif %}
+<style>
+    /* CSS cho các ô input nhập liệu */
+    #content-security input, #content-email input {
+        display: block; width: 100%; padding: 0.5rem 0.75rem;
+        font-size: 1rem; font-weight: 400; line-height: 1.5;
+        color: #212529; background-color: #fff;
+        border: 1px solid #ced4da; border-radius: 0.5rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    @media (min-width: 768px) {
+        #content-security input, #content-email input { padding: 0.75rem 1rem; }
+    }
+    #content-security input:focus, #content-email input:focus {
+        border-color: #198754; outline: 0; box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+    }
+    
+    /* ĐÃ NÂNG CẤP: Giao diện Menu Trái chuẩn chỉnh */
+    .nav-pills .nav-link {
+        color: #495057;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    .nav-pills .nav-link:hover:not(.active) {
+        background-color: #e9f7ef;
+        color: #198754;
+    }
+    .nav-pills .nav-link.active {
+        background-color: #198754 !important;
+        color: white !important;
+        box-shadow: 0 4px 10px rgba(25, 135, 84, 0.3);
+    }
 
-    <footer class="bg-dark text-white text-center py-4 mt-auto">
-        <p class="mb-0 text-white-50">© 2026 EV STORE</p>
-    </footer>
+    /* Style vuốt ngang cực đẹp cho điện thoại */
+    @media (max-width: 767px) {
+        .mobile-scroll-menu {
+            flex-direction: row !important;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Ẩn thanh scroll trên firefox */
+            padding: 10px !important;
+            gap: 10px;
+        }
+        .mobile-scroll-menu::-webkit-scrollbar {
+            display: none; /* Ẩn thanh scroll trên Chrome/Safari */
+        }
+        .mobile-scroll-menu .nav-link {
+            margin-bottom: 0 !important;
+            white-space: nowrap;
+            padding: 10px 20px !important;
+            border-radius: 50px !important; /* Đổi thành viên thuốc (Pill) trên Mobile */
+            text-align: center !important;
+        }
+        .w-md-auto { width: auto !important; }
+    }
+</style>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
-</html>
+<script>
+    function previewImage(event) {
+        var reader = new FileReader();
+        reader.onload = function() {
+            var output = document.getElementById('avatarPreviewMenu');
+            output.src = reader.result;
+        }
+        reader.readAsDataURL(event.target.files[0]);
+    }
+</script>
+{% endblock %}

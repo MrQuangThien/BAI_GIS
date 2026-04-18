@@ -12,6 +12,70 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
+        /* ========================================== */
+    /* TỐI ƯU HÓA GIAO DIỆN RIÊNG CHO MOBILE (< 768px) */
+    /* ========================================== */
+    @media (max-width: 767px) {
+        /* 1. Tối ưu Hero Banner (Thu gọn chiều cao, làm nhỏ chữ) */
+        .hero {
+            height: 400px; /* Không làm chiếm hết màn hình điện thoại */
+        }
+        .hero h1 {
+            font-size: 32px; /* Chữ nhỏ lại để không rớt 3-4 dòng */
+        }
+        .hero .lead {
+            font-size: 15px;
+            padding: 0 15px; /* Thêm lề hai bên cho chữ dễ đọc */
+        }
+        .hero .btn {
+            width: 90%; /* Nút bấm to ngang để ngón tay dễ chạm */
+        }
+
+        /* 2. Tối ưu khoảng cách các khối (Sections) */
+        .my-5 {
+            margin-top: 2rem !important;
+            margin-bottom: 2rem !important;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        /* 3. Tối ưu Trải nghiệm vuốt ngang (Slider) */
+        .product-scroll-container {
+            -webkit-overflow-scrolling: touch; /* Bật hiệu ứng vuốt có trớn của iOS/Android */
+            gap: 1rem; /* Thu hẹp khoảng cách giữa các xe */
+            padding-bottom: 10px;
+            
+            /* Tỉ lệ vàng cho mobile: Thẻ chính chiếm 75%, thẻ sau ló ra 25% để "dụ" khách vuốt tiếp */
+            grid-auto-columns: 75% !important; 
+        }
+
+        /* 4. Tối ưu Thẻ Card Sản phẩm */
+        .card-product-img {
+            height: 180px; /* Ảnh thấp xuống một chút */
+        }
+        .product-card .card-body {
+            padding: 15px 10px;
+        }
+        .product-card h5 {
+            font-size: 1.1rem;
+        }
+        .price-text {
+            font-size: 1rem;
+        }
+        
+        /* Các nút bấm bên trong thẻ xe nhỏ lại cho cân đối */
+        .product-card .btn {
+            padding: 8px 10px;
+            font-size: 14px;
+        }
+
+        /* 5. Tối ưu Icon "Tại sao nên dùng xe điện" */
+        .feature-icon {
+            font-size: 30px;
+        }
+    }
         body {
             background: #f6f6f6;
         }
@@ -78,7 +142,7 @@
 
                 <form action="{% url 'tim_kiem' %}" method="GET" class="d-flex mx-lg-3 my-2 my-lg-0 w-100" style="max-width: 400px;">
                     <div class="input-group shadow-sm">
-                        <input type="text" name="q" class="form-control" placeholder="Tìm kiếm xe, trạm sạc..." value="{{ request.GET.q }}" required>
+                        <input type="text" name="q" class="form-control" placeholder="Nhập tên sản phẩm ..." value="{{ request.GET.q }}" required>
                         <button class="btn btn-warning text-dark fw-bold" type="submit">
                             <i class="bi bi-search"></i>
                         </button>
@@ -340,6 +404,41 @@
     {% endif %}
 
     {% block extra_js %}{% endblock %}
+
+    <script>
+    // SCRIPT ĐỔI NGÔN NGỮ CẢNH BÁO HTML5 SANG TIẾNG VIỆT CHO TOÀN TRANG
+    document.addEventListener("DOMContentLoaded", function() {
+        // Tìm tất cả các thẻ bắt buộc nhập (input, select, textarea) trên trang
+        const requiredElements = document.querySelectorAll("input[required], select[required], textarea[required]");
+        
+        requiredElements.forEach(function(el) {
+            // Khi trình duyệt phát hiện ô bị trống (sự kiện 'invalid')
+            el.addEventListener("invalid", function() {
+                if (el.tagName.toLowerCase() === 'select') {
+                    el.setCustomValidity("Vui lòng chọn một mục trong danh sách này.");
+                } else if (el.type === 'checkbox' || el.type === 'radio') {
+                    el.setCustomValidity("Vui lòng chọn tùy chọn này.");
+                } else if (el.type === 'email') {
+                    el.setCustomValidity("Vui lòng nhập đúng định dạng Email (vd: abc@gmail.com).");
+                } else {
+                    el.setCustomValidity("Vui lòng điền thông tin vào ô này.");
+                }
+            });
+
+            // Xóa cảnh báo ngay khi người dùng bắt đầu nhập/chọn dữ liệu
+            el.addEventListener("input", function() {
+                el.setCustomValidity(""); 
+            });
+            el.addEventListener("change", function() {
+                el.setCustomValidity(""); 
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
+
 </body>
 
 </html>

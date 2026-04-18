@@ -5,8 +5,11 @@ from functools import wraps
 import folium
 from folium.plugins import LocateControl
 
+from django.urls import reverse
 from django.http import HttpResponse
 import openpyxl
+import datetime
+from django.core.paginator import Paginator
 
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
@@ -14,7 +17,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib.auth import login, logout 
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.db.models import Q, Count, Sum, Avg, Max
@@ -22,9 +25,11 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.dateparse import parse_datetime
 
-from .models import TramSac, XeDien, CuaHang, DonHang, DanhMuc, Feedback, KhoHang, PhienSac, AnhXeDien, PhieuNhapKho, ChiTietPhieuNhap, TinNhanChat
+from django.contrib.auth.forms import PasswordChangeForm
 
-from .forms import XeDienForm, UserForm, RegisterForm, DonHangForm, DonHangTaiQuayForm, FeedbackForm, UserProfileForm, PhieuNhapKhoForm, ChiTietPhieuNhapFormSet
+from .models import ThongBao, TramSac, XeDien, CuaHang, DonHang, DanhMuc, Feedback, KhoHang, PhienSac, AnhXeDien, PhieuNhapKho, ChiTietPhieuNhap, TinNhanChat, UserProfile, LichLaiThu, DanhGiaTram
+
+from .forms import XeDienForm, UserForm, RegisterForm, DonHangForm, DonHangTaiQuayForm, FeedbackForm, UserProfileForm, PhieuNhapKhoForm, ChiTietPhieuNhapFormSet, UserUpdateForm, ProfileUpdateForm, EmailChangeForm, LichLaiThuForm
 
 # ==========================================
 # 0. DECORATOR PHÂN QUYỀN
@@ -102,21 +107,43 @@ def chi_tiet_cua_hang(request, pk):
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly','nhan_vien'])
 def admin_dashboard(request):
+    user_profile = getattr(request.user, 'userprofile', None)
+    is_admin = request.user.is_superuser or (user_profile and user_profile.vai_tro == 'admin')
+
+    # 1. BIẾN DÙNG CHUNG (Hạ tầng trạm sạc thường là thông tin chung toàn hệ thống)
     tong_so_tram = TramSac.objects.count()
     tram_hoat_dong = TramSac.objects.filter(trang_thai=True).count()
     tram_bao_tri = tong_so_tram - tram_hoat_dong
     tram_moi_nhat = TramSac.objects.all().order_by('-id')[:5]
     danh_muc_stats = DanhMuc.objects.annotate(so_luong_xe=Count('xedien'))
 
-    tong_don_hang = DonHang.objects.count()
-    tong_khach_hang = User.objects.filter(is_staff=False).count()
+    # 2. PHÂN QUYỀN DỮ LIỆU KINH DOANH
+    if is_admin:
+        # Sếp tổng: Thấy tất cả
+        tong_don_hang = DonHang.objects.count()
+        doanh_thu = DonHang.objects.exclude(trang_thai='Huy').aggregate(Sum('so_tien_tra_truoc'))['so_tien_tra_truoc__sum'] or 0
+        tong_khach_hang = User.objects.filter(is_staff=False).count()
+    else:
+        # Nhân viên: Chỉ thấy đơn hàng & doanh thu của chi nhánh mình
+        cua_hang_nv = user_profile.cua_hang
+        tong_don_hang = DonHang.objects.filter(cua_hang=cua_hang_nv).count()
+        doanh_thu = DonHang.objects.filter(cua_hang=cua_hang_nv).exclude(trang_thai='Huy').aggregate(Sum('so_tien_tra_truoc'))['so_tien_tra_truoc__sum'] or 0
+        
+        # Nếu bảng Khách hàng không chia theo chi nhánh, có thể để mặc định hoặc ẩn đi bằng cách gán = 0
+        tong_khach_hang = User.objects.filter(is_staff=False).count() 
+
     tong_feedback = Feedback.objects.count()
-    doanh_thu = DonHang.objects.filter(trang_thai='Paid').aggregate(Sum('tong_tien'))['tong_tien__sum'] or 0
 
     context = {
-        'tong_so_tram': tong_so_tram, 'tram_hoat_dong': tram_hoat_dong, 'tram_bao_tri': tram_bao_tri,
-        'tram_moi_nhat': tram_moi_nhat, 'danh_muc_stats': danh_muc_stats,
-        'tong_don_hang': tong_don_hang, 'tong_khach_hang': tong_khach_hang, 'tong_feedback': tong_feedback, 'doanh_thu': doanh_thu,
+        'tong_so_tram': tong_so_tram, 
+        'tram_hoat_dong': tram_hoat_dong, 
+        'tram_bao_tri': tram_bao_tri,
+        'tram_moi_nhat': tram_moi_nhat, 
+        'danh_muc_stats': danh_muc_stats,
+        'tong_don_hang': tong_don_hang, 
+        'tong_khach_hang': tong_khach_hang, 
+        'tong_feedback': tong_feedback, 
+        'doanh_thu': doanh_thu,
     }
     return render(request, 'pages/dashboard.html', context)
 
@@ -236,13 +263,24 @@ def danh_sach_xe(request):
     tu_khoa = request.GET.get('q', '')
     tat_ca_xe = XeDien.objects.all().order_by('-id')
     
+    # 1. Xử lý tìm kiếm
     if tu_khoa:
         tat_ca_xe = tat_ca_xe.filter(
             Q(ten_xe__icontains=tu_khoa) | 
             Q(hang_san_xuat__icontains=tu_khoa) |
             Q(danh_muc__ten_danh_muc__icontains=tu_khoa)
         )
-    return render(request, 'xe/danh_sach_xe.html', {'tat_ca_xe': tat_ca_xe, 'tu_khoa': tu_khoa})
+
+    # 2. Xử lý phân trang (8 xe / trang)
+    paginator = Paginator(tat_ca_xe, 10) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Truyền page_obj ra giao diện
+    return render(request, 'xe/danh_sach_xe.html', {
+        'page_obj': page_obj, 
+        'tu_khoa': tu_khoa
+    })
 
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly'])
@@ -426,68 +464,132 @@ def sua_tram_sac(request, tram_id):
 # ==========================================
 # 4. QUẢN LÝ ĐƠN HÀNG
 # ==========================================
+@login_required(login_url='login')
 def tao_don_hang(request, xe_id):
     xe = get_object_or_404(XeDien, id=xe_id)
     loai_mac_dinh = 'B' if xe.sap_ve else 'A'
+    
     if request.method == 'POST':
         form = DonHangForm(request.POST, xe=xe) 
         if form.is_valid():
             don_hang = form.save(commit=False)
             don_hang.xe = xe
-            if request.user.is_authenticated: don_hang.khach_hang = request.user
-            if don_hang.loai_don == 'A':
-                don_hang.trang_thai = 'Pending'
-                don_hang.tong_tien = 0
-            elif don_hang.loai_don == 'B':
-                don_hang.trang_thai = 'Deposit Paid'
-                don_hang.tong_tien = xe.gia * 10 / 100 
-            elif don_hang.loai_don == 'C':
-                don_hang.trang_thai = 'Paid'
-                don_hang.tong_tien = xe.gia 
-            don_hang.save()
             
+            don_hang.tong_tien = xe.gia 
+            if request.user.is_authenticated: 
+                don_hang.khach_hang = request.user
+                
+            if don_hang.loai_don == 'DatCoc':
+                don_hang.trang_thai = 'Deposit Paid'
+                don_hang.so_tien_tra_truoc = 20000000 
+            elif don_hang.loai_don == 'TraThang':
+                don_hang.trang_thai = 'Paid'
+                don_hang.so_tien_tra_truoc = xe.gia
+                
+            don_hang.save()
+
+            if don_hang.cua_hang:
+                kho_chi_nhanh = KhoHang.objects.filter(xe=xe, cua_hang=don_hang.cua_hang).first()
+                if kho_chi_nhanh and kho_chi_nhanh.so_luong > 0:
+                    kho_chi_nhanh.so_luong -= 1
+                    kho_chi_nhanh.save()
+            
+            # --- ĐÃ FIX LOGIC EMAIL ---
             try:
-                email_nhan = getattr(don_hang, 'email', None) 
-                if not email_nhan and request.user.is_authenticated:
-                    email_nhan = request.user.email
+                # Ưu tiên lấy email từ form khách nhập, nếu không có mới lấy từ tài khoản
+                email_nhan = request.POST.get('email') or (request.user.email if request.user.is_authenticated else None)
 
                 if email_nhan:
-                    chu_de = f"Xác nhận đặt hàng thành công - Đơn hàng #{don_hang.id} - EV STORE"
-                    noi_dung = f"""
-                    Chào {don_hang.ho_ten},
+                    ngay_hen_str = don_hang.ngay_giao_xe.strftime('%d/%m/%Y') if don_hang.ngay_giao_xe else "Sẽ được thông báo sau"
+                    
+                    # Tính toán an toàn số tiền còn lại, tránh lỗi sập hàm gửi mail
+                    tien_con_lai = don_hang.tong_tien - don_hang.so_tien_tra_truoc
 
-                    Cảm ơn bạn đã tin tưởng và đặt hàng tại EV STORE!
-                    Đây là email xác nhận đơn hàng của bạn.
-
-                    THÔNG TIN ĐƠN HÀNG:
-                    - Mã đơn hàng: #{don_hang.id}
-                    - Sản phẩm: {xe.ten_xe}
-                    - Số tiền phải thanh toán: {don_hang.tong_tien:,.0f} VNĐ
-
-                    Chúng tôi sẽ sớm liên hệ với bạn qua số điện thoại {don_hang.so_dien_thoai} để tiến hành xác nhận và bàn giao xe.
-
-                    Trân trọng,
-                    Đội ngũ EV STORE.
-                    """
+                    chu_de = f"Xác nhận đặt hàng thành công - EV STORE"
+                    noi_dung = f"Chào {don_hang.ho_ten},\n\n" \
+                               f"Cảm ơn bạn đã đặt hàng tại EV STORE!\n" \
+                               f"THÔNG TIN ĐƠN HÀNG:\n" \
+                               f"- Sản phẩm: {xe.ten_xe}\n" \
+                               f"- Ngày nhận/giao xe (dự kiến): {ngay_hen_str}\n" \
+                               f"- Tổng giá trị xe: {don_hang.tong_tien:,.0f} VNĐ\n" \
+                               f"- Đã thanh toán (Cọc): {don_hang.so_tien_tra_truoc:,.0f} VNĐ\n" \
+                               f"- Cần thanh toán thêm: {tien_con_lai:,.0f} VNĐ\n\n" \
+                               f"Chúng tôi sẽ sớm liên hệ qua SĐT {don_hang.so_dien_thoai} để hỗ trợ.\n\n" \
+                               f"Trân trọng,\nĐội ngũ EV STORE."
+                    
                     send_mail(chu_de, noi_dung, settings.EMAIL_HOST_USER, [email_nhan], fail_silently=False)
-            except Exception as e: print(f"Lỗi gửi email: {e}") 
+            except Exception as e: 
+                print(f"LỖI GỬI EMAIL ĐẶT HÀNG: {e}") # In chữ in hoa để bạn dễ tìm trong Terminal
 
-            messages.success(request, "Đặt hàng thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.")
+            ThongBao.objects.create(
+                tieu_de=f"Đơn đặt hàng mới!",
+                noi_dung=f"Khách hàng {don_hang.ho_ten} vừa đặt mua {don_hang.xe.ten_xe}.",
+                loai='don_hang',
+                cua_hang=don_hang.cua_hang
+            )
+
+            messages.success(request, "🎉 Đặt hàng thành công! Vui lòng kiểm tra email của bạn.")
+            
+            if request.user.is_authenticated:
+                url_chuyen_huong = reverse('tai_khoan') + '?tab=orders'
+                return redirect(url_chuyen_huong) 
             return redirect('trang_chu') 
+            
     else:
-        form = DonHangForm(initial={'loai_don': loai_mac_dinh}, xe=xe)
+        # TỰ ĐỘNG ĐIỀN THÔNG TIN KHÁCH HÀNG
+        initial_data = {'loai_don': loai_mac_dinh}
+        if request.user.is_authenticated:
+            initial_data['ho_ten'] = f"{request.user.last_name} {request.user.first_name}".strip()
+            initial_data['email'] = request.user.email
+            if hasattr(request.user, 'userprofile'):
+                initial_data['so_dien_thoai'] = request.user.userprofile.so_dien_thoai
+                initial_data['dia_chi'] = request.user.userprofile.dia_chi
+
+        form = DonHangForm(initial=initial_data, xe=xe)
+        
     return render(request, 'donhang/tao_don_hang.html', {'form': form, 'xe': xe})
 
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
 def danh_sach_don_hang(request):
+    # Lấy các tham số lọc từ URL
     tu_khoa = request.GET.get('q', '')
-    danh_sach = DonHang.objects.all().order_by('-ngay_dat')
+    ngay_dat = request.GET.get('ngay_dat', '') # Nhận giá trị từ ô chọn ngày
+
+    # 1. LOGIC PHÂN QUYỀN
+    if request.user.is_superuser or (hasattr(request.user, 'userprofile') and request.user.userprofile.vai_tro == 'QuanLy'):
+        danh_sach = DonHang.objects.all().order_by('-id')
+    elif hasattr(request.user, 'userprofile') and request.user.userprofile.cua_hang:
+        chi_nhanh_cua_nv = request.user.userprofile.cua_hang
+        danh_sach = DonHang.objects.filter(cua_hang=chi_nhanh_cua_nv).order_by('-id')
+    else:
+        danh_sach = DonHang.objects.none()
+
+    # 2. XỬ LÝ TÌM KIẾM THEO TÊN/SĐT
     if tu_khoa:
         danh_sach = danh_sach.filter(
-            Q(ho_ten__icontains=tu_khoa) | Q(so_dien_thoai__icontains=tu_khoa) | Q(xe__ten_xe__icontains=tu_khoa) | Q(id__icontains=tu_khoa)
+            Q(ho_ten__icontains=tu_khoa) | 
+            Q(so_dien_thoai__icontains=tu_khoa)
         )
-    return render(request, 'donhang/danh_sach.html', {'danh_sach_don_hang': danh_sach, 'tu_khoa': tu_khoa})
+    
+    # 3. XỬ LÝ LỌC THEO NGÀY ĐẶT
+    if ngay_dat:
+        # Lọc trường ngay_tao dựa trên phần date (năm-tháng-ngày)
+        danh_sach = danh_sach.filter(ngay_tao__date=ngay_dat)
+
+    # 4. LOGIC PHÂN TRANG (10 đơn/trang)
+    paginator = Paginator(danh_sach, 10) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # 5. TRUYỀN RA GIAO DIỆN
+    context = {
+        'page_obj': page_obj,
+        'tu_khoa': tu_khoa,
+        'ngay_dat': ngay_dat, # Truyền ngược lại để giữ giá trị trong ô input
+    }
+    
+    return render(request, 'donhang/danh_sach.html', context)
 
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
@@ -506,21 +608,48 @@ def chi_tiet_don_hang(request, don_id):
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
 def tao_don_hang_offline(request):
     if request.method == 'POST':
-        form = DonHangTaiQuayForm(request.POST)
+        form = DonHangTaiQuayForm(request.POST, request_user=request.user)
         if form.is_valid():
             don_hang = form.save(commit=False)
             don_hang.nhan_vien_tao = request.user
-            if don_hang.loai_don == 'D': don_hang.so_tien_tra_truoc = 0
+            
+            # BẢO MẬT KÉP: Nếu là nhân viên, ép cứng chi nhánh vào đơn hàng
+            is_admin = request.user.is_superuser or (hasattr(request.user, 'userprofile') and request.user.userprofile.vai_tro == 'QuanLy')
+            if not is_admin and hasattr(request.user, 'userprofile') and request.user.userprofile.cua_hang:
+                don_hang.cua_hang = request.user.userprofile.cua_hang
+            
+            # Đảm bảo gán lại tổng tiền từ giá xe gốc trong DB để an toàn
+            don_hang.tong_tien = don_hang.xe.gia
+            
+            # Hứng dữ liệu từ các Radio HTML
+            don_hang.hinh_thuc_nhan = request.POST.get('phuong_thuc_nhan', 'tai_cua_hang')
+            
+            time_type = request.POST.get('thoi_gian_nhan')
+            if time_type == 'ngay_khac':
+                don_hang.ngay_giao_xe = request.POST.get('ngay_giao_xe')
+            
+            if don_hang.loai_don == 'DatCoc':
+                don_hang.so_tien_tra_truoc = 20000000  # Chốt cứng 20 triệu
+                don_hang.trang_thai = 'Deposit Paid'
+            else:
+                don_hang.so_tien_tra_truoc = don_hang.tong_tien
+                don_hang.trang_thai = 'Paid'
+
             don_hang.save()
-            messages.success(request, f'Đã tạo đơn hàng thành công cho khách {don_hang.ho_ten}!')
+            messages.success(request, f'Đã chốt thành công đơn hàng xe {don_hang.xe.ten_xe}!')
             return redirect('danh_sach_don_hang')
-    else: form = DonHangTaiQuayForm(initial={'loai_don': 'D', 'trang_thai': 'Paid'})
-    return render(request, 'donhang/tao_moi.html', {'form': form})
+    else:
+        # 🔥 ĐÃ FIX LỖI: Truyền user vào ngay khi mới mở trang lên (GET request)
+        form = DonHangTaiQuayForm(request_user=request.user)
+
+        danh_sach_kho = KhoHang.objects.filter(so_luong__gt=0)
+        
+    return render(request, 'donhang/tao_moi.html', {'form': form, 'danh_sach_kho': danh_sach_kho})
 
 @login_required(login_url='login')
-def chi_tiet_don_hang_khach(request, don_hang_id):
+def chi_tiet_don_khach(request, don_hang_id):
     don_hang = get_object_or_404(DonHang, id=don_hang_id, khach_hang=request.user)
-    return render(request, 'donhang/chi_tiet_khach.html', {'don_hang': don_hang})
+    return render(request, 'donhang/chi_tiet_don_khach.html', {'don_hang': don_hang})
 
 
 # ==========================================
@@ -639,8 +768,77 @@ def logout_view(request):
 
 @login_required(login_url='login')
 def tai_khoan(request):
-    don_hang_list = DonHang.objects.filter(khach_hang=request.user).order_by('-ngay_dat')
-    return render(request, 'users/tai_khoan.html', {'don_hang_list': don_hang_list})
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    # 1. ĐÃ SỬA: Lấy tab từ URL, nếu không có mặc định là 'profile'
+    active_tab = request.GET.get('tab', 'profile') 
+
+    # 2. ĐÃ SỬA: Lấy danh sách đơn hàng ra ngoài cùng để luôn luôn hiển thị
+    danh_sach_don_hang = DonHang.objects.filter(khach_hang=request.user).order_by('-ngay_dat')
+
+    if request.method == 'POST':
+        # CẬP NHẬT HỒ SƠ
+        if 'btn_cap_nhat_thong_tin' in request.POST:
+            active_tab = 'profile'
+            u_form = UserUpdateForm(request.POST, instance=request.user)
+            p_form = ProfileUpdateForm(request.POST, request.FILES, instance=profile)
+            pass_form = PasswordChangeForm(request.user)
+            email_form = EmailChangeForm(request.user)
+            
+            if u_form.is_valid() and p_form.is_valid():
+                u_form.save()
+                p_form.save()
+                messages.success(request, 'Thông tin tài khoản đã được cập nhật!')
+                return redirect('tai_khoan')
+
+        # ĐỔI MẬT KHẨU
+        elif 'btn_doi_mat_khau' in request.POST:
+            active_tab = 'security'
+            u_form = UserUpdateForm(instance=request.user)
+            p_form = ProfileUpdateForm(instance=profile)
+            pass_form = PasswordChangeForm(request.user, request.POST)
+            email_form = EmailChangeForm(request.user)
+            
+            if pass_form.is_valid():
+                user = pass_form.save() 
+                update_session_auth_hash(request, user) 
+                messages.success(request, 'Mật khẩu của bạn đã được đổi thành công!')
+                return redirect('tai_khoan')
+            else:
+                messages.error(request, 'Đổi mật khẩu thất bại. Vui lòng kiểm tra lại!')
+
+        # ĐỔI EMAIL
+        elif 'btn_doi_email' in request.POST:
+            active_tab = 'email'
+            u_form = UserUpdateForm(instance=request.user)
+            p_form = ProfileUpdateForm(instance=profile)
+            pass_form = PasswordChangeForm(request.user)
+            email_form = EmailChangeForm(request.user, request.POST)
+            
+            if email_form.is_valid():
+                request.user.email = email_form.cleaned_data['new_email']
+                request.user.save()
+                messages.success(request, 'Email đăng nhập đã được thay đổi thành công!')
+                return redirect('tai_khoan')
+            else:
+                messages.error(request, 'Đổi Email thất bại. Vui lòng kiểm tra lại các lỗi báo đỏ bên dưới!')
+
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=profile)
+        pass_form = PasswordChangeForm(request.user)
+        email_form = EmailChangeForm(request.user)
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form,
+        'pass_form': pass_form,
+        'email_form': email_form,
+        'active_tab': active_tab, 
+        'danh_sach_don_hang': danh_sach_don_hang # 3. ĐÃ SỬA: Đưa đơn hàng vào render ra HTML
+    }
+    
+    return render(request, 'users/tai_khoan.html', context)
 
 @login_required
 def profile(request):
@@ -755,6 +953,48 @@ def quan_ly_ton_kho(request):
     tu_khoa = request.GET.get('q', '')
     cua_hang_id = request.GET.get('cua_hang', '') 
 
+    # 1. BẢNG TỒN KHO TỔNG (Ai cũng thấy để check chéo)
+    danh_sach = KhoHang.objects.select_related('xe', 'cua_hang').all().order_by('-id')
+
+    # Lọc theo thanh tìm kiếm (áp dụng cho bảng dưới)
+    if tu_khoa:
+        danh_sach = danh_sach.filter(
+            Q(xe__ten_xe__icontains=tu_khoa) |
+            Q(xe__hang_san_xuat__icontains=tu_khoa)
+        )
+
+    if cua_hang_id:
+        danh_sach = danh_sach.filter(cua_hang_id=cua_hang_id)
+
+    # 2. KHU VỰC CẢNH BÁO (Áp dụng phân quyền)
+    canh_bao_het_hang = danh_sach.filter(so_luong__lte=3).order_by('so_luong')
+    
+    # Logic kiểm tra quyền: Nếu KHÔNG PHẢI là Admin thì chỉ hiện cảnh báo của chi nhánh mình
+    user_profile = getattr(request.user, 'userprofile', None)
+    is_admin = request.user.is_superuser or (user_profile and user_profile.vai_tro in ['admin', 'quan_ly', 'QuanLy'])
+    chi_nhanh_nv = user_profile.cua_hang if user_profile else None
+
+    if not is_admin and chi_nhanh_nv:
+        canh_bao_het_hang = canh_bao_het_hang.filter(cua_hang=chi_nhanh_nv)
+
+    cac_cua_hang = CuaHang.objects.all()
+
+    # 3. TRUYỀN ĐÚNG TÊN BIẾN RA HTML NHƯ CODE CŨ CỦA BẠN
+    return render(request, 'kho/bao_cao_ton_kho.html', {
+        'kho': danh_sach,
+        'tu_khoa': tu_khoa,
+        'cac_cua_hang': cac_cua_hang,
+        'cua_hang_chon': int(cua_hang_id) if cua_hang_id else '',
+        'canh_bao_het_hang': canh_bao_het_hang
+    })
+
+@login_required
+@phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
+def xuat_excel_ton_kho(request):
+    # 1. Bắt lại các tham số lọc từ URL để xuất đúng dữ liệu
+    tu_khoa = request.GET.get('q', '')
+    cua_hang_id = request.GET.get('cua_hang', '') 
+
     danh_sach = KhoHang.objects.select_related('xe', 'cua_hang').all().order_by('-id')
 
     if tu_khoa:
@@ -766,16 +1006,46 @@ def quan_ly_ton_kho(request):
     if cua_hang_id:
         danh_sach = danh_sach.filter(cua_hang_id=cua_hang_id)
 
-    canh_bao_het_hang = danh_sach.filter(so_luong__lte=3).order_by('so_luong')
-    cac_cua_hang = CuaHang.objects.all()
+    # 2. Tạo file Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Ton Kho EV Store"
 
-    return render(request, 'kho/bao_cao_ton_kho.html', {
-        'kho': danh_sach,
-        'tu_khoa': tu_khoa,
-        'cac_cua_hang': cac_cua_hang,
-        'cua_hang_chon': int(cua_hang_id) if cua_hang_id else '',
-        'canh_bao_het_hang': canh_bao_het_hang
-    })
+    # Tạo Dòng Tiêu đề (Header)
+    ws.append(['Tên xe điện', 'Hãng sản xuất', 'Chi nhánh', 'Số lượng tồn', 'Đơn giá (VNĐ)', 'Tổng giá trị vốn (VNĐ)', 'Tình trạng'])
+
+    # 3. Đổ dữ liệu vào Excel
+    for item in danh_sach:
+        # Tính tổng giá trị vốn
+        tong_gia_tri = item.so_luong * item.xe.gia
+        
+        # Xác định tình trạng bằng chữ
+        if item.so_luong == 0:
+            tinh_trang = "Hết hàng"
+        elif item.so_luong <= 3:
+            tinh_trang = "Sắp hết"
+        else:
+            tinh_trang = "Sẵn sàng"
+
+        ws.append([
+            item.xe.ten_xe,
+            item.xe.hang_san_xuat,
+            item.cua_hang.ten_cua_hang,
+            item.so_luong,
+            item.xe.gia,
+            tong_gia_tri,
+            tinh_trang
+        ])
+
+    # 4. Cấu hình file tải về
+    now = datetime.datetime.now().strftime("%Y%m%d_%H%M")
+    filename = f"Bao_Cao_Ton_Kho_{now}.xlsx"
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    
+    return response
 
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
@@ -960,8 +1230,29 @@ def get_nearest_tram(request):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 def tram_api(request):
-    danh_sach_tram = [{'id': t.id, 'ten_tram': t.ten_tram, 'lat': float(t.lat), 'lon': float(t.lon), 'dia_chi': t.dia_chi, 'loai_sac': t.loai_sac, 'cong_suat': t.cong_suat, 'hinh_anh': t.hinh_anh.url if t.hinh_anh else ''} for t in TramSac.objects.filter(trang_thai=True)]
-    return JsonResponse(danh_sach_tram, safe=False)
+    # Dùng annotate để tự động tính Số lượng đánh giá và Điểm trung bình cho từng trạm
+    trams = TramSac.objects.annotate(
+        trung_binh_sao=Avg('danh_gia__so_sao'),  # 'danh_gia' là related_name bạn đặt ở bài trước
+        so_luong_danh_gia=Count('danh_gia')
+    ).all()
+    
+    data = []
+    for t in trams:
+        data.append({
+            'id': t.id,
+            'ten_tram': t.ten_tram,
+            'lat': t.lat,
+            'lon': t.lon,
+            'dia_chi': t.dia_chi,
+            'loai_sac': t.loai_sac,
+            'cong_suat': t.cong_suat,
+            'hinh_anh': t.hinh_anh.url if t.hinh_anh else '',
+            
+            # BỔ SUNG 2 DÒNG NÀY ĐỂ GỬI RA NGOÀI BẢN ĐỒ:
+            'trung_binh_sao': round(t.trung_binh_sao, 1) if t.trung_binh_sao else 0,
+            'so_luong_danh_gia': t.so_luong_danh_gia
+        })
+    return JsonResponse(data, safe=False)
 
 def cua_hang_api(request):
     danh_sach_ch = []
@@ -1051,7 +1342,29 @@ def gui_ho_tro_nhanh(request):
     if request.method == 'POST':
         noi_dung = request.POST.get('noi_dung')
         if noi_dung:
+            # 1. Lưu tin nhắn vào Database
             TinNhanChat.objects.create(khach_hang=request.user, nguoi_gui=request.user, noi_dung=noi_dung)
+            
+            # ==========================================
+            # 2. LOGIC BƠM CHUÔNG THÔNG BÁO CHO ADMIN
+            # ==========================================
+            # Tìm xem đã có thông báo chat của khách này chưa (chỉ lấy cái chưa đọc)
+            tb_chat, created = ThongBao.objects.get_or_create(
+                tieu_de=f"Tin nhắn hỗ trợ từ {request.user.username}",
+                loai='ho_tro',
+                da_doc=False, 
+                defaults={
+                    'noi_dung': noi_dung[:50] + "...", # Lấy 50 chữ đầu làm tóm tắt
+                    'cua_hang': None # Gửi lên tổng đài chung để admin nào cũng thấy
+                }
+            )
+            
+            # Nếu chuông đã reo rồi (khách chat liên tục), thì chỉ cập nhật dòng chat mới nhất
+            if not created:
+                tb_chat.noi_dung = noi_dung[:50] + "..."
+                tb_chat.save()
+            # ==========================================
+
             return JsonResponse({'status': 'success'})
     return JsonResponse({'status': 'error'})
 
@@ -1070,8 +1383,20 @@ def quan_ly_ho_tro(request):
     
     if khach_dang_chon:
         tin_nhans = TinNhanChat.objects.filter(khach_hang_id=khach_dang_chon).order_by('thoi_gian')
-        # Khi admin bấm vào xem -> Tự động chuyển toàn bộ tin của khách này thành "Đã đọc"
+        
+        # 1. Tự động chuyển toàn bộ tin nhắn chat thành "Đã đọc"
         tin_nhans.filter(nguoi_gui__is_staff=False, da_doc=False).update(da_doc=True)
+
+        # ==========================================
+        # 2. TỰ ĐỘNG TẮT CHUÔNG THÔNG BÁO Ở NAVBAR
+        # ==========================================
+        khach = User.objects.get(id=khach_dang_chon)
+        ThongBao.objects.filter(
+            tieu_de=f"Tin nhắn hỗ trợ từ {khach.username}",
+            loai='ho_tro',
+            da_doc=False
+        ).update(da_doc=True)
+        # ==========================================
 
     # Khi Admin gõ câu trả lời và bấm Gửi
     if request.method == 'POST':
@@ -1086,3 +1411,339 @@ def quan_ly_ho_tro(request):
         'khach_dang_chon': int(khach_dang_chon) if khach_dang_chon else None,
         'tin_nhans': tin_nhans
     })
+
+def api_lay_tin_nhan_moi(request, khach_id):
+    # Lấy tin nhắn và đánh dấu đã đọc ngầm
+    tin_nhans = TinNhanChat.objects.filter(khach_hang_id=khach_id).order_by('thoi_gian')
+    tin_nhans.filter(nguoi_gui__is_staff=False, da_doc=False).update(da_doc=True)
+
+    data = []
+    for tn in tin_nhans:
+        data.append({
+            'noi_dung': tn.noi_dung,
+            'la_admin': tn.nguoi_gui.is_staff # Kiểm tra xem ai gửi
+        })
+    return JsonResponse({'tin_nhans': data})
+
+def dang_ky_lai_thu(request, xe_id):
+    xe_quan_tam = get_object_or_404(XeDien, id=xe_id)
+    
+    if request.method == 'POST':
+        form = LichLaiThuForm(request.POST)
+        if form.is_valid():
+            lich = form.save(commit=False)
+            lich.xe_quan_tam = xe_quan_tam 
+            lich.save()
+            
+            # --- LOGIC GỬI EMAIL ---
+            email_nhan = request.POST.get('email')
+            if email_nhan: 
+                subject = f"Xác nhận đăng ký xem xe {xe_quan_tam.ten_xe} thành công"
+                message = f"""
+                Chào {lich.ho_ten},
+                Cảm ơn bạn đã quan tâm đến dòng xe {xe_quan_tam.ten_xe}.
+                Lịch hẹn của bạn đã được ghi nhận:
+                - Chi nhánh: {lich.cua_hang.ten_cua_hang if lich.cua_hang else 'Đang cập nhật'}
+                - Ngày hẹn: {lich.ngay_hen.strftime('%d/%m/%Y') if lich.ngay_hen else 'Đang cập nhật'}
+                - Ghi chú: {lich.ghi_chu}
+                
+                Nhân viên của EV Store sẽ liên hệ sớm nhất để xác nhận lịch với bạn.
+                Trân trọng!
+                """
+                try:
+                    send_mail(
+                        subject,
+                        message,
+                        settings.EMAIL_HOST_USER, 
+                        [email_nhan], 
+                        fail_silently=False,
+                    )
+                except Exception as e:
+                    print(f"LỖI GỬI EMAIL LÁI THỬ: {e}")
+
+            ThongBao.objects.create(
+                tieu_de="Yêu cầu lái thử mới",
+                noi_dung=f"Khách hàng {lich.ho_ten} muốn lái thử {xe_quan_tam.ten_xe}.",
+                loai='lai_thu',
+                cua_hang=lich.cua_hang 
+            )
+            
+            messages.success(request, "🎉 Đăng ký thành công! Vui lòng kiểm tra email xác nhận.")
+            return redirect('chi_tiet_xe', xe_id=xe_id)
+    else:
+        # ĐÃ BỔ SUNG TỰ ĐỘNG ĐIỀN THÔNG TIN CHO FORM LÁI THỬ
+        initial_data = {}
+        if request.user.is_authenticated:
+            initial_data['ho_ten'] = f"{request.user.last_name} {request.user.first_name}".strip()
+            initial_data['email'] = request.user.email
+            if hasattr(request.user, 'userprofile'):
+                initial_data['so_dien_thoai'] = request.user.userprofile.so_dien_thoai
+        
+        form = LichLaiThuForm(initial=initial_data)
+        
+    return render(request, 'xe/dang_ky_lai_thu.html', {'form': form, 'xe': xe_quan_tam})
+
+@login_required
+@phan_quyen(roles=['admin', 'quan_ly','nhan_vien'])
+def quan_ly_lai_thu(request):
+    user_profile = request.user.userprofile
+    
+    # 1. Phân quyền chi nhánh
+    if request.user.is_superuser:
+        danh_sach = LichLaiThu.objects.all()
+    else:
+        danh_sach = LichLaiThu.objects.filter(cua_hang=user_profile.cua_hang)
+
+    # 2. Lấy các tham số lọc từ URL
+    query_name = request.GET.get('q', '')       # Tìm theo tên/SĐT
+    query_date = request.GET.get('ngay', '')    # Tìm theo ngày hẹn
+
+    # 3. Áp dụng bộ lọc kép
+    if query_name:
+        danh_sach = danh_sach.filter(
+            Q(ho_ten__icontains=query_name) | Q(so_dien_thoai__icontains=query_name)
+        )
+    
+    if query_date:
+        danh_sach = danh_sach.filter(ngay_hen=query_date)
+
+    # Sắp xếp: Ưu tiên ngày gần nhất hiện lên trước
+    danh_sach = danh_sach.order_by('ngay_hen', 'id')
+
+    context = {
+        'danh_sach': danh_sach,
+        'query_name': query_name,
+        'query_date': query_date,
+        'now': datetime.datetime.now()
+    }
+    return render(request, 'xe/lich_lai_thu.html', context)
+
+@login_required
+@phan_quyen(roles=['admin', 'quan_ly','nhan_vien'])
+def xuat_excel_lai_thu(request):
+    # Lấy dữ liệu theo tháng hiện tại
+    now = datetime.datetime.now()
+    user_profile = request.user.userprofile
+    
+    if request.user.is_superuser:
+        data = LichLaiThu.objects.filter(ngay_hen__month=now.month, ngay_hen__year=now.year)
+    else:
+        data = LichLaiThu.objects.filter(cua_hang=user_profile.cua_hang, ngay_hen__month=now.month, ngay_hen__year=now.year)
+
+    # Tạo file Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"Bao_Cao_Lai_Thu_T{now.month}"
+
+    # Header
+    columns = ['Họ Tên', 'SĐT', 'Xe Quan Tâm', 'Chi Nhánh', 'Ngày Hẹn', 'Trạng Thái']
+    ws.append(columns)
+
+    for item in data:
+        ws.append([
+            item.ho_ten, 
+            item.so_dien_thoai, 
+            str(item.xe_quan_tam), 
+            str(item.cua_hang), 
+            item.ngay_hen.strftime('%d/%m/%Y'), 
+            item.get_trang_thai_display()
+        ])
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename=Bao_Cao_Lai_Thu_Thang_{now.month}.xlsx'
+    wb.save(response)
+    return response
+
+def cap_nhat_trang_thai_lai_thu(request, lich_id):
+    if request.method == 'POST':
+        lich = get_object_or_404(LichLaiThu, id=lich_id)
+        lich.trang_thai = request.POST.get('trang_thai')
+        lich.save()
+        
+        # Sửa lại tên đường dẫn trả về cho đúng với file urls.py hiện tại
+        return redirect('quan_ly_lai_thu')
+
+@login_required
+@phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien']) # Đảm bảo hàm decorator này giống hệ thống của bạn
+def xuat_excel_nhap_kho(request):
+    # Lấy toàn bộ chi tiết phiếu nhập, dùng select_related để truy vấn siêu tốc
+    danh_sach = ChiTietPhieuNhap.objects.select_related(
+        'phieu_nhap', 'xe', 'phieu_nhap__cua_hang', 'phieu_nhap__nhan_vien_nhap'
+    ).all().order_by('-phieu_nhap__ngay_nhap')
+
+    # Tạo file Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Lich Su Nhap Kho"
+
+    # Header (Đã loại bỏ các cột tiền tệ cho khớp với Model của bạn)
+    ws.append([
+        'Mã Phiếu', 'Ngày Nhập', 'Chi Nhánh Nhận', 'Người Lập Phiếu', 'Ghi Chú',
+        'Tên Sản Phẩm', 'Hãng Sản Xuất', 'Số Lượng Nhập'
+    ])
+
+    # Đổ dữ liệu
+    for item in danh_sach:
+        # Chuẩn bị format các trường dữ liệu
+        ma_phieu = f"#PN-{item.phieu_nhap.id:04d}"
+        ngay_nhap_str = item.phieu_nhap.ngay_nhap.strftime('%d/%m/%Y %H:%M')
+        nguoi_lap = item.phieu_nhap.nhan_vien_nhap.username if item.phieu_nhap.nhan_vien_nhap else "Hệ thống"
+        ghi_chu = item.phieu_nhap.ghi_chu if item.phieu_nhap.ghi_chu else "Không có"
+
+        ws.append([
+            ma_phieu,
+            ngay_nhap_str,
+            item.phieu_nhap.cua_hang.ten_cua_hang,
+            nguoi_lap,
+            ghi_chu,
+            item.xe.ten_xe,
+            item.xe.hang_san_xuat,
+            item.so_luong
+        ])
+
+    # Cấu hình file tải về với timestamp hiện tại
+    now = datetime.datetime.now().strftime("%Y%m%d_%H%M")
+    filename = f"Lich_Su_Nhap_Kho_{now}.xlsx"
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    
+    return response
+
+@login_required
+@phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien']) 
+def xuat_excel_don_hang(request):
+    # Lấy tháng, năm hiện tại để làm mặc định
+    now = datetime.datetime.now()
+    thang = int(request.GET.get('thang', now.month))
+    nam = int(request.GET.get('nam', now.year))
+    cua_hang_id = request.GET.get('cua_hang', '')
+
+    danh_sach_don = DonHang.objects.filter(ngay_dat__month=thang, ngay_dat__year=nam).order_by('-ngay_dat')
+
+    # Phân quyền: Nhân viên chi nhánh nào chỉ xuất data chi nhánh đó
+    if not request.user.is_superuser:
+        danh_sach_don = danh_sach_don.filter(cua_hang=request.user.userprofile.cua_hang)
+    elif cua_hang_id:
+        danh_sach_don = danh_sach_don.filter(cua_hang_id=cua_hang_id)
+
+    # 1. Khởi tạo file Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"Doanh_Thu_T{thang}_{nam}"
+
+    # 2. Tạo Header (Dòng tiêu đề)
+    ws.append([
+        'Mã Đơn', 'Ngày Đặt', 'Tên Khách Hàng', 'Số Điện Thoại', 
+        'Sản Phẩm', 'Chi Nhánh Giao', 'Loại Đơn', 'Tổng Tiền Xe (VNĐ)', 
+        'Đã Thu (VNĐ)', 'Số Còn Thiếu (VNĐ)', 'Trạng Thái'
+    ])
+
+    # 3. Lặp dữ liệu và đổ vào Excel
+    for dh in danh_sach_don:
+        # Xử lý format ngày tháng
+        ngay_dat_str = dh.ngay_dat.strftime('%d/%m/%Y %H:%M') if dh.ngay_dat else ""
+        
+        # Xử lý text Loại Đơn (Dựa trên code đợt trước chúng ta đã tối ưu)
+        loai_don_str = "Cọc Online (20Tr)" if dh.loai_don == 'DatCoc' else "Mua trả thẳng (100%)"
+        
+        # Tính số tiền còn thiếu
+        tien_con_thieu = dh.tong_tien - dh.so_tien_tra_truoc
+
+        ws.append([
+            f"#DH{dh.id:04d}",
+            ngay_dat_str,
+            dh.ho_ten,
+            dh.so_dien_thoai,
+            dh.xe.ten_xe if dh.xe else "N/A",
+            dh.cua_hang.ten_cua_hang if dh.cua_hang else "N/A",
+            loai_don_str,
+            dh.tong_tien,
+            dh.so_tien_tra_truoc,
+            tien_con_thieu,
+            dh.trang_thai
+        ])
+
+    # 4. Trả file về cho trình duyệt
+    filename = f"Tong_Ket_Don_Hang_Thang_{thang}_{nam}.xlsx"
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    
+    return response
+
+def luu_danh_gia_api(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            tram_id = data.get('tram_id')
+            so_sao = int(data.get('so_sao'))
+            
+            tram = TramSac.objects.get(id=tram_id)
+            
+            DanhGiaTram.objects.create(
+                khach_hang=request.user if request.user.is_authenticated else None,
+                tram_sac=tram,
+                so_sao=so_sao
+            )
+            return JsonResponse({'status': 'success', 'message': 'Lưu đánh giá thành công'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+            
+    return JsonResponse({'status': 'error', 'message': 'Sai phương thức'})
+
+# Hàm này để load giao diện trang quản lý đánh giá
+@login_required
+@phan_quyen(roles=['admin', 'quan_ly'])
+def quan_ly_danh_gia(request):
+    danh_sach = DanhGiaTram.objects.select_related('khach_hang', 'tram_sac').all().order_by('-ngay_danh_gia')
+    return render(request, 'tram_sac/quan_ly_danh_gia.html', {'danh_sach': danh_sach})
+
+@login_required
+@phan_quyen(roles=['admin', 'quan_ly'])
+def xoa_danh_gia(request, danh_gia_id):
+    # Đảm bảo chỉ nhận lệnh POST để bảo mật, chống việc gõ URL bậy bạ để xóa
+    if request.method == 'POST':
+        danh_gia = get_object_or_404(DanhGiaTram, id=danh_gia_id)
+        danh_gia.delete()
+        
+    return redirect('quan_ly_danh_gia')
+
+@login_required
+def doc_thong_bao(request, thong_bao_id):
+    # Tìm thông báo
+    tb = get_object_or_404(ThongBao, id=thong_bao_id)
+    
+    # Đánh dấu đã đọc
+    if not tb.da_doc:
+        tb.da_doc = True
+        tb.save()
+        
+    # Chuyển hướng thông minh dựa vào loại thông báo
+    if tb.loai == 'don_hang':
+        return redirect('danh_sach_don_hang')
+    elif tb.loai == 'lai_thu':
+        return redirect('quan_ly_lai_thu')
+    elif tb.loai == 'ho_tro':
+        return redirect('quan_ly_ho_tro')
+    else:
+        return redirect('admin_dashboard')
+
+# 2. HÀM ĐÁNH DẤU TẤT CẢ ĐÃ ĐỌC (QUÉT SẠCH CHUÔNG)
+@login_required
+def danh_dau_tat_ca(request):
+    user_profile = request.user.userprofile
+    is_admin = request.user.is_superuser or user_profile.vai_tro in ['admin', 'quan_ly']
+
+    if is_admin:
+        # Sếp tổng: Quét sạch toàn bộ
+        ThongBao.objects.filter(da_doc=False).update(da_doc=True)
+    else:
+        # Nhân viên: Chỉ quét sạch của chi nhánh mình và thông báo chung
+        ThongBao.objects.filter(da_doc=False, cua_hang=user_profile.cua_hang).update(da_doc=True)
+        ThongBao.objects.filter(da_doc=False, cua_hang__isnull=True).update(da_doc=True)
+
+    # Làm xong thì quay lại trang hiện tại (không bị nhảy đi trang khác)
+    truoc_do = request.META.get('HTTP_REFERER', 'admin_dashboard')
+    return redirect(truoc_do)

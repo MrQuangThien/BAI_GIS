@@ -83,7 +83,7 @@
         .filter-box input:checked + span { color: #198754; font-weight: bold; }
         .filter-box:has(input:checked) { border-color: #198754; background: #f0fdf4; }
    
-        /* CSS THANH TRƯỢT GIÁ (ĐÃ FIX LỖI KẸT NÚT) */
+        /* CSS THANH TRƯỢT GIÁ */
         .range-slider-container {
             position: relative;
             width: 100%;
@@ -107,7 +107,7 @@
             position: absolute;
             top: -7px;
             margin: 0;
-            pointer-events: none; /* Khóa bắt sự kiện lên thanh nền */
+            pointer-events: none;
             z-index: 3;
         }
         .range-slider-container input[type="range"]::-webkit-slider-thumb {
@@ -118,15 +118,47 @@
             background: #ffffff;
             border: 2px solid #198754;
             cursor: pointer;
-            pointer-events: auto; /* Mở khóa bắt sự kiện tại vị trí Nút bấm */
+            pointer-events: auto;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             transition: transform 0.1s;
         }
-        .range-slider-container input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.15);
-        }
-        .range-slider-container input[type="range"]::-webkit-slider-thumb:active {
-            background: #e8f5e9;
+        .range-slider-container input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+        .range-slider-container input[type="range"]::-webkit-slider-thumb:active { background: #e8f5e9; }
+
+        /* TỐI ƯU HÓA MOBILE (< 768px) */
+        @media (max-width: 767px) {
+            .product-img {
+                height: 150px; /* Ảnh thấp lại để vừa 2 cột */
+                padding: 10px;
+            }
+            .product-card .card-title {
+                font-size: 0.9rem;
+            }
+            .product-card .fs-6 {
+                font-size: 0.9rem !important; /* Giá tiền nhỏ lại */
+            }
+            .badge-container .badge {
+                font-size: 0.65rem;
+                padding: 3px 5px;
+            }
+            /* Ẩn bớt icon trên mobile để tiết kiệm diện tích */
+            .badge-container .bi { display: none; } 
+            .quick-filter-bar {
+                padding: 10px;
+            }
+            .filter-btn {
+                padding: 5px 10px;
+                font-size: 0.85rem;
+            }
+            /* Các input số trong Modal lọc */
+            #displayMin, #displayMax {
+                font-size: 0.85rem;
+            }
+            /* Gói gọn phần "Sắp xếp" */
+            .sort-group {
+                flex-wrap: wrap; 
+                gap: 10px;
+            }
         }
    </style>
 </head>
@@ -138,23 +170,23 @@
             <a class="navbar-brand fw-bold" href="{% url 'trang_chu' %}">
                 <i class="bi bi-lightning-charge-fill text-warning"></i> EV STORE
             </a>
-            <div class="collapse navbar-collapse">
+            <div class="collapse navbar-collapse d-none d-lg-block">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link" href="{% url 'trang_chu' %}">Trang chủ</a></li>
                     <li class="nav-item"><a class="nav-link active fw-bold" href="{% url 'danh_sach_san_pham' %}">Sản phẩm</a></li>
                 </ul>
             </div>
+            <a href="{% url 'trang_chu' %}" class="btn btn-sm btn-outline-light d-lg-none"><i class="bi bi-house"></i></a>
         </div>
     </nav>
 
-    <div class="container my-4">
+    <div class="container my-3 my-md-4">
         <form method="GET" id="filterForm">
             
             <div class="quick-filter-bar">
-                
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <button type="button" class="btn filter-btn d-flex align-items-center fw-bold" data-bs-toggle="modal" data-bs-target="#filterModal">
-                        <i class="bi bi-funnel me-2 fs-5"></i> Lọc
+                <div class="d-flex align-items-center gap-2 gap-md-3 mb-2 mb-md-3">
+                    <button type="button" class="btn filter-btn d-flex align-items-center fw-bold text-nowrap" data-bs-toggle="modal" data-bs-target="#filterModal">
+                        <i class="bi bi-funnel me-1 me-md-2 fs-6 fs-md-5"></i> Lọc
                     </button>
 
                     <div class="quick-brand-list flex-grow-1">
@@ -173,23 +205,22 @@
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center border-top pt-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="text-muted small me-2">Sắp xếp theo:</span>
-                        <label class="cursor-pointer text-dark small fw-medium {% if sort_by == 'gia_tang' %}text-success fw-bold{% endif %}">
+                <div class="d-flex justify-content-between align-items-center border-top pt-2 pt-md-3 flex-wrap gap-2 sort-group">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="text-muted small me-1">Xếp theo:</span>
+                        <label class="cursor-pointer text-dark small fw-medium {% if sort_by == 'gia_tang' %}text-success fw-bold{% endif %} border px-2 py-1 rounded bg-light">
                             <input type="radio" name="sort" value="gia_tang" class="d-none" onchange="this.form.submit()" {% if sort_by == 'gia_tang' %}checked{% endif %}>
-                            <i class="bi bi-sort-up"></i> Giá thấp - cao
+                            <i class="bi bi-sort-up"></i> Giá thấp
                         </label>
-                        <span class="text-muted mx-1">|</span>
-                        <label class="cursor-pointer text-dark small fw-medium {% if sort_by == 'gia_giam' %}text-success fw-bold{% endif %}">
+                        <label class="cursor-pointer text-dark small fw-medium {% if sort_by == 'gia_giam' %}text-success fw-bold{% endif %} border px-2 py-1 rounded bg-light">
                             <input type="radio" name="sort" value="gia_giam" class="d-none" onchange="this.form.submit()" {% if sort_by == 'gia_giam' %}checked{% endif %}>
-                            <i class="bi bi-sort-down"></i> Giá cao - thấp
+                            <i class="bi bi-sort-down"></i> Giá cao
                         </label>
                     </div>
 
                     {% if hang_chon or pk_chon or tieu_chi or sort_by or khoang_gia or gia_min or gia_max %}
                         <a href="{% url 'danh_sach_san_pham' %}" class="text-danger small text-decoration-none fw-bold">
-                            <i class="bi bi-x-circle me-1"></i>Xóa tất cả lọc
+                            <i class="bi bi-x-circle me-1"></i>Xóa lọc
                         </a>
                     {% endif %}
                 </div>
@@ -202,7 +233,7 @@
                             <h5 class="modal-title fw-bold mx-auto" id="filterModalLabel">Tất cả bộ lọc</h5>
                             <button type="button" class="btn-close m-0 position-absolute end-0 me-3" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body px-4 py-4">
+                        <div class="modal-body px-3 px-md-4 py-4">
                             
                             <div class="mb-4 border-bottom pb-4">
                                 <div class="modal-filter-title">Hãng xe</div>
@@ -226,25 +257,14 @@
                                 <div class="modal-filter-title">Mức giá</div>
                                 
                                 <div class="px-2 position-relative" style="height: 40px;">
-                                    <div class="range-slider-container" style="position: absolute; width: 100%; top: 15px; height: 6px; background: #e0e0e0; border-radius: 5px;">
-                                        <div class="slider-track-fill" id="sliderTrack" style="height: 100%; background: #198754; position: absolute; border-radius: 5px; z-index: 1;"></div>
-                                        <input type="range" min="0" max="5000000000" step="10000000" value="{{ gia_min|default:'0' }}" id="sliderMin" style="position: absolute; top: -7px; width: 100%; -webkit-appearance: none; background: transparent; pointer-events: none; z-index: 3;">
-                                        <input type="range" min="0" max="5000000000" step="10000000" value="{{ gia_max|default:'5000000000' }}" id="sliderMax" style="position: absolute; top: -7px; width: 100%; -webkit-appearance: none; background: transparent; pointer-events: none; z-index: 4;">
+                                    <div class="range-slider-container">
+                                        <div class="slider-track-fill" id="sliderTrack"></div>
+                                        <input type="range" min="0" max="5000000000" step="10000000" value="{{ gia_min|default:'0' }}" id="sliderMin">
+                                        <input type="range" min="0" max="5000000000" step="10000000" value="{{ gia_max|default:'5000000000' }}" id="sliderMax">
                                     </div>
                                 </div>
-                                
-                                <style>
-                                    input[type=range]::-webkit-slider-thumb {
-                                        pointer-events: all;
-                                        width: 20px; height: 20px;
-                                        -webkit-appearance: none;
-                                        background: white; border: 2px solid #198754; border-radius: 50%;
-                                        cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-                                    }
-                                </style>
 
                                 <div class="d-flex align-items-center justify-content-between gap-2 mt-2">
-                                    
                                     <input type="hidden" name="gia_min" id="realMin" value="{{ gia_min }}">
                                     <input type="hidden" name="gia_max" id="realMax" value="{{ gia_max }}">
 
@@ -309,17 +329,18 @@
 
                         </div>
                         <div class="modal-footer justify-content-center border-top-0 pt-0 pb-4">
-                            <button type="button" class="btn btn-outline-danger fw-bold px-4 py-2 me-2" onclick="window.location.href='{% url 'danh_sach_san_pham' %}'">Bỏ chọn</button>
-                            <button type="submit" id="btnSubmitFilter" class="btn btn-success fw-bold px-5 py-2">
+                            <button type="button" class="btn btn-outline-danger fw-bold px-3 py-2 me-2" onclick="window.location.href='{% url 'danh_sach_san_pham' %}'">Bỏ chọn</button>
+                            <button type="submit" id="btnSubmitFilter" class="btn btn-success fw-bold px-4 py-2">
                                 Xem {{ danh_sach_xe.count }} kết quả
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="row g-3">
+
+            <div class="row g-2 g-md-3">
                 {% for xe in danh_sach_xe %}
-                <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="col-6 col-md-4 col-lg-3">
                     <div class="card product-card h-100 position-relative">
 
                         <div class="badge-container">
@@ -343,12 +364,12 @@
                         <img src="https://via.placeholder.com/300x200?text=Chưa+có+ảnh" class="card-img-top product-img bg-light">
                         {% endif %}
 
-                        <div class="card-body text-center d-flex flex-column border-top">
-                            <p class="text-muted small mb-1">{{ xe.hang_san_xuat }}</p>
+                        <div class="card-body text-center d-flex flex-column border-top p-2 p-md-3">
+                            <p class="text-muted small mb-1 d-none d-md-block">{{ xe.hang_san_xuat }}</p>
                             <h6 class="card-title fw-bold text-truncate" title="{{ xe.ten_xe }}">{{ xe.ten_xe }}</h6>
-                            <p class="text-danger fw-bold mt-2 mb-3 fs-6">{{ xe.gia|intcomma }} VNĐ</p>
+                            <p class="text-danger fw-bold mt-auto mb-2 fs-6">{{ xe.gia|intcomma }} đ</p>
                             
-                            <div class="mt-auto">
+                            <div class="mt-2">
                                 <a href="{% url 'chi_tiet_xe' xe.id %}" class="btn btn-outline-success btn-sm w-100 fw-bold rounded-pill">
                                     Xem chi tiết
                                 </a>
@@ -360,7 +381,7 @@
                 <div class="col-12 text-center text-muted py-5 mt-3 bg-white rounded shadow-sm border">
                     <i class="bi bi-search fs-1 d-block mb-3 text-secondary"></i>
                     <h5 class="fw-bold">Không tìm thấy xe nào phù hợp!</h5>
-                    <p>Vui lòng thử bỏ bớt các tiêu chí lọc.</p>
+                    <p class="small">Vui lòng thử bỏ bớt các tiêu chí lọc.</p>
                     <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-success mt-2 fw-bold shadow-sm">Xóa lọc để xem tất cả</a>
                 </div>
                 {% endfor %}
@@ -382,7 +403,6 @@
                 const formData = new FormData(filterForm);
                 const searchParams = new URLSearchParams(formData).toString();
 
-                // Hiển thị hiệu ứng tải trên nút
                 btnSubmitFilter.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang đếm...';
                 btnSubmitFilter.classList.add('disabled');
 
@@ -391,7 +411,6 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    // Update nút với kết quả mới
                     btnSubmitFilter.innerHTML = `Xem <b>${data.count}</b> kết quả`;
                     btnSubmitFilter.classList.remove('disabled');
                 })
@@ -401,7 +420,6 @@
                 });
             }
 
-            // Gắn event onChange cho tất cả input trong form để gọi AJAX
             filterForm.querySelectorAll('input').forEach(input => {
                 input.addEventListener('change', function(e) {
                     if(e.target.type !== 'range') fetchLiveCount();
@@ -411,17 +429,15 @@
           // 2. CHỨC NĂNG THANH TRƯỢT KÉP (DUAL RANGE SLIDER)
             const sliderMin = document.getElementById("sliderMin");
             const sliderMax = document.getElementById("sliderMax");
-            const displayMin = document.getElementById("displayMin"); // Ô hiển thị
-            const displayMax = document.getElementById("displayMax"); // Ô hiển thị
-            const realMin = document.getElementById("realMin");       // Ô chứa data sạch gửi đi
-            const realMax = document.getElementById("realMax");       // Ô chứa data sạch gửi đi
+            const displayMin = document.getElementById("displayMin");
+            const displayMax = document.getElementById("displayMax");
+            const realMin = document.getElementById("realMin");      
+            const realMax = document.getElementById("realMax");      
             const sliderTrack = document.getElementById("sliderTrack");
             const maxAllowed = parseInt(sliderMax.max);
             const gap = 10000000; 
 
-            // Hàm định dạng số có dấu phẩy: 1000000 -> 1,000,000
             const formatMoney = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            // Hàm xóa dấu phẩy để tính toán: 1,000,000 -> 1000000
             const parseMoney = (str) => parseInt(str.toString().replace(/,/g, '')) || 0;
 
             function updateSliderVisuals(isFromSlider = false) {
@@ -438,11 +454,9 @@
                     }
                 }
 
-                // Cập nhật ô hiển thị (Có dấu phẩy)
                 displayMin.value = formatMoney(val1);
                 displayMax.value = formatMoney(val2);
                 
-                // Cập nhật ô ẩn (Không có phẩy - gửi về server)
                 realMin.value = val1;
                 realMax.value = val2;
 
@@ -457,7 +471,6 @@
             }
 
             function updateInputsToSlider() {
-                // Lấy dữ liệu từ ô hiển thị, bỏ dấu phẩy đi để tính toán
                 let val1 = parseMoney(displayMin.value);
                 let val2 = parseMoney(displayMax.value);
 
@@ -477,7 +490,6 @@
             sliderMin.addEventListener("change", fetchLiveCount);
             sliderMax.addEventListener("change", fetchLiveCount);
 
-            // Khi người dùng gõ tay vào ô và bấm chuột ra ngoài (change) -> Tự động thêm phẩy
             displayMin.addEventListener("change", updateInputsToSlider);
             displayMax.addEventListener("change", updateInputsToSlider);
 

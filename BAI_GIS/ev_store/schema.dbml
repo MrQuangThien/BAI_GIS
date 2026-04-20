@@ -1,0 +1,674 @@
+Project "Django DBML" {
+  database_type: 'PostgreSQL'
+  Note: '''Generated from Django models.
+  Last Updated At 04-19-2026 04:07PM UTC'''
+}
+
+enum core.char_donhang_hinh_thuc_nhan {
+  "Tai_cua_hang" [note: '''Nhận xe tại cửa hàng''']
+  "Giao_tan_noi" [note: '''Giao xe tận nơi''']
+}
+
+enum core.char_donhang_loai_don {
+  "TraThang" [note: '''Thanh toán 100% nhận xe''']
+  "DatCoc" [note: '''Đặt cọc giữ xe (20.000.000 VNĐ)''']
+}
+
+enum core.char_donhang_trang_thai {
+  "Pending" [note: '''Pending (Đang chờ)''']
+  "Deposit Paid" [note: '''Deposit Paid (Đã đặt cọc)''']
+  "Paid" [note: '''Paid (Đã thanh toán)''']
+  "Cancelled" [note: '''Đã hủy''']
+}
+
+enum core.char_lichlaithu_trang_thai {
+  "cho_xac_nhan" [note: '''Chờ xác nhận''']
+  "da_xac_nhan" [note: '''Đã xác nhận lịch''']
+  "hoan_thanh" [note: '''Khách đã đến showroom''']
+  "huy" [note: '''Đã hủy / Khách không đến''']
+}
+
+enum core.char_phiensac_trang_thai {
+  "Dang sac" [note: '''Đang sạc''']
+  "Hoan thanh" [note: '''Hoàn thành''']
+}
+
+enum core.char_thongbao_loai {
+  "don_hang" [note: '''Đơn hàng mới''']
+  "lai_thu" [note: '''Đăng ký lái thử''']
+  "ho_tro" [note: '''Tin nhắn hỗ trợ''']
+  "he_thong" [note: '''Hệ thống''']
+}
+
+enum core.char_userprofile_vai_tro {
+  "admin" [note: '''Admin''']
+  "quan_ly" [note: '''Quản lý''']
+  "nhan_vien" [note: '''Nhân viên''']
+  "khach_hang" [note: '''Khách hàng''']
+}
+
+enum core.integer_feedback_danh_gia {
+  "1" [note: '''1 sao''']
+  "2" [note: '''2 sao''']
+  "3" [note: '''3 sao''']
+  "4" [note: '''4 sao''']
+  "5" [note: '''5 sao''']
+}
+
+Table auth.Group {
+  Note: '''
+Groups are a generic way of categorizing users to apply permissions, or
+some other label, to those users. A user can belong to any number of
+groups.
+
+A user in a group automatically has all the permissions granted to that
+group. For example, if the group 'Site editors' has the permission
+can_edit_home_page, any user in that group will have that permission.
+
+Beyond permissions, groups are a convenient way to categorize users to
+apply some label, or extended functionality, to them. For example, you
+could create a group 'Special users', and you could write code that would
+do special things to those users -- such as giving them access to a
+members-only portion of your site, or sending them members-only email
+messages.
+
+
+*table: public.auth_group*'''
+
+  id auto [note: '''*ID*''', pk, unique, not null]
+  name char [note: '''*Tên*''', unique, not null]
+
+  indexes {
+    (name) [unique, name: 'auth_group_name_key', type: btree]
+    (id) [pk, unique, name: 'auth_group_pkey', type: btree]
+  }
+}
+
+
+Table auth.Permission {
+  Note: '''
+The permissions system provides a way to assign permissions to specific
+users and groups of users.
+
+The permission system is used by the Django admin site, but may also be
+useful in your own code. The Django admin site uses permissions as follows:
+
+- The "add" permission limits the user's ability to view the "add" form
+and add an object.
+- The "change" permission limits a user's ability to view the change
+list, view the "change" form and change an object.
+- The "delete" permission limits the ability to delete an object.
+- The "view" permission limits the ability to view an object.
+
+Permissions are set globally per type of object, not per specific object
+instance. It is possible to say "Mary may change news stories," but it's
+not currently possible to say "Mary may change news stories, but only the
+ones she created herself" or "Mary may only change news stories that have a
+certain status or publication date."
+
+The permissions listed above are automatically created for each model.
+
+
+*table: public.auth_permission*'''
+
+  id auto [note: '''*ID*''', pk, unique, not null]
+  name char [note: '''*Tên*''', not null]
+  codename char [note: '''*tên mã*''', not null]
+
+  indexes {
+    (content_type_id,codename) [unique, name: 'auth_permission_content_type_id_codename_01ab375a_uniq', type: btree]
+    (id) [pk, unique, name: 'auth_permission_pkey', type: btree]
+  }
+}
+ref: auth.Permission.content_type_id > contenttypes.ContentType.id
+
+
+Table auth.User {
+  Note: '''
+Users within the Django authentication system are represented by this
+model.
+
+Username and password are required. Other fields are optional.
+
+
+*table: public.auth_user*'''
+
+  id auto [note: '''*ID*''', pk, unique, not null]
+  password char [note: '''*Mật khẩu*''', not null]
+  last_login date_time [note: '''*Lần cuối đăng nhập*''', null]
+  is_superuser boolean [note: '''
+*trạng thái superuser*
+Định rằng người dùng này có tất cả các quyền mà không gán cho họ một cách cụ thể.''', default:`False`, not null]
+  username char [note: '''
+*Tên đăng nhập*
+Yêu cầu. 150 ký tự hoặc ít hơn. Chỉ là chữ cái, chữ số và @/./+/-/_.''', unique, not null]
+  first_name char [note: '''*Tên*''', not null]
+  last_name char [note: '''*Họ*''', not null]
+  email email [note: '''*địa chỉ email*''', not null]
+  is_staff boolean [note: '''
+*tình trạng nhân viên*
+Chỉ định người dùng nào được phép truy cập vào trang admin.''', default:`False`, not null]
+  is_active boolean [note: '''
+*Kích hoạt*
+Chỉ định xem người dùng này phải được coi là đang hoạt động. Bạn nên bỏ chọn này thay vì xóa tài khoản.''', default:`True`, not null]
+  date_joined date_time [note: '''*Ngày tham gia*''', default:`django.utils.timezone.now()`, not null]
+
+  indexes {
+    (id) [pk, unique, name: 'auth_user_pkey', type: btree]
+    (username) [unique, name: 'auth_user_username_key', type: btree]
+  }
+}
+
+
+Table auth.group_permissions {
+  Note: '''
+This is a Many-To-Many linking table autogenerated by Django.
+
+*DB table: auth_group_permissions*'''
+
+  id auto [pk, not null]
+  permission_id auto [not null]
+  group_id auto [not null]
+
+  indexes {
+    (group_id) [name: 'auth_group_permissions_group_id_b120cbf9', type: btree]
+    (group_id,permission_id) [unique, name: 'auth_group_permissions_group_id_permission_id_0cd325b0_uniq', type: btree]
+    (permission_id) [name: 'auth_group_permissions_permission_id_84c5c92e', type: btree]
+    (id) [pk, unique, name: 'auth_group_permissions_pkey', type: btree]
+  }
+}
+ref: auth.Group.id > auth.group_permissions.group_id
+ref: auth.Permission.id > auth.group_permissions.permission_id
+
+
+Table auth.user_groups {
+  Note: '''
+This is a Many-To-Many linking table autogenerated by Django.
+
+*DB table: auth_user_groups*'''
+
+  id auto [pk, not null]
+  group_id auto [not null]
+  user_id auto [not null]
+
+  indexes {
+    (group_id) [name: 'auth_user_groups_group_id_97559544', type: btree]
+    (id) [pk, unique, name: 'auth_user_groups_pkey', type: btree]
+    (user_id) [name: 'auth_user_groups_user_id_6a12ed8b', type: btree]
+    (user_id,group_id) [unique, name: 'auth_user_groups_user_id_group_id_94350c0c_uniq', type: btree]
+  }
+}
+ref: auth.User.id > auth.user_groups.user_id
+ref: auth.Group.id > auth.user_groups.group_id
+
+
+Table auth.user_user_permissions {
+  Note: '''
+This is a Many-To-Many linking table autogenerated by Django.
+
+*DB table: auth_user_user_permissions*'''
+
+  id auto [pk, not null]
+  permission_id auto [not null]
+  user_id auto [not null]
+
+  indexes {
+    (permission_id) [name: 'auth_user_user_permissions_permission_id_1fbb5f2c', type: btree]
+    (id) [pk, unique, name: 'auth_user_user_permissions_pkey', type: btree]
+    (user_id) [name: 'auth_user_user_permissions_user_id_a95ead1b', type: btree]
+    (user_id,permission_id) [unique, name: 'auth_user_user_permissions_user_id_permission_id_14a6b632_uniq', type: btree]
+  }
+}
+ref: auth.User.id > auth.user_user_permissions.user_id
+ref: auth.Permission.id > auth.user_user_permissions.permission_id
+
+
+Table contenttypes.ContentType {
+  Note: '''
+ContentType(id, app_label, model)
+
+*table: public.django_content_type*'''
+
+  id auto [note: '''*ID*''', pk, unique, not null]
+  app_label char [note: '''*app label*''', not null]
+  model char [note: '''*tên lớp mô hình python*''', not null]
+
+  indexes {
+    (app_label,model) [unique, name: 'django_content_type_app_label_model_76bd3d3b_uniq', type: btree]
+    (id) [pk, unique, name: 'django_content_type_pkey', type: btree]
+  }
+}
+
+
+Table core.AnhXeDien {
+  Note: '''
+AnhXeDien(id, xe, image)
+
+*table: public.core_anhxedien*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  image image [note: '''*image*''', not null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_anhxedien_pkey', type: btree]
+  }
+}
+ref: core.AnhXeDien.xe_id > core.XeDien.id
+
+
+Table core.ChiTietPhieuNhap {
+  Note: '''
+ChiTietPhieuNhap(id, phieu_nhap, xe, so_luong)
+
+*table: public.core_chitietphieunhap*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  so_luong positive_integer [note: '''*Số lượng nhập*''', not null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_chitietphieunhap_pkey', type: btree]
+  }
+}
+ref: core.ChiTietPhieuNhap.phieu_nhap_id > core.PhieuNhapKho.id
+ref: core.ChiTietPhieuNhap.xe_id > core.XeDien.id
+
+
+Table core.CuaHang {
+  Note: '''
+CuaHang(id, ten_cua_hang, dia_chi, bai_gioi_thieu, so_dien_thoai, trang_thai, lat, lon, hinh_anh)
+
+*table: public.core_cuahang*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  ten_cua_hang char [note: '''*ten cua hang*''', not null]
+  dia_chi text [note: '''*dia chi*''', not null]
+  bai_gioi_thieu rich_text [note: '''*bai gioi thieu*''', null]
+  so_dien_thoai char [note: '''*so dien thoai*''', not null]
+  trang_thai boolean [note: '''*trang thai*''', default:`True`, not null]
+  lat float [note: '''*lat*''', null]
+  lon float [note: '''*lon*''', null]
+  hinh_anh image [note: '''*hinh anh*''', null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_cuahang_pkey', type: btree]
+  }
+}
+
+
+Table core.DanhGiaTram {
+  Note: '''
+DanhGiaTram(id, khach_hang, tram_sac, so_sao, noi_dung, ngay_danh_gia)
+
+*table: public.core_danhgiatram*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  so_sao integer [note: '''*Số sao*''', default:`5`, not null]
+  noi_dung text [note: '''*Nội dung bình luận*''', null]
+  ngay_danh_gia date_time [note: '''*Ngày đánh giá*''', not null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_danhgiatram_pkey', type: btree]
+  }
+}
+ref: core.DanhGiaTram.khach_hang_id > auth.User.id
+ref: core.DanhGiaTram.tram_sac_id > core.TramSac.id
+
+
+Table core.DanhMuc {
+  Note: '''
+DanhMuc(id, ten_danh_muc)
+
+*table: public.core_danhmuc*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  ten_danh_muc char [note: '''*Tên danh mục*''', not null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_danhmuc_pkey', type: btree]
+  }
+}
+
+
+Table core.DonHang {
+  Note: '''
+DonHang(id, hinh_thuc_nhan, ngay_giao_xe, xe, cua_hang, khach_hang, nhan_vien_tao, ho_ten, so_dien_thoai, email, dia_chi, loai_don, trang_thai, ngay_dat, tong_tien, so_tien_tra_truoc)
+
+*table: public.core_donhang*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  hinh_thuc_nhan core.char_donhang_hinh_thuc_nhan [note: '''*Hình thức nhận xe*''', default:`"Tai_cua_hang"`, not null]
+  ngay_giao_xe date [note: '''*Ngày hẹn giao/nhận xe*''', null]
+  ho_ten char [note: '''*Họ và tên*''', not null]
+  so_dien_thoai char [note: '''*Số điện thoại*''', not null]
+  email email [note: '''*Email nhận thông báo*''', null]
+  dia_chi text [note: '''*Địa chỉ giao xe / Liên hệ*''', not null]
+  loai_don core.char_donhang_loai_don [note: '''*loai don*''', default:`"A"`, not null]
+  trang_thai core.char_donhang_trang_thai [note: '''*trang thai*''', default:`"Pending"`, not null]
+  ngay_dat date_time [note: '''*ngay dat*''', not null]
+  tong_tien decimal [note: '''*tong tien*''', default:`0`, not null]
+  so_tien_tra_truoc decimal [note: '''*Số tiền trả trước*''', default:`0`, not null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_donhang_pkey', type: btree]
+  }
+}
+ref: core.DonHang.xe_id > core.XeDien.id
+ref: core.DonHang.cua_hang_id > core.CuaHang.id
+ref: core.DonHang.khach_hang_id > auth.User.id
+ref: core.DonHang.nhan_vien_tao_id > auth.User.id
+
+
+Table core.Feedback {
+  Note: '''
+Feedback(id, user, xe, noi_dung, danh_gia, ngay_tao)
+
+*table: public.core_feedback*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  noi_dung text [note: '''*noi dung*''', not null]
+  danh_gia core.integer_feedback_danh_gia [note: '''*danh gia*''', default:`5`, not null]
+  ngay_tao date_time [note: '''*ngay tao*''', not null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_feedback_pkey', type: btree]
+  }
+}
+ref: core.Feedback.user_id > auth.User.id
+ref: core.Feedback.xe_id > core.XeDien.id
+
+
+Table core.KhachHang {
+  Note: '''
+KhachHang(id, password, last_login, is_superuser, username, first_name, last_name, email, is_staff, is_active, date_joined)
+
+*table: public.auth_user*'''
+
+  id auto [note: '''*ID*''', pk, unique, not null]
+  password char [note: '''*Mật khẩu*''', not null]
+  last_login date_time [note: '''*Lần cuối đăng nhập*''', null]
+  is_superuser boolean [note: '''
+*trạng thái superuser*
+Định rằng người dùng này có tất cả các quyền mà không gán cho họ một cách cụ thể.''', default:`False`, not null]
+  username char [note: '''
+*Tên đăng nhập*
+Yêu cầu. 150 ký tự hoặc ít hơn. Chỉ là chữ cái, chữ số và @/./+/-/_.''', unique, not null]
+  first_name char [note: '''*Tên*''', not null]
+  last_name char [note: '''*Họ*''', not null]
+  email email [note: '''*địa chỉ email*''', not null]
+  is_staff boolean [note: '''
+*tình trạng nhân viên*
+Chỉ định người dùng nào được phép truy cập vào trang admin.''', default:`False`, not null]
+  is_active boolean [note: '''
+*Kích hoạt*
+Chỉ định xem người dùng này phải được coi là đang hoạt động. Bạn nên bỏ chọn này thay vì xóa tài khoản.''', default:`True`, not null]
+  date_joined date_time [note: '''*Ngày tham gia*''', default:`django.utils.timezone.now()`, not null]
+
+  indexes {
+    (id) [pk, unique, name: 'auth_user_pkey', type: btree]
+    (username) [unique, name: 'auth_user_username_key', type: btree]
+  }
+}
+
+
+Table core.KhoHang {
+  Note: '''
+KhoHang(id, xe, cua_hang, so_luong, ngay_cap_nhat)
+
+*table: public.core_khohang*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  so_luong positive_integer [note: '''*Số lượng tồn kho*''', default:`0`, not null]
+  ngay_cap_nhat date_time [note: '''*ngay cap nhat*''', not null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_khohang_pkey', type: btree]
+    (xe_id,cua_hang_id) [unique, name: 'core_khohang_xe_id_cua_hang_id_5b34ad47_uniq', type: btree]
+  }
+}
+ref: core.KhoHang.xe_id > core.XeDien.id
+ref: core.KhoHang.cua_hang_id > core.CuaHang.id
+
+
+Table core.LichLaiThu {
+  Note: '''
+LichLaiThu(id, ho_ten, so_dien_thoai, email, xe_quan_tam, cua_hang, ngay_hen, ghi_chu, trang_thai, ngay_tao)
+
+*table: public.core_lichlaithu*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  ho_ten char [note: '''*Họ tên khách hàng*''', not null]
+  so_dien_thoai char [note: '''*Số điện thoại*''', not null]
+  email email [note: '''*Email*''', null]
+  ngay_hen date [note: '''*Ngày hẹn đến*''', not null]
+  ghi_chu text [note: '''*Ghi chú của khách*''', null]
+  trang_thai core.char_lichlaithu_trang_thai [note: '''*Trạng thái*''', default:`"cho_xac_nhan"`, not null]
+  ngay_tao date_time [note: '''*ngay tao*''', not null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_lichlaithu_pkey', type: btree]
+  }
+}
+ref: core.LichLaiThu.xe_quan_tam_id > core.XeDien.id
+ref: core.LichLaiThu.cua_hang_id > core.CuaHang.id
+
+
+Table core.NhanVien {
+  Note: '''
+NhanVien(id, password, last_login, is_superuser, username, first_name, last_name, email, is_staff, is_active, date_joined)
+
+*table: public.auth_user*'''
+
+  id auto [note: '''*ID*''', pk, unique, not null]
+  password char [note: '''*Mật khẩu*''', not null]
+  last_login date_time [note: '''*Lần cuối đăng nhập*''', null]
+  is_superuser boolean [note: '''
+*trạng thái superuser*
+Định rằng người dùng này có tất cả các quyền mà không gán cho họ một cách cụ thể.''', default:`False`, not null]
+  username char [note: '''
+*Tên đăng nhập*
+Yêu cầu. 150 ký tự hoặc ít hơn. Chỉ là chữ cái, chữ số và @/./+/-/_.''', unique, not null]
+  first_name char [note: '''*Tên*''', not null]
+  last_name char [note: '''*Họ*''', not null]
+  email email [note: '''*địa chỉ email*''', not null]
+  is_staff boolean [note: '''
+*tình trạng nhân viên*
+Chỉ định người dùng nào được phép truy cập vào trang admin.''', default:`False`, not null]
+  is_active boolean [note: '''
+*Kích hoạt*
+Chỉ định xem người dùng này phải được coi là đang hoạt động. Bạn nên bỏ chọn này thay vì xóa tài khoản.''', default:`True`, not null]
+  date_joined date_time [note: '''*Ngày tham gia*''', default:`django.utils.timezone.now()`, not null]
+
+  indexes {
+    (id) [pk, unique, name: 'auth_user_pkey', type: btree]
+    (username) [unique, name: 'auth_user_username_key', type: btree]
+  }
+}
+
+
+Table core.PhienSac {
+  Note: '''
+PhienSac(id, user, tram_sac, thoi_gian_bat_dau, thoi_gian_ket_thuc, dien_nang_tieu_thu, tong_tien, trang_thai)
+
+*table: public.core_phiensac*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  thoi_gian_bat_dau date_time [note: '''*thoi gian bat dau*''', not null]
+  thoi_gian_ket_thuc date_time [note: '''*thoi gian ket thuc*''', null]
+  dien_nang_tieu_thu float [note: '''*Điện năng (kWh)*''', default:`0`, not null]
+  tong_tien decimal [note: '''*Tổng tiền (VNĐ)*''', default:`0`, not null]
+  trang_thai core.char_phiensac_trang_thai [note: '''*trang thai*''', default:`"Dang sac"`, not null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_phiensac_pkey', type: btree]
+  }
+}
+ref: core.PhienSac.user_id > auth.User.id
+ref: core.PhienSac.tram_sac_id > core.TramSac.id
+
+
+Table core.PhieuNhapKho {
+  Note: '''
+PhieuNhapKho(id, cua_hang, nhan_vien_nhap, ngay_nhap, ghi_chu)
+
+*table: public.core_phieunhapkho*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  ngay_nhap date_time [note: '''*ngay nhap*''', not null]
+  ghi_chu text [note: '''*Ghi chú lô hàng*''', null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_phieunhapkho_pkey', type: btree]
+  }
+}
+ref: core.PhieuNhapKho.cua_hang_id > core.CuaHang.id
+ref: core.PhieuNhapKho.nhan_vien_nhap_id > auth.User.id
+
+
+Table core.ThongBao {
+  Note: '''
+ThongBao(id, tieu_de, noi_dung, loai, cua_hang, da_doc, ngay_tao)
+
+*table: public.core_thongbao*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  tieu_de char [note: '''*Tiêu đề*''', not null]
+  noi_dung text [note: '''*Nội dung*''', not null]
+  loai core.char_thongbao_loai [note: '''*loai*''', default:`"he_thong"`, not null]
+  da_doc boolean [note: '''*Đã đọc*''', default:`False`, not null]
+  ngay_tao date_time [note: '''*ngay tao*''', not null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_thongbao_pkey', type: btree]
+  }
+}
+ref: core.ThongBao.cua_hang_id > core.CuaHang.id
+
+
+Table core.TinNhanChat {
+  Note: '''
+TinNhanChat(id, khach_hang, nguoi_gui, noi_dung, thoi_gian, da_doc)
+
+*table: public.core_tinnhanchat*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  noi_dung text [note: '''*noi dung*''', not null]
+  thoi_gian date_time [note: '''*thoi gian*''', not null]
+  da_doc boolean [note: '''*da doc*''', default:`False`, not null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_tinnhanchat_pkey', type: btree]
+  }
+}
+ref: core.TinNhanChat.khach_hang_id > auth.User.id
+ref: core.TinNhanChat.nguoi_gui_id > auth.User.id
+
+
+Table core.TramSac {
+  Note: '''
+TramSac(id, ten_tram, dia_chi, cong_suat, loai_sac, trang_thai, lat, lon, hinh_anh)
+
+*table: public.core_tramsac*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  ten_tram char [note: '''*ten tram*''', not null]
+  dia_chi text [note: '''*dia chi*''', not null]
+  cong_suat integer [note: '''*cong suat*''', not null]
+  loai_sac char [note: '''*loai sac*''', not null]
+  trang_thai boolean [note: '''*trang thai*''', default:`True`, not null]
+  lat float [note: '''*lat*''', not null]
+  lon float [note: '''*lon*''', not null]
+  hinh_anh image [note: '''*hinh anh*''', null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_tramsac_pkey', type: btree]
+  }
+}
+
+
+Table core.UserProfile {
+  Note: '''
+UserProfile(id, user, so_dien_thoai, dia_chi, cua_hang, vai_tro, avatar)
+
+*table: public.core_userprofile*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  so_dien_thoai char [note: '''*so dien thoai*''', not null]
+  dia_chi text [note: '''*dia chi*''', not null]
+  vai_tro core.char_userprofile_vai_tro [note: '''*Vai trò*''', default:`"khach_hang"`, not null]
+  avatar image [note: '''*Ảnh đại diện*''', default:`"avatars/default.png"`, null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_userprofile_pkey', type: btree]
+  }
+}
+ref: core.UserProfile.user_id - auth.User.id
+ref: core.UserProfile.cua_hang_id > core.CuaHang.id
+
+
+Table core.XeDien {
+  Note: '''
+XeDien(id, ten_xe, hang_san_xuat, dung_luong_pin, tam_di_chuyen, gia, trang_thai, danh_muc, hinh_anh, noi_bat, sap_ve, mo_ta, moi_ve, ban_chay)
+
+*table: public.core_xedien*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  ten_xe char [note: '''*ten xe*''', not null]
+  hang_san_xuat char [note: '''*hang san xuat*''', not null]
+  dung_luong_pin integer [note: '''*dung luong pin*''', not null]
+  tam_di_chuyen integer [note: '''*tam di chuyen*''', not null]
+  gia big_integer [note: '''*gia*''', not null]
+  trang_thai boolean [note: '''*trang thai*''', default:`True`, not null]
+  hinh_anh image [note: '''*Ảnh đại diện*''', null]
+  noi_bat boolean [note: '''*Sản phẩm nổi bật*''', default:`False`, not null]
+  sap_ve boolean [note: '''*Sản phẩm sắp về*''', default:`False`, not null]
+  mo_ta rich_text [note: '''*Mô tả chi tiết*''', null]
+  moi_ve boolean [note: '''*Hàng mới về*''', default:`False`, not null]
+  ban_chay boolean [note: '''*Bán chạy nhất*''', default:`False`, not null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_xedien_pkey', type: btree]
+  }
+}
+ref: core.XeDien.danh_muc_id > core.DanhMuc.id
+
+
+Table core.YeuCauHoTro {
+  Note: '''
+YeuCauHoTro(id, khach_hang, tieu_de, noi_dung_hoi, noi_dung_tra_loi, ngay_gui, trang_thai)
+
+*table: public.core_yeucauhotro*'''
+
+  id big_auto [note: '''*ID*''', pk, unique, not null]
+  tieu_de char [note: '''*Tiêu đề cần hỗ trợ*''', not null]
+  noi_dung_hoi text [note: '''*Nội dung câu hỏi*''', not null]
+  noi_dung_tra_loi text [note: '''*Nhân viên trả lời*''', null]
+  ngay_gui date_time [note: '''*ngay gui*''', not null]
+  trang_thai boolean [note: '''*Đã xử lý*''', default:`False`, not null]
+
+  indexes {
+    (id) [pk, unique, name: 'core_yeucauhotro_pkey', type: btree]
+  }
+}
+ref: core.YeuCauHoTro.khach_hang_id > auth.User.id
+
+
+Table core.xedien_cua_hang {
+  Note: '''
+This is a Many-To-Many linking table autogenerated by Django.
+
+*DB table: core_xedien_cua_hang*'''
+
+  id auto [pk, not null]
+  cuahang_id auto [not null]
+  xedien_id auto [not null]
+
+  indexes {
+    (cuahang_id) [name: 'core_xedien_cua_hang_cuahang_id_00d8beca', type: btree]
+    (id) [pk, unique, name: 'core_xedien_cua_hang_pkey', type: btree]
+    (xedien_id) [name: 'core_xedien_cua_hang_xedien_id_66744fd4', type: btree]
+    (xedien_id,cuahang_id) [unique, name: 'core_xedien_cua_hang_xedien_id_cuahang_id_32803d13_uniq', type: btree]
+  }
+}
+ref: core.XeDien.id > core.xedien_cua_hang.xedien_id
+ref: core.CuaHang.id > core.xedien_cua_hang.cuahang_id
+

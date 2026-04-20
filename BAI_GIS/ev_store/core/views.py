@@ -915,11 +915,18 @@ def sua_cua_hang(request, pk):
         ch.dia_chi = request.POST.get('dia_chi')
         ch.so_dien_thoai = request.POST.get('so_dien_thoai')
         ch.bai_gioi_thieu = request.POST.get('bai_gioi_thieu')
+        
         lat, lon = request.POST.get('lat'), request.POST.get('lon')
-        if lat: ch.lat = float(lat)
-        if lon: ch.lon = float(lon)
-        if 'hinh_anh' in request.FILES: ch.hinh_anh = request.FILES.get('hinh_anh')
+        
+        # Bổ sung replace(',', '.') ở đây để chặn lỗi nhập dấu phẩy
+        if lat: ch.lat = float(lat.replace(',', '.'))
+        if lon: ch.lon = float(lon.replace(',', '.'))
+        
+        if 'hinh_anh' in request.FILES: 
+            ch.hinh_anh = request.FILES.get('hinh_anh')
+            
         ch.save()
+        
     return redirect('quan_ly_cua_hang')
 
 @login_required
@@ -1167,10 +1174,23 @@ def danh_sach_phien_sac(request):
         phien = phien.filter(Q(tram_sac__ten_tram__icontains=tu_khoa) | Q(tram_sac__dia_chi__icontains=tu_khoa) | Q(user__username__icontains=tu_khoa))
     return render(request, 'tram_sac/danh_sach.html', {'phien': phien, 'tu_khoa': tu_khoa})
 
-@login_required
 def bat_dau_sac(request, tram_id):
+    # Khóa chặt bằng code thay vì chỉ dùng decorator
+    if not request.user.is_authenticated:
+        # Nếu gọi bằng AJAX thì trả về JSON lỗi
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': 'Vui lòng đăng nhập để sạc pin!'}, status=401)
+        # Nếu truy cập URL bình thường thì đá về trang đăng nhập
+        return redirect('login') 
+
     tram = get_object_or_404(TramSac, id=tram_id)
-    PhienSac.objects.create(user=request.user, tram_sac=tram, thoi_gian_bat_dau=timezone.now())
+    
+    PhienSac.objects.create(
+        user=request.user, 
+        tram_sac=tram, 
+        thoi_gian_bat_dau=timezone.now()
+    )
+    
     return redirect('danh_sach_phien_sac')
 
 @login_required(login_url='login')
@@ -1425,6 +1445,7 @@ def api_lay_tin_nhan_moi(request, khach_id):
         })
     return JsonResponse({'tin_nhans': data})
 
+@login_required(login_url='login')
 def dang_ky_lai_thu(request, xe_id):
     xe_quan_tam = get_object_or_404(XeDien, id=xe_id)
     
@@ -1674,6 +1695,13 @@ def xuat_excel_don_hang(request):
     return response
 
 def luu_danh_gia_api(request):
+    # BƯỚC 1: Chặn ngay nếu chưa đăng nhập
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'status': 'error', 
+            'message': 'Vui lòng đăng nhập để đánh giá trạm sạc.'
+        }, status=401) # Mã 401: Unauthorized (Chưa xác thực)
+
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -1682,8 +1710,9 @@ def luu_danh_gia_api(request):
             
             tram = TramSac.objects.get(id=tram_id)
             
+            # BƯỚC 2: Lưu thẳng request.user vì chắc chắn 100% đã đăng nhập
             DanhGiaTram.objects.create(
-                khach_hang=request.user if request.user.is_authenticated else None,
+                khach_hang=request.user,
                 tram_sac=tram,
                 so_sao=so_sao
             )

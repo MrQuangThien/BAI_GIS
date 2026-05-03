@@ -80,6 +80,7 @@ urlpatterns = [
     path('quan-ly-don-hang/<int:don_id>/', views.chi_tiet_don_hang, name='chi_tiet_don_hang'),
     path('quan-ly-don-hang/tao-don-tai-quay/', views.tao_don_hang_offline, name='tao_don_hang_offline'),
     path('admin/don-hang/xuat-excel/', views.xuat_excel_don_hang, name='xuat_excel_don_hang'),
+    path('api/kiem-tra-ma/', views.kiem_tra_ma_km, name='kiem_tra_ma_km'),
 
     # Quản lý Danh Mục
     path('quan-ly-danh-muc/', views.quan_ly_danh_muc, name='quan_ly_danh_muc'),
@@ -135,4 +136,11 @@ urlpatterns = [
     #Thông báo
     path('thong-bao/doc/<int:thong_bao_id>/', views.doc_thong_bao, name='doc_thong_bao'),
     path('thong-bao/doc-tat-ca/', views.danh_dau_tat_ca, name='danh_dau_tat_ca'),
+
+    #Mã Khuyến Mãi
+    path('quan-ly/voucher/', views.quan_ly_voucher, name='quan_ly_voucher'),
+    path('quan-ly/voucher/them/', views.them_sua_voucher, name='them_voucher'),
+    path('quan-ly/voucher/sua/<int:pk>/', views.them_sua_voucher, name='sua_voucher'),
+    path('quan-ly/voucher/xoa/<int:pk>/', views.xoa_voucher, name='xoa_voucher'),
+    path('ajax/luu-voucher/', views.luu_voucher_ajax, name='luu_voucher_ajax'),
 ]

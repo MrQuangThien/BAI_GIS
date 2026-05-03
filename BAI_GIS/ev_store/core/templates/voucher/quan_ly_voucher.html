@@ -1,0 +1,137 @@
+{% extends 'base_admin.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold"><i class="bi bi-ticket-perforated me-2"></i>Quản lý Khuyến mãi</h3>
+        <a href="{% url 'them_voucher' %}" class="btn btn-success fw-bold rounded-pill shadow-sm">
+            <i class="bi bi-plus-circle me-1"></i> Tạo mã mới
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4 py-3">Mã & Chương trình</th>
+                            <th>Giá trị ưu đãi</th>
+                            <th>Điều kiện áp dụng</th>
+                            <th>Phát hành & Thời hạn</th>
+                            <th>Trạng thái</th>
+                            <th class="pe-4 text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in danh_sach %}
+                        <tr>
+                            <!-- 1. CỘT MÃ & TÊN CHƯƠNG TRÌNH -->
+                            <td class="ps-4">
+                                <div class="d-flex flex-column">
+                                    <span class="badge bg-dark text-white px-2 py-1 mb-1 align-self-start" style="font-size: 0.8rem; letter-spacing: 0.5px;">{{ item.ma_code }}</span>
+                                    <span class="fw-bold text-dark">{{ item.ten_chuong_trinh }}</span>
+                                </div>
+                            </td>
+
+                            <!-- 2. CỘT GIÁ TRỊ GIẢM -->
+                            <td class="text-danger fw-bold">
+                                {% if item.loai_khuyen_mai == 'phan_tram' %}
+                                    <i class="bi bi-percent me-1"></i>Giảm {{ item.gia_tri }}%
+                                {% elif item.loai_khuyen_mai == 'tien_mat' %}
+                                    <i class="bi bi-cash me-1"></i>Giảm {{ item.gia_tri|intcomma }}đ
+                                {% else %}
+                                    {% if item.mo_ta_qua_tang %}
+                                    <span class="text-success"><i class="bi bi-gift-fill me-1"></i>Tặng: {{ item.mo_ta_qua_tang }}</span>
+                                    {% else %}
+                                    <span class="text-success"><i class="bi bi-gift-fill me-1"></i>Quà tặng kèm</span>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+
+                            <!-- 3. CỘT ĐIỀU KIỆN (Loại đơn + Sản phẩm) -->
+                            <td>
+                                <!-- Loại đơn -->
+                                <div class="mb-1 d-flex align-items-center">
+                                    <span class="text-muted small fw-semibold me-2" style="width: 65px;">Loại đơn:</span>
+                                    {% if item.loai_don_ap_dung == 'Tra_thang' %}
+                                        <span class="badge bg-info text-dark">Thanh toán 100%</span>
+                                    {% elif item.loai_don_ap_dung == 'Dat_coc' %}
+                                        <span class="badge bg-warning text-dark">Chỉ đặt cọc</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Mọi loại đơn</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Sản phẩm áp dụng -->
+                                <div class="d-flex align-items-center">
+                                    <span class="text-muted small fw-semibold me-2" style="width: 65px;">Áp dụng:</span>
+                                    {% with xe_list=item.xe_ap_dung.all %}
+                                        {% if not xe_list %}
+                                            <span class="badge bg-success-subtle text-success border border-success">Mọi loại xe</span>
+                                        {% else %}
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <!-- Lấy tối đa 2 xe để hiển thị -->
+                                                {% for xe in xe_list|slice:":2" %}
+                                                    <span class="badge bg-light text-dark border">{{ xe.ten_xe }}</span>
+                                                {% endfor %}
+                                                
+                                                <!-- Nếu có trên 2 xe, gom số lượng còn lại vào nút + -->
+                                                {% if xe_list|length > 2 %}
+                                                    <span class="badge bg-secondary" style="cursor: help;" title="Gồm: {% for xe in xe_list %}{{ xe.ten_xe }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+                                                        +{{ xe_list|length|add:"-2" }} xe khác
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </td>
+
+                            <!-- 4. CỘT PHÁT HÀNH & THỜI HẠN -->
+                            <td>
+                                <div class="mb-1">
+                                    {% if item.chien_luoc == 'public' %}
+                                    <span class="text-primary fw-bold small"><i class="bi bi-globe me-1"></i>Công khai</span>
+                                    {% elif item.chien_luoc == 'private' %}
+                                    <span class="text-success fw-bold small"><i class="bi bi-person-badge-fill me-1"></i>Thành viên</span>
+                                    {% else %}
+                                    <span class="text-danger fw-bold small"><i class="bi bi-car-front-fill me-1"></i>Quà Lái thử</span>
+                                    {% endif %}
+                                </div>
+                                <div class="small text-muted fw-semibold">
+                                    <i class="bi bi-clock-history me-1"></i>
+                                    {{ item.ngay_bat_dau|date:"d/m/Y" }} - {{ item.ngay_ket_thuc|date:"d/m/Y" }}
+                                </div>
+                            </td>
+
+                            <!-- 5. CỘT TRẠNG THÁI -->
+                            <td>
+                                {% if item.trang_thai %}
+                                <span class="badge bg-success-subtle text-success rounded-pill px-3">Hoạt động</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 text-danger">Tạm khóa</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- 6. THAO TÁC -->
+                            <td class="pe-4 text-end">
+                                <a href="{% url 'sua_voucher' item.pk %}" class="btn btn-sm btn-outline-primary border-0" title="Sửa"><i class="bi bi-pencil-square"></i></a>
+                                <a href="{% url 'xoa_voucher' item.pk %}" class="btn btn-sm btn-outline-danger border-0" onclick="return confirm('Bạn có chắc chắn muốn xóa mã này?')" title="Xóa"><i class="bi bi-trash"></i></a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if not danh_sach %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-ticket-detailed display-1 opacity-25 mb-3 d-block"></i>
+                    <h5>Chưa có chương trình khuyến mãi nào được tạo.</h5>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

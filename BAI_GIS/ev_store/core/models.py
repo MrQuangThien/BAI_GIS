@@ -130,6 +130,44 @@ class PhienSac(models.Model):
         # Gọi hàm save gốc của Django để lưu vào Database
         super().save(*args, **kwargs)
 
+class KhuyenMai(models.Model):
+    LOAI_KM_CHOICES = (
+        ('tien_mat', 'Giảm tiền mặt'),
+        ('phan_tram', 'Giảm phần trăm'),
+        ('qua_tang', 'Quà tặng kèm'),
+    )
+    CHIEN_LUOC_CHOICES = (
+        ('public', 'Hiển thị công khai (Trang chủ)'),
+        ('private', 'Đặc quyền thành viên (Ví Voucher)'),
+        ('lai_thu', 'Tặng kín sau khi lái thử'),
+    )
+    LOAI_DON_CHOICES = (
+        ('Tat_ca', 'Áp dụng cho mọi loại đơn'),
+        ('Tra_thang', 'Chỉ áp dụng khi Thanh toán 100%'),
+        ('Dat_coc', 'Chỉ áp dụng cho Đặt cọc'),
+    )
+
+    loai_don_ap_dung = models.CharField(max_length=20, choices=LOAI_DON_CHOICES, default='Tat_ca', verbose_name="Loại đơn áp dụng")
+    ma_code = models.CharField(max_length=50, unique=True)
+    ten_chuong_trinh = models.CharField(max_length=255)
+    loai_khuyen_mai = models.CharField(max_length=50, choices=LOAI_KM_CHOICES)
+    gia_tri = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+    chien_luoc = models.CharField(max_length=20, choices=CHIEN_LUOC_CHOICES, default='public') # MỚI THÊM
+    ngay_bat_dau = models.DateTimeField()
+    ngay_ket_thuc = models.DateTimeField()
+    trang_thai = models.BooleanField(default=True)
+    xe_ap_dung = models.ManyToManyField('XeDien', blank=True, help_text="Để trống nếu muốn áp dụng cho TẤT CẢ các xe. Trái lại, chỉ áp dụng cho xe được chọn.")
+    mo_ta_qua_tang = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True, 
+        help_text="Nhập mô tả quà tặng nếu loại khuyến mãi là 'Quà tặng kèm' (VD: Tặng sạc di động 2.2kW)"
+    )
+
+    def is_valid(self):
+        now = timezone.now()
+        return self.trang_thai and self.ngay_bat_dau <= now <= self.ngay_ket_thuc
+    
 class DonHang(models.Model):
     LOAI_DON_CHOICES = [
     ('TraThang', 'Thanh toán 100% nhận xe'),
@@ -169,7 +207,9 @@ class DonHang(models.Model):
     ngay_dat = models.DateTimeField(auto_now_add=True)
     tong_tien = models.DecimalField(max_digits=15, decimal_places=0, default=0)
     so_tien_tra_truoc = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name="Số tiền trả trước")
-
+    khuyen_mai = models.ForeignKey(KhuyenMai, on_delete=models.SET_NULL, null=True, blank=True)
+    tien_giam_gia = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+    
     def __str__(self):
         return f"Đơn #{self.id} - {self.ho_ten} - {self.xe.ten_xe}"
     
@@ -213,6 +253,7 @@ class UserProfile(models.Model):
     cua_hang = models.ForeignKey('CuaHang', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Chi nhánh làm việc")
     vai_tro = models.CharField(max_length=20, choices=VAI_TRO_CHOICES, default='khach_hang', verbose_name="Vai trò")
     avatar = models.ImageField(upload_to='avatars/', default='avatars/default.png', null=True, blank=True, verbose_name="Ảnh đại diện")
+    voucher_da_luu = models.ManyToManyField('KhuyenMai', blank=True, related_name='nguoi_dung_da_luu')
 
     def __str__(self):
         return self.user.username
@@ -347,3 +388,4 @@ class ThongBao(models.Model):
 
     def __str__(self):
         return self.tieu_de
+    

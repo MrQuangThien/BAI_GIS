@@ -173,6 +173,13 @@
                             {% endif %}
 
                             {% if request.user.is_superuser or request.user.userprofile.vai_tro == 'admin' or request.user.userprofile.vai_tro == 'quan_ly' %}
+                            
+                            <!-- BẮT ĐẦU PHẦN THÊM MỚI: QUẢN LÝ KHUYẾN MÃI -->
+                            <a href="{% url 'quan_ly_voucher' %}" class="{% if request.resolver_match.url_name == 'quan_ly_voucher' or request.resolver_match.url_name == 'them_voucher' or request.resolver_match.url_name == 'sua_voucher' %}active{% endif %}">
+                                <i class="bi bi-ticket-perforated me-2"></i> Quản lý Khuyến mãi
+                            </a>
+                            <!-- KẾT THÚC PHẦN THÊM MỚI -->
+
                             <a href="{% url 'ql_nhan_vien' %}" class="{% if request.resolver_match.url_name == 'ql_nhan_vien' or request.resolver_match.url_name == 'them_user' or request.resolver_match.url_name == 'sua_user' %}active{% endif %}">
                                 <i class="bi bi-person-vcard me-2"></i> Quản lý Nhân Viên
                             </a>
@@ -317,7 +324,6 @@
         let isUserScrolling = false;
         const chatBox = document.getElementById('chat-box');
         
-        // Bắt sự kiện cuộn chuột để xem người dùng có đang cuộn lên không
         if (chatBox) {
             chatBox.addEventListener('scroll', function() {
                 isUserScrolling = chatBox.scrollTop + chatBox.clientHeight < chatBox.scrollHeight - 20;
@@ -335,7 +341,6 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 
-                // 1. TÌM VÀ CẬP NHẬT CÁC SỐ ĐẾM TRÊN CHUÔNG
                 const currentBadge = document.getElementById('notification-badge');
                 const newBadge = doc.getElementById('notification-badge');
                 if (currentBadge && newBadge && currentBadge.innerText.trim() !== newBadge.innerText.trim()) {
@@ -345,27 +350,23 @@
                     setTimeout(() => currentBadge.parentElement.classList.remove('animate-pulse'), 1000);
                 }
 
-                // 2. TÌM VÀ CẬP NHẬT DANH SÁCH THÔNG BÁO BÊN TRONG
                 const currentList = document.getElementById('notification-list');
                 const newList = doc.getElementById('notification-list');
                 if (currentList && newList && currentList.innerHTML !== newList.innerHTML) {
                     currentList.innerHTML = newList.innerHTML;
                 }
 
-                // 3. CẬP NHẬT DANH SÁCH KHÁCH HÀNG BÊN TRÁI
                 const currentUserList = document.getElementById('chat-user-list');
                 const newUserList = doc.getElementById('chat-user-list');
                 if (currentUserList && newUserList && currentUserList.innerHTML !== newUserList.innerHTML) {
                     currentUserList.innerHTML = newUserList.innerHTML;
                 }
 
-                // 4. CẬP NHẬT KHUNG CHAT BÊN PHẢI
                 const currentChat = document.getElementById('chat-box');
                 const newChat = doc.getElementById('chat-box');
                 if (currentChat && newChat && currentChat.innerHTML !== newChat.innerHTML) {
                     currentChat.innerHTML = newChat.innerHTML;
                     
-                    // Nếu khách hàng gửi tin nhắn mới và Admin đang không cuộn lên thì nhảy xuống đáy
                     if (!isUserScrolling) {
                         currentChat.scrollTop = currentChat.scrollHeight;
                     }
@@ -373,7 +374,6 @@
                 
             })
             .catch(error => {
-                // Im lặng
             });
         }, 3000); 
         

@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import XeDien, DonHang, KhoHang, CuaHang, PhienSac, UserProfile, Feedback,PhieuNhapKho, ChiTietPhieuNhap, YeuCauHoTro, LichLaiThu
+from .models import XeDien, DonHang, KhoHang, CuaHang, PhienSac, UserProfile, Feedback,PhieuNhapKho, ChiTietPhieuNhap, YeuCauHoTro, LichLaiThu, KhuyenMai
 from django.forms import inlineformset_factory
 
 # ==========================================
@@ -437,3 +437,21 @@ class LichLaiThuForm(forms.ModelForm):
         # Chỉ hiển thị danh sách các chi nhánh
         self.fields['cua_hang'].queryset = CuaHang.objects.all()
         self.fields['cua_hang'].empty_label = "--- Chọn chi nhánh bạn muốn đến xem ---"
+
+class KhuyenMaiForm(forms.ModelForm):
+    class Meta:
+        model = KhuyenMai
+        fields = ['ma_code', 'ten_chuong_trinh', 'loai_khuyen_mai', 'gia_tri', 'mo_ta_qua_tang', 'loai_don_ap_dung', 'chien_luoc', 'ngay_bat_dau', 'ngay_ket_thuc', 'trang_thai', 'xe_ap_dung']
+        widgets = {
+            'ngay_bat_dau': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'ngay_ket_thuc': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'ma_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'VD: VINFAST50'}),
+            'ten_chuong_trinh': forms.TextInput(attrs={'class': 'form-control'}),
+            'loai_khuyen_mai': forms.Select(attrs={'class': 'form-select'}),
+            'chien_luoc': forms.Select(attrs={'class': 'form-select'}),
+            'gia_tri': forms.NumberInput(attrs={'class': 'form-control'}),
+            'mo_ta_qua_tang': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'VD: Tặng sạc di động 2.2kW'}),
+            'loai_don_ap_dung': forms.Select(attrs={'class': 'form-select'}),
+            'trang_thai': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'xe_ap_dung': forms.SelectMultiple(attrs={'class': 'form-select', 'size': '4'}),
+        }

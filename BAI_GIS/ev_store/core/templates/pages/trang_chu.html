@@ -6,6 +6,35 @@
 
 {% block extra_css %}
 <style>
+    /* --- LƯỚI CUỘN NGANG CHO VOUCHER --- */
+    .voucher-scroll-container {
+        display: grid;
+        grid-auto-flow: column;
+        /* Mặc định trên PC hiện 3 voucher 1 lúc */
+        grid-auto-columns: calc((100% - (2 * 1.5rem)) / 3); 
+        gap: 1.5rem;
+        overflow-x: auto;
+        padding: 10px 5px 25px 5px; 
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+    }
+    
+    .voucher-item { scroll-snap-align: start; height: 100%; }
+
+    /* Responsive cho Voucher */
+    @media (max-width: 991px) { 
+        .voucher-scroll-container { grid-auto-columns: calc((100% - 1.5rem) / 2); } 
+    }
+    @media (max-width: 575px) { 
+        .voucher-scroll-container { grid-auto-columns: 85%; } 
+    }
+
+    /* Trang trí thanh cuộn màu đỏ tông xuyệt tông với Voucher */
+    .voucher-scroll-container::-webkit-scrollbar { height: 8px; }
+    .voucher-scroll-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    .voucher-scroll-container::-webkit-scrollbar-thumb { background: #198754; border-radius: 10px; } /* Đổi sang xanh lá */
+    .voucher-scroll-container::-webkit-scrollbar-thumb:hover { background: #146c43; } /* Xanh đậm khi di chuột */
+    
     /* CSS cho phần Hero Banner */
     .hero {
         height: 550px;
@@ -68,79 +97,46 @@
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15) !important;
     }
 
-    /* ========================================== */
-    /* LƯỚI CUỘN TỰ ĐỘNG CHIA TỈ LỆ (SMART GRID SCROLL) */
-    /* ========================================== */
+    /* LƯỚI CUỘN TỰ ĐỘNG CHIA TỈ LỆ */
     .product-scroll-container {
         display: grid;
         grid-auto-flow: column;
         grid-auto-columns: calc((100% - (3 * 1.5rem)) / 4);
         gap: 1.5rem;
         overflow-x: auto;
-        
-        /* ĐÃ SỬA: Thêm padding các bên để bóng đổ của thẻ khi hover không bị cắt mất */
         padding: 10px 5px 25px 5px; 
-        
         scroll-snap-type: x mandatory;
         scroll-behavior: smooth;
     }
     
-    .product-item {
-        scroll-snap-align: start;
-        height: 100%; 
-    }
+    .product-item { scroll-snap-align: start; height: 100%; }
 
-    @media (max-width: 991px) {
-        .product-scroll-container {
-            grid-auto-columns: calc((100% - (2 * 1.5rem)) / 3);
-        }
-    }
-
+    @media (max-width: 991px) { .product-scroll-container { grid-auto-columns: calc((100% - (2 * 1.5rem)) / 3); } }
     @media (max-width: 767px) {
-        .product-scroll-container {
-            grid-auto-columns: calc((100% - 1.5rem) / 2);
-        }
-        /* Thu nhỏ chữ ở trang chủ trên mobile để đồng bộ */
+        .product-scroll-container { grid-auto-columns: calc((100% - 1.5rem) / 2); }
         .hero h1 { font-size: 35px; }
     }
+    @media (max-width: 575px) { .product-scroll-container { grid-auto-columns: 85%; } }
 
-    @media (max-width: 575px) {
-        .product-scroll-container {
-            grid-auto-columns: 85%;
-        }
-    }
+    /* TRANG TRÍ THANH CUỘN */
+    .product-scroll-container::-webkit-scrollbar { height: 8px; }
+    .product-scroll-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    .product-scroll-container::-webkit-scrollbar-thumb { background: #198754; border-radius: 10px; }
+    .product-scroll-container::-webkit-scrollbar-thumb:hover { background: #146c43; }
+    .sap-ve-scroll::-webkit-scrollbar-thumb { background: #0dcaf0; }
+    .sap-ve-scroll::-webkit-scrollbar-thumb:hover { background: #0bacbe; }
 
-    /* TRANG TRÍ THANH CUỘN BÊN DƯỚI */
-    .product-scroll-container::-webkit-scrollbar {
-        height: 8px; 
-    }
-    .product-scroll-container::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
-    }
-    .product-scroll-container::-webkit-scrollbar-thumb {
-        background: #198754; 
-        border-radius: 10px;
-    }
-    .product-scroll-container::-webkit-scrollbar-thumb:hover {
-        background: #146c43;
-    }
-
-    .sap-ve-scroll::-webkit-scrollbar-thumb {
-        background: #0dcaf0; 
-    }
-    .sap-ve-scroll::-webkit-scrollbar-thumb:hover {
-        background: #0bacbe;
-    }
+    /* --- MỚI THÊM: CSS CHO VOUCHER CÔNG KHAI --- */
+    .border-dashed { border-style: dashed !important; border-width: 2px !important; }
+    .transition-hover { transition: transform 0.2s ease-in-out; }
+    .transition-hover:hover { transform: translateY(-5px); }
 </style>
 {% endblock %}
 
 {% block content %}
     <section class="hero">
         <img src="{% static 'core/images/banner.jpg' %}" alt="EV Store Banner" class="hero-img">
-        
         <div class="hero-overlay"></div>
-
         <div class="container">
             <h1>Tương Lai Của Xe Điện</h1>
             <p class="lead mt-3 mb-4 fw-light">Khám phá hệ sinh thái xe điện hiện đại – tiết kiệm – thân thiện môi trường</p>
@@ -150,7 +146,6 @@
 
     <div class="container my-4 my-md-5 py-3">
         <h2 class="section-title text-center border-0 mb-4">Tại sao nên dùng xe điện?</h2>
-        
         <div class="row text-center mt-4 g-3">
             <div class="col-6 col-md-3 mb-3">
                 <i class="bi bi-tree feature-icon"></i>
@@ -174,6 +169,62 @@
             </div>
         </div>
     </div>
+
+    {% if voucher_public %}
+        {% if hien_thi_khuyen_mai %}
+        <!-- ID CHÍNH: Dùng để ẩn toàn bộ khu vực bằng Javascript -->
+        <div class="container my-4 my-md-5 pt-3" id="khu-vuc-khuyen-mai">
+            <div class="d-flex align-items-center mb-3">
+                <h4 class="fw-bold text-danger mb-0"><i class="bi bi-fire text-warning me-2"></i>ƯU ĐÃI ĐANG DIỄN RA</h4>
+                <div class="ms-3 flex-grow-1 border-bottom border-danger opacity-25"></div>
+            </div>
+
+            <div class="voucher-scroll-container mt-3">
+                {% for km in voucher_public %}
+                <div class="voucher-item">
+                    <div class="card border-0 rounded-3 shadow-sm h-100 transition-hover" style="border: 1.5px solid rgba(25, 135, 84, 0.4) !important; background-color: #ffffff;">
+                        <div class="card-body p-3 d-flex flex-column">
+                            
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="fw-bold text-success text-uppercase mb-0" style="font-size: 0.75rem; line-height: 1.4; padding-right: 10px;">{{ km.ten_chuong_trinh }}</h6>
+                                <i class="bi bi-ticket-perforated text-danger opacity-25 fs-4" style="margin-top: -5px;"></i>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h5 class="fw-bold text-dark mb-0">
+                                    {% if km.loai_khuyen_mai == 'phan_tram' %} Giảm <span class="text-danger fs-3">{{ km.gia_tri }}%</span>
+                                    {% elif km.loai_khuyen_mai == 'tien_mat' %} Giảm <span class="text-danger fs-4">{{ km.gia_tri|intcomma }}đ</span>
+                                    {% else %} <i class="bi bi-gift-fill text-danger me-1"></i> <span class="text-danger fs-5">{% if km.mo_ta_qua_tang %}{{ km.mo_ta_qua_tang }}{% else %}Quà tặng kèm{% endif %}</span>
+                                    {% endif %}
+                                </h5>
+                            </div>
+                            
+                            <div class="mt-auto border-top pt-3 d-flex justify-content-between align-items-center" style="border-style: dashed !important; border-width: 1.5px !important; border-color: rgba(220, 53, 69, 0.3) !important;">
+                                <div>
+                                    <span class="bg-light px-2 py-1 rounded border text-dark fw-bold user-select-all shadow-sm" style="font-size: 0.85rem; letter-spacing: 0.5px;">{{ km.ma_code }}</span>
+                                    <div class="text-muted mt-2" style="font-size: 0.7rem;"><i class="bi bi-clock-history me-1"></i>HSD: {{ km.ngay_ket_thuc|date:"d/m/Y" }}</div>
+                                </div>
+                                
+                                {% if request.user.is_authenticated %}
+                                    <button class="btn btn-sm btn-luu-voucher rounded-pill fw-bold shadow-sm {% if km.id in danh_sach_voucher_da_luu %}btn-secondary disabled{% else %}btn-danger{% endif %}" 
+                                            data-id="{{ km.id }}" 
+                                            {% if km.id in danh_sach_voucher_da_luu %}disabled{% endif %}
+                                            style="font-size: 0.75rem; padding: 6px 14px;">
+                                        {% if km.id in danh_sach_voucher_da_luu %}<i class="bi bi-check2 me-1"></i>Đã lưu{% else %}Lưu mã{% endif %}
+                                    </button>
+                                {% else %}
+                                    <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-sm btn-danger rounded-pill fw-bold shadow-sm" style="font-size: 0.75rem; padding: 6px 14px;">Lưu mã</a>
+                                {% endif %}
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
 
     <div class="container my-5" id="noibat">
         <h2 class="section-title border-success">Sản phẩm nổi bật</h2>
@@ -276,4 +327,55 @@
             {% endfor %}
         </div>
     </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const btnLuuList = document.querySelectorAll('.btn-luu-voucher');
+    const khuVucKhuyenMai = document.getElementById('khu-vuc-khuyen-mai');
+
+    btnLuuList.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault(); // Ngăn chặn hành động mặc định
+
+            // 1. Chặn luôn nếu nút đã ở trạng thái disabled (Khóa một chiều)
+            if (this.disabled || this.classList.contains('disabled')) return;
+
+            const voucherId = this.getAttribute('data-id');
+            const button = this;
+
+            fetch("{% url 'luu_voucher_ajax' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `voucher_id=${voucherId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 2. Ép cứng trạng thái thành "Đã Lưu" và khóa lại
+                button.classList.remove('btn-danger');
+                button.classList.add('btn-secondary', 'disabled');
+                button.disabled = true;
+                button.innerHTML = '<i class="bi bi-check2 me-1"></i>Đã lưu';
+
+                // 3. Logic ẩn toàn bộ khu vực khi vét sạch mã
+                // Kiểm tra xem tất cả các nút lưu mã trên màn hình đã disabled chưa
+                const allSaved = Array.from(btnLuuList).every(b => b.disabled || b.classList.contains('disabled'));
+                
+                if (allSaved && khuVucKhuyenMai) {
+                    // Hiệu ứng mờ dần trong 0.5 giây rồi biến mất
+                    khuVucKhuyenMai.style.transition = "opacity 0.5s ease";
+                    khuVucKhuyenMai.style.opacity = "0";
+                    setTimeout(() => {
+                        khuVucKhuyenMai.style.display = "none";
+                    }, 500);
+                }
+            })
+            .catch(error => console.error('Error saving voucher:', error));
+        });
+    });
+});
+</script>
+
 {% endblock %}

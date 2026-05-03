@@ -16,14 +16,14 @@
             {% endfor %}
         {% endif %}
 
+        <!-- SIDEBAR MENU -->
         <div class="col-md-4 col-lg-3 mb-4">
-            
             <div class="card border-0 shadow-sm rounded-4 text-center p-3 p-md-4 mb-3">
                 <div class="position-relative d-inline-block mx-auto mb-2">
                     {% if user.userprofile.avatar %}
-                        <img src="{{ user.userprofile.avatar.url }}" id="avatarPreviewMenu" class="rounded-circle border border-3 border-success object-fit-cover" style="width: 100px; height: 100px; md-width: 120px; md-height: 120px;">
+                        <img src="{{ user.userprofile.avatar.url }}" id="avatarPreviewMenu" class="rounded-circle border border-3 border-success object-fit-cover" style="width: 100px; height: 100px;">
                     {% else %}
-                        <img src="https://via.placeholder.com/150" id="avatarPreviewMenu" class="rounded-circle border border-3 border-success object-fit-cover" style="width: 100px; height: 100px; md-width: 120px; md-height: 120px;">
+                        <img src="https://via.placeholder.com/150" id="avatarPreviewMenu" class="rounded-circle border border-3 border-success object-fit-cover" style="width: 100px; height: 100px;">
                     {% endif %}
                 </div>
                 
@@ -37,131 +37,97 @@
             </div>
 
             <div class="nav nav-pills flex-column shadow-sm rounded-4 bg-white p-2 mobile-scroll-menu" id="account-tabs" role="tablist">
-                
-                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'profile' or not active_tab %}active{% endif %}" id="tab-profile" data-bs-toggle="pill" data-bs-target="#content-profile" type="button" role="tab">
-                    <i class="bi bi-person-lines-fill me-2"></i> Hồ sơ
+                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'profile' or not active_tab %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#content-profile" type="button" role="tab">
+                    <i class="bi bi-person-lines-fill me-2"></i> Hồ sơ cá nhân
                 </button>
-                
-                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'orders' %}active{% endif %}" id="tab-orders" data-bs-toggle="pill" data-bs-target="#content-orders" type="button" role="tab">
-                    <i class="bi bi-box-seam me-2"></i> Lịch sử mua
+                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'orders' %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#content-orders" type="button" role="tab">
+                    <i class="bi bi-box-seam me-2"></i> Lịch sử mua xe
                 </button>
-                
-                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'email' %}active{% endif %}" id="tab-email" data-bs-toggle="pill" data-bs-target="#content-email" type="button" role="tab">
+                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'laithu' %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#content-laithu" type="button" role="tab">
+                    <i class="bi bi-car-front-fill me-2"></i> Lịch sử Lái thử
+                </button>
+                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'sacpin' %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#content-sacpin" type="button" role="tab">
+                    <i class="bi bi-ev-station-fill me-2"></i> Lịch sử Sạc pin
+                </button>
+                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'voucher' %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#content-voucher" type="button" role="tab">
+                    <i class="bi bi-ticket-perforated-fill me-2"></i> Ví Voucher
+                </button>
+                <hr class="my-2 opacity-25 d-none d-md-block">
+                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'email' %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#content-email" type="button" role="tab">
                     <i class="bi bi-envelope-check me-2"></i> Đổi Email
                 </button>
-
-                <button class="nav-link text-start fw-bold py-3 px-3 mb-0 {% if active_tab == 'security' %}active{% endif %}" id="tab-security" data-bs-toggle="pill" data-bs-target="#content-security" type="button" role="tab">
+                <button class="nav-link text-start fw-bold py-3 px-3 mb-0 {% if active_tab == 'security' %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#content-security" type="button" role="tab">
                     <i class="bi bi-shield-lock-fill me-2"></i> Đổi mật khẩu
                 </button>
-                
             </div>
         </div>
 
+        <!-- MAIN CONTENT TABS -->
         <div class="col-md-8 col-lg-9">
-            <div class="tab-content shadow-sm bg-white rounded-4 p-3 p-md-5 border-0" id="account-tab-content">
+            <div class="tab-content shadow-sm bg-white rounded-4 p-3 p-md-5 border-0 min-vh-50" id="account-tab-content">
 
+                <!-- 1. TAB HỒ SƠ -->
                 <div class="tab-pane fade {% if active_tab == 'profile' or not active_tab %}show active{% endif %}" id="content-profile" role="tabpanel">
-                    <h4 class="fw-bold mb-3 mb-md-4 text-success border-bottom pb-2 pb-md-3 fs-5 fs-md-4"><i class="bi bi-info-circle me-2"></i>Hồ Sơ Của Tôi</h4>
+                    <h4 class="fw-bold mb-3 mb-md-4 text-success border-bottom pb-2 pb-md-3"><i class="bi bi-info-circle me-2"></i>Hồ Sơ Của Tôi</h4>
                     <form id="profile-form" method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="row g-3 g-md-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-muted">Họ (Last Name)</label>
-                                <input type="text" name="last_name" value="{{ u_form.last_name.value|default:'' }}" class="form-control form-control-md form-control-md-lg bg-light" required>
+                                <input type="text" name="last_name" value="{{ u_form.last_name.value|default:'' }}" class="form-control bg-light" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-muted">Tên (First Name)</label>
-                                <input type="text" name="first_name" value="{{ u_form.first_name.value|default:'' }}" class="form-control form-control-md form-control-md-lg bg-light" required>
+                                <input type="text" name="first_name" value="{{ u_form.first_name.value|default:'' }}" class="form-control bg-light" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-muted">Email đăng nhập</label>
-                                <input type="email" value="{{ u_form.email.value|default:'' }}" class="form-control form-control-md form-control-md-lg bg-secondary-subtle text-muted border-0" readonly title="Vui lòng sang tab Cài đặt Email để thay đổi">
+                                <input type="email" value="{{ u_form.email.value|default:'' }}" class="form-control bg-secondary-subtle text-muted border-0" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-muted">Số điện thoại</label>
-                                <input type="text" name="so_dien_thoai" value="{{ p_form.so_dien_thoai.value|default:'' }}" class="form-control form-control-md form-control-md-lg bg-light">
+                                <input type="text" name="so_dien_thoai" value="{{ p_form.so_dien_thoai.value|default:'' }}" class="form-control bg-light">
                             </div>
                             <div class="col-12">
                                 <label class="form-label fw-bold small text-muted">Địa chỉ liên hệ</label>
                                 <textarea name="dia_chi" class="form-control bg-light" rows="3">{{ p_form.dia_chi.value|default:'' }}</textarea>
                             </div>
                         </div>
-                        <div class="text-center text-md-end mt-4 mt-md-5 pt-3 border-top">
-                            <button type="submit" name="btn_cap_nhat_thong_tin" class="btn btn-success px-5 fw-bold rounded-pill shadow-sm w-100 w-md-auto">
-                                Lưu thay đổi
-                            </button>
+                        <div class="text-center text-md-end mt-4 pt-3 border-top">
+                            <button type="submit" name="btn_cap_nhat_thong_tin" class="btn btn-success px-5 fw-bold rounded-pill shadow-sm w-100 w-md-auto">Lưu thay đổi</button>
                         </div>
                     </form>
                 </div>
 
+                <!-- 2. TAB MUA XE -->
                 <div class="tab-pane fade {% if active_tab == 'orders' %}show active{% endif %}" id="content-orders" role="tabpanel">
-                    <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3 fs-5 fs-md-4"><i class="bi bi-box-seam me-2 text-primary"></i>Lịch sử mua hàng</h4>
+                    <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3"><i class="bi bi-box-seam me-2 text-primary"></i>Lịch sử mua hàng</h4>
                     
                     {% if danh_sach_don_hang %}
                         <div class="d-flex flex-column gap-3">
                         {% for don in danh_sach_don_hang %}
                             <div class="card border border-light-subtle shadow-sm rounded-4 overflow-hidden">
-                                <div class="card-header bg-light border-bottom-0 pt-3 pb-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center pt-3 pb-2">
                                     <span class="text-muted small"><i class="bi bi-clock me-1"></i> Ngày đặt: <strong>{{ don.ngay_dat|date:"d/m/Y" }}</strong></span>
-                                    
-                                    {% if don.trang_thai == 'Pending' %}
-                                        <span class="badge bg-warning text-dark px-2 px-md-3 py-1 py-md-2 rounded-pill"><i class="bi bi-hourglass-split me-1"></i> Đang chờ xử lý</span>
-                                    {% elif don.trang_thai == 'Deposit Paid' %}
-                                        <span class="badge bg-info text-dark px-2 px-md-3 py-1 py-md-2 rounded-pill"><i class="bi bi-credit-card me-1"></i> Đã đặt cọc</span>
-                                    {% elif don.trang_thai == 'Paid' %}
-                                        <span class="badge bg-success px-2 px-md-3 py-1 py-md-2 rounded-pill"><i class="bi bi-check-circle me-1"></i> Đã thanh toán</span>
-                                    {% elif don.trang_thai == 'Cancelled' %}
-                                        <span class="badge bg-danger px-2 px-md-3 py-1 py-md-2 rounded-pill"><i class="bi bi-x-circle me-1"></i> Đã hủy</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary px-2 px-md-3 py-1 py-md-2 rounded-pill">{{ don.get_trang_thai_display }}</span>
-                                    {% endif %}
+                                    <span class="badge {% if don.trang_thai == 'Paid' %}bg-success{% elif don.trang_thai == 'Cancelled' %}bg-danger{% else %}bg-warning text-dark{% endif %} px-3 py-2 rounded-pill">
+                                        {{ don.get_trang_thai_display }}
+                                    </span>
                                 </div>
-                                
                                 <div class="card-body p-3 p-md-4">
-                                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                        
-                                        <div class="d-flex align-items-center w-100 mb-3 mb-md-0">
-                                            {% if don.xe.hinh_anh %}
-                                                <img src="{{ don.xe.hinh_anh.url }}" class="rounded-3 object-fit-cover me-3 border" style="width: 100px; height: 70px; md-width: 140px; md-height: 90px;">
-                                            {% else %}
-                                                <div class="bg-secondary-subtle rounded-3 me-3 d-flex align-items-center justify-content-center text-muted" style="width: 100px; height: 70px; md-width: 140px; md-height: 90px;">
-                                                    <i class="bi bi-car-front fs-4 fs-md-3"></i>
-                                                </div>
-                                            {% endif %}
-                                            
-                                            <div class="flex-grow-1">
-                                                <h6 class="fw-bold mb-1 fs-6 fs-md-5 text-dark">
-                                                    {{ don.xe.ten_xe }}
-                                                </h6>
-                                                <p class="text-muted small mb-2">Thương hiệu: {{ don.xe.hang_san_xuat }}</p>
-                                                
-                                                {% if don.hinh_thuc_nhan == 'Giao_tan_noi' %}
-                                                    <p class="text-dark small mb-1 fw-semibold"><i class="bi bi-truck text-primary me-1"></i> Giao tận nhà</p>
-                                                {% else %}
-                                                    <p class="text-dark small mb-1 fw-semibold"><i class="bi bi-shop text-success me-1"></i> Nhận trực tiếp</p>
-                                                {% endif %}
-
-                                                <span class="badge border border-success text-success bg-success-subtle mt-1">{{ don.get_loai_don_display }}</span>
+                                    <div class="d-flex align-items-center">
+                                        {% if don.xe.hinh_anh %}
+                                            <img src="{{ don.xe.hinh_anh.url }}" class="rounded-3 object-fit-cover me-3 border" style="width: 120px; height: 80px;">
+                                        {% else %}
+                                            <div class="bg-secondary-subtle rounded-3 me-3 d-flex align-items-center justify-content-center text-muted" style="width: 120px; height: 80px;">
+                                                <i class="bi bi-car-front fs-3"></i>
                                             </div>
+                                        {% endif %}
+                                        <div class="flex-grow-1">
+                                            <h6 class="fw-bold mb-1 fs-5">{{ don.xe.ten_xe }}</h6>
+                                            <p class="text-muted small mb-1">Loại đơn: <span class="badge border text-dark">{{ don.get_loai_don_display }}</span></p>
+                                            <p class="text-danger fw-bold mb-0 fs-6">{{ don.tong_tien|intcomma }} ₫</p>
                                         </div>
-                                        
-                                        <div class="text-start text-md-end border-top border-md-top-0 border-md-start pt-3 pt-md-0 ps-md-4 ms-md-2 mt-2 mt-md-0 w-100" style="md-min-width: 160px;">
-                                            <p class="text-muted small mb-0">Tổng giá trị xe</p>
-                                            <span class="text-dark fw-bold fs-6">{{ don.tong_tien|intcomma }} ₫</span>
-                                            
-                                            <hr class="my-2 border-secondary opacity-25">
-                                            
-                                            <div class="d-flex justify-content-between d-md-block align-items-center">
-                                                <div>
-                                                    <p class="text-muted small mb-0 text-md-end">Đã thanh toán</p>
-                                                    <span class="text-danger fw-bold fs-5">{{ don.so_tien_tra_truoc|intcomma }} ₫</span>
-                                                </div>
-                                                <a href="{% url 'chi_tiet_don_khach' don.id %}" class="btn btn-outline-success btn-sm mt-0 mt-md-3 rounded-pill fw-bold">
-                                                    Chi tiết <i class="bi bi-arrow-right-short d-none d-md-inline"></i>
-                                                </a>
-                                            </div>
-                                        </div>
-
+                                        <a href="{% url 'chi_tiet_don_khach' don.id %}" class="btn btn-outline-success rounded-pill px-4 fw-bold shadow-sm">Chi tiết</a>
                                     </div>
                                 </div>
                             </div>
@@ -170,13 +136,183 @@
                     {% else %}
                         <div class="text-center py-5 text-muted bg-light rounded-4 border border-dashed">
                             <i class="bi bi-bag-x display-1 opacity-25 mb-3 d-block"></i>
-                            <h5 class="fw-bold fs-5 fs-md-4">Bạn chưa có đơn hàng nào</h5>
+                            <h5 class="fw-bold fs-5">Bạn chưa có đơn hàng nào</h5>
                             <p class="small px-2">Hãy khám phá các dòng xe điện tuyệt vời của chúng tôi nhé!</p>
                             <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-success rounded-pill px-4 mt-2 fw-bold shadow-sm">Mua sắm ngay</a>
                         </div>
                     {% endif %}
                 </div>
-                
+
+                <!-- 3. TAB LÁI THỬ -->
+                <div class="tab-pane fade {% if active_tab == 'laithu' %}show active{% endif %}" id="content-laithu" role="tabpanel">
+                    <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3"><i class="bi bi-car-front-fill me-2 text-info"></i>Lịch sử Lái thử</h4>
+                    
+                    {% if danh_sach_lai_thu %}
+                        <div class="table-responsive bg-white border rounded-4 shadow-sm">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="py-3 ps-3">Ngày đăng ký</th>
+                                        <th class="py-3">Mẫu xe</th>
+                                        <th class="py-3">Chi nhánh trải nghiệm</th>
+                                        <th class="py-3 pe-3">Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for lt in danh_sach_lai_thu %}
+                                    <tr>
+                                        <td class="ps-3">{{ lt.ngay_tao|date:"d/m/Y" }}</td>
+                                        
+                                        <td class="fw-bold text-primary">
+                                            {% if lt.xe_quan_tam %}
+                                                {{ lt.xe_quan_tam.ten_xe }}
+                                            {% else %}
+                                                <span class="text-muted fw-normal fst-italic">Chưa chọn xe</span>
+                                            {% endif %}
+                                        </td>
+                                        
+                                        <td><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ lt.cua_hang.ten_cua_hang }}</td>
+                                        <td class="pe-3">
+                                            {% if lt.trang_thai == 'Da_hoan_tat' %}
+                                                <span class="badge bg-success rounded-pill px-3 py-2">Đã trải nghiệm</span>
+                                            {% elif lt.trang_thai == 'Cho_xac_nhan' %}
+                                                <span class="badge bg-warning text-dark rounded-pill px-3 py-2">Đang chờ hẹn</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary rounded-pill px-3 py-2">{{ lt.get_trang_thai_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted bg-light rounded-4 border border-dashed">
+                            <i class="bi bi-journal-x display-1 opacity-25 mb-3 d-block"></i>
+                            <h5 class="fw-bold fs-5">Bạn chưa đăng ký lái thử lần nào</h5>
+                            <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-outline-primary rounded-pill mt-3 fw-bold px-4">Đăng ký trải nghiệm ngay</a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- 4. TAB SẠC PIN -->
+                <div class="tab-pane fade {% if active_tab == 'sacpin' %}show active{% endif %}" id="content-sacpin" role="tabpanel">
+                    <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3"><i class="bi bi-ev-station-fill me-2 text-success"></i>Lịch sử Sạc pin</h4>
+                    
+                    {% if danh_sach_phien_sac %}
+                        <div class="table-responsive bg-white border rounded-4 shadow-sm">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="py-3 ps-3">Thời gian</th>
+                                        <th class="py-3">Trạm sạc</th>
+                                        <th class="py-3">Điện năng</th>
+                                        <th class="py-3">Tổng tiền</th>
+                                        <th class="py-3 pe-3">Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for ps in danh_sach_phien_sac %}
+                                    <tr>
+                                        <td class="small ps-3">{{ ps.thoi_gian_bat_dau|date:"d/m/Y H:i" }}</td>
+                                        <td class="fw-bold text-success"><i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ ps.tram_sac.ten_tram }}</td>
+                                        <td class="fw-semibold">{{ ps.dien_nang_tieu_thu }} <span class="text-muted small">kWh</span></td>
+                                        <td class="fw-bold text-danger">{{ ps.tong_tien|intcomma }} ₫</td>
+                                        <td class="pe-3">
+                                            <span class="badge {% if ps.trang_thai == 'Hoan thanh' %}bg-success{% else %}bg-warning text-dark{% endif %} rounded-pill px-2 py-1">
+                                                {{ ps.trang_thai }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted bg-light rounded-4 border border-dashed">
+                            <i class="bi bi-plug-fill display-1 opacity-25 mb-3 d-block"></i>
+                            <h5 class="fw-bold fs-5">Bạn chưa sử dụng dịch vụ sạc pin</h5>
+                            <p class="small px-2">Lịch sử sạc tại các trạm sẽ được cập nhật tại đây.</p>
+                            <a href="{% url 'ban_do_gis' %}" class="btn btn-outline-success rounded-pill mt-2 px-4 fw-bold">Tìm trạm sạc quanh đây</a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- 5. TAB VÍ VOUCHER -->
+                <div class="tab-pane fade {% if active_tab == 'voucher' %}show active{% endif %}" id="content-voucher" role="tabpanel">
+                    <h4 class="fw-bold mb-3 mb-md-4 text-danger border-bottom pb-2 pb-md-3"><i class="bi bi-wallet2 me-2"></i>Ví Voucher Của Tôi</h4>
+                    
+                    <div class="row g-3">
+                        <!-- VOUCHER THÀNH VIÊN -->
+                        {% for km in voucher_private %}
+                        <div class="col-md-6">
+                            <div class="card border-success border-2 rounded-4 border-dashed h-100 shadow-sm">
+                                <div class="card-body d-flex align-items-center">
+                                    <div class="bg-success text-white rounded-3 p-3 me-3 text-center shadow-sm">
+                                        <i class="bi bi-ev-station-fill fs-2"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-1 text-success">{{ km.ten_chuong_trinh }}</h6>
+                                        <p class="text-muted small mb-2"><i class="bi bi-clock-history me-1"></i>Hạn dùng: {{ km.ngay_ket_thuc|date:"d/m/Y" }}</p>
+                                        <div class="d-inline-block bg-light px-2 py-1 border rounded text-dark">
+                                            Mã code: <span class="fw-bold text-danger user-select-all">{{ km.ma_code }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- VOUCHER CÔNG KHAI ĐÃ LƯU -->
+                        {% for km in voucher_da_luu %}
+                        <div class="col-md-6">
+                            <div class="card border-primary border-2 rounded-4 border-dashed h-100 shadow-sm">
+                                <div class="card-body d-flex align-items-center">
+                                    <div class="bg-primary text-white rounded-3 p-3 me-3 text-center shadow-sm">
+                                        <i class="bi bi-ticket-perforated fs-2"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-1 text-primary">{{ km.ten_chuong_trinh }}</h6>
+                                        <p class="text-muted small mb-2"><i class="bi bi-clock-history me-1"></i>Hạn dùng: {{ km.ngay_ket_thuc|date:"d/m/Y" }}</p>
+                                        <div class="d-inline-block bg-light px-2 py-1 border rounded text-dark">
+                                            Mã code: <span class="fw-bold text-danger user-select-all">{{ km.ma_code }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- VOUCHER LÁI THỬ -->
+                        {% for km in voucher_laithu %}
+                        <div class="col-md-6">
+                            <div class="card bg-danger-subtle border-danger border-2 rounded-4 h-100 shadow-sm">
+                                <div class="card-body d-flex align-items-center position-relative overflow-hidden">
+                                    <i class="bi bi-gift-fill text-danger opacity-25 position-absolute end-0 bottom-0" style="font-size: 5rem; transform: rotate(-15deg); margin-right: -10px;"></i>
+                                    <div class="z-1">
+                                        <h6 class="fw-bold mb-1 text-danger">Quà tặng sau Lái thử!</h6>
+                                        <p class="text-dark small mb-2 fw-semibold">{{ km.ten_chuong_trinh }}</p>
+                                        <div class="d-inline-block bg-white px-2 py-1 border border-danger rounded text-dark">
+                                            Mã code: <span class="fw-bold text-danger user-select-all">{{ km.ma_code }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        {% if not voucher_private and not voucher_laithu and not voucher_da_luu %}
+                        <div class="col-12 text-center py-5 bg-light rounded-4 border border-dashed">
+                            <i class="bi bi-wallet2 display-1 opacity-25 mb-3 d-block text-danger"></i>
+                            <h5 class="fw-bold fs-5">Ví của bạn đang trống</h5>
+                            <p class="small text-muted px-2">Hãy săn thêm các mã khuyến mãi công khai trên trang chủ nhé!</p>
+                            <a href="{% url 'trang_chu' %}" class="btn btn-outline-danger rounded-pill px-4 mt-2 fw-bold">Săn voucher ngay</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- 6. TAB EMAIL -->
                 <div class="tab-pane fade {% if active_tab == 'email' %}show active{% endif %}" id="content-email" role="tabpanel">
                     <h4 class="fw-bold mb-3 mb-md-4 text-primary border-bottom pb-2 pb-md-3 fs-5 fs-md-4"><i class="bi bi-envelope-at me-2"></i>Thay đổi Email</h4>
                     <p class="text-muted mb-4 small">Để đảm bảo an toàn cho tài khoản của bạn, vui lòng nhập mật khẩu hiện tại khi muốn đổi sang Email mới.</p>
@@ -201,24 +337,27 @@
                         </div>
                     </form>
                 </div>
-
+                
+                <!-- 7. TAB BẢO MẬT -->
                 <div class="tab-pane fade {% if active_tab == 'security' %}show active{% endif %}" id="content-security" role="tabpanel">
                     <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3 fs-5 fs-md-4"><i class="bi bi-shield-lock me-2 text-warning"></i>Đổi mật khẩu</h4>
                     
-                    <form method="POST">
+                    <form method="POST" class="bg-white p-2 p-md-0">
                         {% csrf_token %}
-                        {% for field in pass_form %}
-                            <div class="mb-3 mb-md-4">
+                        <div class="row">
+                            {% for field in pass_form %}
+                            <div class="col-12 mb-3 mb-md-4">
                                 <label class="form-label fw-bold small text-muted">{{ field.label }}</label>
                                 {{ field }}
                                 {% if field.errors %}
                                     <div class="text-danger small mt-1"><i class="bi bi-exclamation-triangle"></i> {{ field.errors|striptags }}</div>
                                 {% endif %}
                                 {% if field.help_text %}
-                                    <small class="text-muted fst-italic" style="font-size: 0.75rem;">{{ field.help_text }}</small>
+                                    <div class="form-text text-muted fst-italic" style="font-size: 0.75rem;">{{ field.help_text|safe }}</div>
                                 {% endif %}
                             </div>
-                        {% endfor %}
+                            {% endfor %}
+                        </div>
 
                         <div class="text-center text-md-end mt-4 mt-md-5 pt-3 border-top">
                             <button type="submit" name="btn_doi_mat_khau" class="btn btn-dark px-5 fw-bold rounded-pill shadow-sm w-100 w-md-auto">
@@ -227,66 +366,60 @@
                         </div>
                     </form>
                 </div>
-
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    /* CSS cho các ô input nhập liệu */
-    #content-security input, #content-email input {
-        display: block; width: 100%; padding: 0.5rem 0.75rem;
-        font-size: 1rem; font-weight: 400; line-height: 1.5;
-        color: #212529; background-color: #fff;
-        border: 1px solid #ced4da; border-radius: 0.5rem;
-        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-    }
-    @media (min-width: 768px) {
-        #content-security input, #content-email input { padding: 0.75rem 1rem; }
-    }
-    #content-security input:focus, #content-email input:focus {
-        border-color: #198754; outline: 0; box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
-    }
-    
-    /* ĐÃ NÂNG CẤP: Giao diện Menu Trái chuẩn chỉnh */
+    /* CSS Menu Trái (Giữ nguyên của bạn) */
     .nav-pills .nav-link {
-        color: #495057;
-        border-radius: 12px;
-        transition: all 0.3s ease;
+        color: #495057; border-radius: 12px; transition: all 0.3s ease;
     }
     .nav-pills .nav-link:hover:not(.active) {
-        background-color: #e9f7ef;
-        color: #198754;
+        background-color: #e9f7ef; color: #198754;
     }
     .nav-pills .nav-link.active {
-        background-color: #198754 !important;
-        color: white !important;
-        box-shadow: 0 4px 10px rgba(25, 135, 84, 0.3);
+        background-color: #198754 !important; color: white !important; box-shadow: 0 4px 10px rgba(25, 135, 84, 0.3);
     }
+    .nav-pills .nav-link.text-danger.active {
+        background-color: #dc3545 !important; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+    }
+    .border-dashed { border-style: dashed !important; }
 
-    /* Style vuốt ngang cực đẹp cho điện thoại */
+    /* Vuốt ngang cho Mobile */
     @media (max-width: 767px) {
         .mobile-scroll-menu {
-            flex-direction: row !important;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none; /* Ẩn thanh scroll trên firefox */
-            padding: 10px !important;
-            gap: 10px;
+            flex-direction: row !important; flex-wrap: nowrap; overflow-x: auto;
+            -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 10px !important; gap: 10px;
         }
-        .mobile-scroll-menu::-webkit-scrollbar {
-            display: none; /* Ẩn thanh scroll trên Chrome/Safari */
-        }
+        .mobile-scroll-menu::-webkit-scrollbar { display: none; }
         .mobile-scroll-menu .nav-link {
-            margin-bottom: 0 !important;
-            white-space: nowrap;
-            padding: 10px 20px !important;
-            border-radius: 50px !important; /* Đổi thành viên thuốc (Pill) trên Mobile */
-            text-align: center !important;
+            margin-bottom: 0 !important; white-space: nowrap; padding: 10px 20px !important;
+            border-radius: 50px !important; text-align: center !important;
         }
-        .w-md-auto { width: auto !important; }
+    }
+
+    /* Bổ sung CSS cho Input của form Email & Mật khẩu nếu chưa có */
+    #content-security input, #content-email input {
+        display: block; 
+        width: 100%; 
+        padding: 0.75rem 1rem;
+        font-size: 1rem; 
+        font-weight: 400; 
+        line-height: 1.5;
+        color: #212529; 
+        background-color: #fcfcfc;
+        border: 1px solid #ced4da; 
+        border-radius: 0.5rem;
+        transition: all 0.2s ease-in-out;
+    }
+
+    #content-security input:focus, #content-email input:focus {
+        border-color: #198754; 
+        background-color: #fff;
+        outline: 0; 
+        box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15);
     }
 </style>
 

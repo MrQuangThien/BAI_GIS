@@ -1,6 +1,7 @@
 import json
 from math import radians, sin, cos, sqrt, atan2
 from datetime import timezone
+import traceback
 from functools import wraps 
 import folium
 from folium.plugins import LocateControl
@@ -27,9 +28,9 @@ from django.utils.dateparse import parse_datetime
 
 from django.contrib.auth.forms import PasswordChangeForm
 
-from .models import ThongBao, TramSac, XeDien, CuaHang, DonHang, DanhMuc, Feedback, KhoHang, PhienSac, AnhXeDien, PhieuNhapKho, ChiTietPhieuNhap, TinNhanChat, UserProfile, LichLaiThu, DanhGiaTram
+from .models import ThongBao, TramSac, XeDien, CuaHang, DonHang, DanhMuc, Feedback, KhoHang, PhienSac, AnhXeDien, PhieuNhapKho, ChiTietPhieuNhap, TinNhanChat, UserProfile, LichLaiThu, DanhGiaTram, KhuyenMai
 
-from .forms import XeDienForm, UserForm, RegisterForm, DonHangForm, DonHangTaiQuayForm, FeedbackForm, UserProfileForm, PhieuNhapKhoForm, ChiTietPhieuNhapFormSet, UserUpdateForm, ProfileUpdateForm, EmailChangeForm, LichLaiThuForm
+from .forms import XeDienForm, UserForm, RegisterForm, DonHangForm, DonHangTaiQuayForm, FeedbackForm, UserProfileForm, PhieuNhapKhoForm, ChiTietPhieuNhapFormSet, UserUpdateForm, ProfileUpdateForm, EmailChangeForm, LichLaiThuForm, KhuyenMaiForm
 
 # ==========================================
 # 0. DECORATOR PHÂN QUYỀN
@@ -71,11 +72,41 @@ def trang_chu(request):
         
     xe_sap_ve = XeDien.objects.filter(sap_ve=True, trang_thai=True)
     form = FeedbackForm() 
-    
+
+    now = datetime.datetime.now() 
+    voucher_public = KhuyenMai.objects.filter(
+        chien_luoc='public',
+        trang_thai=True,
+        ngay_bat_dau__lte=now,
+        ngay_ket_thuc__gte=now
+    ).order_by('-id')
+
+    danh_sach_voucher_da_luu = []
+    hien_thi_khuyen_mai = False # Mặc định là ẨN khu vực ưu đãi
+
+    if voucher_public.exists():
+        hien_thi_khuyen_mai = True # Nếu có voucher đang chạy thì báo bật (HIỆN)
+        
+        if request.user.is_authenticated:
+            profile, created = UserProfile.objects.get_or_create(user=request.user)
+            # Lấy mảng ID các mã mà khách đã lưu
+            danh_sach_voucher_da_luu = list(profile.voucher_da_luu.values_list('id', flat=True))
+            
+            # Tính toán: Trong số các mã Công Khai, khách đã lưu bao nhiêu cái?
+            public_ids = list(voucher_public.values_list('id', flat=True))
+            so_luong_da_luu = sum(1 for v_id in danh_sach_voucher_da_luu if v_id in public_ids)
+
+            # ĐIỀU KIỆN VÀNG: Nếu số lượng mã khách lưu >= tổng số mã công khai -> ẨN KHU VỰC
+            if so_luong_da_luu >= voucher_public.count():
+                hien_thi_khuyen_mai = False
+
     context = {
         'xe_noi_bat': danh_sach_noi_bat, 
         'xe_sap_ve': xe_sap_ve, 
-        'form': form
+        'form': form,
+        'voucher_public': voucher_public,
+        'danh_sach_voucher_da_luu': danh_sach_voucher_da_luu, 
+        'hien_thi_khuyen_mai': hien_thi_khuyen_mai, # Truyền biến quyết định Ẩn/Hiện ra HTML
     }
     return render(request, 'pages/trang_chu.html', context)
 
@@ -475,16 +506,26 @@ def tao_don_hang(request, xe_id):
             don_hang = form.save(commit=False)
             don_hang.xe = xe
             
-            don_hang.tong_tien = xe.gia 
+            # --- ĐÃ FIX LOGIC TRỪ TIỀN KHUYẾN MÃI KHI LƯU VÀO DB ---
+            # Lấy số tiền giảm giá từ hidden input do JS gửi lên
+            try:
+                tien_giam_gia = float(request.POST.get('tien_giam_gia', 0))
+            except ValueError:
+                tien_giam_gia = 0
+
+            # Tính tổng tiền sau giảm (dùng max để đảm bảo tiền không bị âm)
+            don_hang.tong_tien = max(0, xe.gia - tien_giam_gia) 
+
             if request.user.is_authenticated: 
                 don_hang.khach_hang = request.user
                 
             if don_hang.loai_don == 'DatCoc':
                 don_hang.trang_thai = 'Deposit Paid'
-                don_hang.so_tien_tra_truoc = 20000000 
+                # Nếu tiền cọc 20tr mà được giảm giá thì cũng phải trừ đi
+                don_hang.so_tien_tra_truoc = max(0, 20000000 - tien_giam_gia) 
             elif don_hang.loai_don == 'TraThang':
                 don_hang.trang_thai = 'Paid'
-                don_hang.so_tien_tra_truoc = xe.gia
+                don_hang.so_tien_tra_truoc = don_hang.tong_tien # Trả đủ số tiền đã giảm
                 
             don_hang.save()
 
@@ -494,15 +535,12 @@ def tao_don_hang(request, xe_id):
                     kho_chi_nhanh.so_luong -= 1
                     kho_chi_nhanh.save()
             
-            # --- ĐÃ FIX LOGIC EMAIL ---
+            # --- LOGIC GỬI EMAIL ---
             try:
-                # Ưu tiên lấy email từ form khách nhập, nếu không có mới lấy từ tài khoản
                 email_nhan = request.POST.get('email') or (request.user.email if request.user.is_authenticated else None)
 
                 if email_nhan:
                     ngay_hen_str = don_hang.ngay_giao_xe.strftime('%d/%m/%Y') if don_hang.ngay_giao_xe else "Sẽ được thông báo sau"
-                    
-                    # Tính toán an toàn số tiền còn lại, tránh lỗi sập hàm gửi mail
                     tien_con_lai = don_hang.tong_tien - don_hang.so_tien_tra_truoc
 
                     chu_de = f"Xác nhận đặt hàng thành công - EV STORE"
@@ -511,7 +549,7 @@ def tao_don_hang(request, xe_id):
                                f"THÔNG TIN ĐƠN HÀNG:\n" \
                                f"- Sản phẩm: {xe.ten_xe}\n" \
                                f"- Ngày nhận/giao xe (dự kiến): {ngay_hen_str}\n" \
-                               f"- Tổng giá trị xe: {don_hang.tong_tien:,.0f} VNĐ\n" \
+                               f"- Tổng giá trị xe (Sau KM): {don_hang.tong_tien:,.0f} VNĐ\n" \
                                f"- Đã thanh toán (Cọc): {don_hang.so_tien_tra_truoc:,.0f} VNĐ\n" \
                                f"- Cần thanh toán thêm: {tien_con_lai:,.0f} VNĐ\n\n" \
                                f"Chúng tôi sẽ sớm liên hệ qua SĐT {don_hang.so_dien_thoai} để hỗ trợ.\n\n" \
@@ -519,7 +557,7 @@ def tao_don_hang(request, xe_id):
                     
                     send_mail(chu_de, noi_dung, settings.EMAIL_HOST_USER, [email_nhan], fail_silently=False)
             except Exception as e: 
-                print(f"LỖI GỬI EMAIL ĐẶT HÀNG: {e}") # In chữ in hoa để bạn dễ tìm trong Terminal
+                print(f"LỖI GỬI EMAIL ĐẶT HÀNG: {e}") 
 
             ThongBao.objects.create(
                 tieu_de=f"Đơn đặt hàng mới!",
@@ -547,7 +585,73 @@ def tao_don_hang(request, xe_id):
 
         form = DonHangForm(initial=initial_data, xe=xe)
         
-    return render(request, 'donhang/tao_don_hang.html', {'form': form, 'xe': xe})
+    # ========================================================
+    # BẮT ĐẦU: LỌC VOUCHER TỪ VÍ KHÁCH HÀNG HIỂN THỊ RA DROPDOWN
+    # ========================================================
+    danh_sach_voucher = []
+    
+    if request.user.is_authenticated:
+        now = datetime.datetime.now()
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        
+        danh_sach_id_duoc_dung = []
+
+        # 1. Voucher công khai ĐÃ ĐƯỢC LƯU VÀO VÍ
+        saved_ids = profile.voucher_da_luu.filter(
+            trang_thai=True, ngay_bat_dau__lte=now, ngay_ket_thuc__gte=now
+        ).values_list('id', flat=True)
+        danh_sach_id_duoc_dung.extend(list(saved_ids))
+
+        # 2. Voucher Đặc quyền Thành viên (Private)
+        private_ids = KhuyenMai.objects.filter(
+            chien_luoc='private', trang_thai=True, ngay_bat_dau__lte=now, ngay_ket_thuc__gte=now
+        ).values_list('id', flat=True)
+        danh_sach_id_duoc_dung.extend(list(private_ids))
+
+        # 3. Voucher Lái thử
+        sdt_khach = profile.so_dien_thoai
+        email_khach = request.user.email
+        
+        # Chỉ tạo điều kiện tìm kiếm khi khách có SĐT hoặc Email
+        q_objects = Q()
+        if sdt_khach:
+            q_objects |= Q(so_dien_thoai=sdt_khach)
+        if email_khach:
+            q_objects |= Q(email=email_khach)
+            
+        # Nếu q_objects có dữ liệu (khách có SĐT hoặc Email)
+        if q_objects:
+            da_lai_thu = LichLaiThu.objects.filter(
+                q_objects,
+                trang_thai='hoan_thanh' # Đã khớp 100% với models.py của bạn
+            ).exists()
+            
+            if da_lai_thu:
+                # Lưu ý: Chữ 'lai_thu' ở đây phải khớp với mã bạn cài trong KhuyenMai models
+                laithu_ids = KhuyenMai.objects.filter(
+                    chien_luoc='lai_thu', 
+                    trang_thai=True, 
+                    ngay_bat_dau__lte=now, 
+                    ngay_ket_thuc__gte=now
+                ).values_list('id', flat=True)
+                danh_sach_id_duoc_dung.extend(list(laithu_ids))
+
+        # Kéo các voucher hợp lệ từ CSDL lên
+        vouchers_tiem_nang = KhuyenMai.objects.filter(id__in=danh_sach_id_duoc_dung).distinct()
+
+        # BƯỚC CUỐI: Cực kỳ quan trọng -> Chỉ hiện mã áp dụng cho mẫu xe đang mua
+        for km in vouchers_tiem_nang:
+            if not km.xe_ap_dung.exists() or xe in km.xe_ap_dung.all():
+                danh_sach_voucher.append(km)
+    # ========================================================
+    # KẾT THÚC LOGIC LỌC VOUCHER
+    # ========================================================
+
+    return render(request, 'donhang/tao_don_hang.html', {
+        'form': form, 
+        'xe': xe, 
+        'danh_sach_voucher': danh_sach_voucher # Đã truyền biến này ra giao diện
+    })
 
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
@@ -769,15 +873,53 @@ def logout_view(request):
 @login_required(login_url='login')
 def tai_khoan(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
-    
-    # 1. ĐÃ SỬA: Lấy tab từ URL, nếu không có mặc định là 'profile'
     active_tab = request.GET.get('tab', 'profile') 
-
-    # 2. ĐÃ SỬA: Lấy danh sách đơn hàng ra ngoài cùng để luôn luôn hiển thị
     danh_sach_don_hang = DonHang.objects.filter(khach_hang=request.user).order_by('-ngay_dat')
+    
+    sdt_khach = profile.so_dien_thoai
+    email_khach = request.user.email
+    
+    # Lịch sử sạc pin
+    from .models import PhienSac
+    danh_sach_phien_sac = PhienSac.objects.filter(user=request.user).order_by('-thoi_gian_bat_dau')
 
+    # --- ĐÃ FIX: Dùng Q() an toàn, tránh lỗi khi khách chưa nhập SĐT ---
+    q_objects = Q()
+    if sdt_khach:
+        q_objects |= Q(so_dien_thoai=sdt_khach)
+    if email_khach:
+        q_objects |= Q(email=email_khach)
+        
+    if q_objects:
+        danh_sach_lai_thu = LichLaiThu.objects.filter(q_objects).order_by('-ngay_tao')
+    else:
+        danh_sach_lai_thu = LichLaiThu.objects.none()
+
+    # Xử lý logic Ví Voucher (Khuyến mãi)
+    now = datetime.datetime.now()
+    
+    # 1. Voucher Đặc quyền thành viên
+    voucher_private = KhuyenMai.objects.filter(
+        chien_luoc='private', trang_thai=True,
+        ngay_bat_dau__lte=now, ngay_ket_thuc__gte=now
+    )
+
+    # --- ĐÃ FIX: Đổi trạng thái thành 'hoan_thanh' cho khớp với models.py ---
+    da_lai_thu = danh_sach_lai_thu.filter(trang_thai='hoan_thanh').exists() if danh_sach_lai_thu else False
+    
+    if da_lai_thu:
+        voucher_laithu = KhuyenMai.objects.filter(
+            chien_luoc='lai_thu', trang_thai=True,
+            ngay_bat_dau__lte=now, ngay_ket_thuc__gte=now
+        )
+    else:
+        voucher_laithu = []
+
+    # 3. Voucher Công khai khách đã lưu
+    voucher_da_luu = profile.voucher_da_luu.filter(trang_thai=True, ngay_ket_thuc__gte=now)
+
+    # XỬ LÝ FORM POST
     if request.method == 'POST':
-        # CẬP NHẬT HỒ SƠ
         if 'btn_cap_nhat_thong_tin' in request.POST:
             active_tab = 'profile'
             u_form = UserUpdateForm(request.POST, instance=request.user)
@@ -791,7 +933,6 @@ def tai_khoan(request):
                 messages.success(request, 'Thông tin tài khoản đã được cập nhật!')
                 return redirect('tai_khoan')
 
-        # ĐỔI MẬT KHẨU
         elif 'btn_doi_mat_khau' in request.POST:
             active_tab = 'security'
             u_form = UserUpdateForm(instance=request.user)
@@ -807,7 +948,6 @@ def tai_khoan(request):
             else:
                 messages.error(request, 'Đổi mật khẩu thất bại. Vui lòng kiểm tra lại!')
 
-        # ĐỔI EMAIL
         elif 'btn_doi_email' in request.POST:
             active_tab = 'email'
             u_form = UserUpdateForm(instance=request.user)
@@ -821,7 +961,7 @@ def tai_khoan(request):
                 messages.success(request, 'Email đăng nhập đã được thay đổi thành công!')
                 return redirect('tai_khoan')
             else:
-                messages.error(request, 'Đổi Email thất bại. Vui lòng kiểm tra lại các lỗi báo đỏ bên dưới!')
+                messages.error(request, 'Đổi Email thất bại. Vui lòng kiểm tra lại!')
 
     else:
         u_form = UserUpdateForm(instance=request.user)
@@ -829,13 +969,19 @@ def tai_khoan(request):
         pass_form = PasswordChangeForm(request.user)
         email_form = EmailChangeForm(request.user)
 
+    # Đưa toàn bộ dữ liệu ra template
     context = {
         'u_form': u_form,
         'p_form': p_form,
         'pass_form': pass_form,
         'email_form': email_form,
         'active_tab': active_tab, 
-        'danh_sach_don_hang': danh_sach_don_hang # 3. ĐÃ SỬA: Đưa đơn hàng vào render ra HTML
+        'danh_sach_don_hang': danh_sach_don_hang,
+        'danh_sach_lai_thu': danh_sach_lai_thu,
+        'danh_sach_phien_sac': danh_sach_phien_sac, 
+        'voucher_private': voucher_private,         
+        'voucher_laithu': voucher_laithu,           
+        'voucher_da_luu': voucher_da_luu,           
     }
     
     return render(request, 'users/tai_khoan.html', context)
@@ -943,16 +1089,32 @@ def xoa_cua_hang(request, pk):
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
 def quan_ly_phieu_nhap(request):
+    user_profile = request.user.userprofile
     tu_khoa = request.GET.get('q', '')
-    danh_sach = PhieuNhapKho.objects.all().order_by('-ngay_nhap')
     
+    # 1. BƯỚC LỌC QUYỀN: Chỉ lấy dữ liệu theo đúng chi nhánh của nhân viên
+    if request.user.is_superuser or user_profile.vai_tro == 'admin':
+        # Admin thấy toàn bộ
+        danh_sach = PhieuNhapKho.objects.all()
+    else:
+        # Nhân viên / Quản lý chỉ thấy phiếu của cửa hàng mình
+        danh_sach = PhieuNhapKho.objects.filter(cua_hang=user_profile.cua_hang)
+        
+    # 2. BƯỚC SẮP XẾP: Đưa phiếu mới nhất lên đầu
+    danh_sach = danh_sach.order_by('-ngay_nhap')
+    
+    # 3. BƯỚC TÌM KIẾM: Lọc tiếp trên danh sách đã được phân quyền ở trên
     if tu_khoa:
         danh_sach = danh_sach.filter(
             Q(cua_hang__ten_cua_hang__icontains=tu_khoa) |
             Q(nhan_vien_nhap__username__icontains=tu_khoa) |
             Q(ghi_chu__icontains=tu_khoa)
         )
-    return render(request, 'kho/lich_su_nhap.html', {'danh_sach': danh_sach, 'tu_khoa': tu_khoa})
+        
+    return render(request, 'kho/lich_su_nhap.html', {
+        'danh_sach': danh_sach, 
+        'tu_khoa': tu_khoa
+    })
 
 @login_required
 @phan_quyen(roles=['admin', 'quan_ly', 'nhan_vien'])
@@ -1776,3 +1938,112 @@ def danh_dau_tat_ca(request):
     # Làm xong thì quay lại trang hiện tại (không bị nhảy đi trang khác)
     truoc_do = request.META.get('HTTP_REFERER', 'admin_dashboard')
     return redirect(truoc_do)
+
+def kiem_tra_ma_km(request):
+    if request.method == 'POST':
+        ma_code = request.POST.get('ma_code')
+        loai_don = request.POST.get('loai_don') # ĐÓN THÔNG TIN LOẠI ĐƠN TỪ FRONTEND
+        
+        try:
+            xe_id = int(request.POST.get('xe_id'))
+            gia_xe = float(request.POST.get('gia_xe', 0))
+        except (ValueError, TypeError):
+            return JsonResponse({'success': False, 'message': 'Dữ liệu xe không hợp lệ!'})
+
+        try:
+            now = datetime.datetime.now()
+            km = KhuyenMai.objects.filter(
+                ma_code=ma_code, trang_thai=True,
+                ngay_bat_dau__lte=now, ngay_ket_thuc__gte=now
+            ).first()
+
+            if not km:
+                return JsonResponse({'success': False, 'message': 'Mã đã hết hạn hoặc chưa tới thời gian sử dụng!'})
+
+            # --- BẮT ĐẦU: KIỂM TRA LOẠI ĐƠN (CỌC HAY TRẢ THẲNG) ---
+            if km.loai_don_ap_dung == 'Tra_thang' and loai_don != 'TraThang':
+                return JsonResponse({'success': False, 'message': 'Mã này chỉ áp dụng khi Thanh toán 100% giá trị xe!'})
+            
+            if km.loai_don_ap_dung == 'Dat_coc' and loai_don != 'DatCoc':
+                return JsonResponse({'success': False, 'message': 'Mã này chỉ áp dụng cho đơn Đặt cọc giữ chỗ!'})
+            # --- KẾT THÚC KIỂM TRA LOẠI ĐƠN ---
+
+            if km.xe_ap_dung.exists():
+                if not km.xe_ap_dung.filter(id=xe_id).exists():
+                    return JsonResponse({'success': False, 'message': 'Rất tiếc, mã này không áp dụng cho mẫu xe bạn đang chọn!'})
+
+            try:
+                gia_tri_km = float(km.gia_tri) if km.gia_tri else 0.0
+            except (ValueError, TypeError):
+                gia_tri_km = 0.0
+
+            if km.loai_khuyen_mai == 'phan_tram':
+                tien_giam = (gia_xe * gia_tri_km) / 100.0
+                ghi_chu = ""
+            elif km.loai_khuyen_mai == 'tien_mat':
+                tien_giam = gia_tri_km
+                ghi_chu = ""
+            elif km.loai_khuyen_mai == 'qua_tang':
+                tien_giam = 0.0
+                ghi_chu = km.mo_ta_qua_tang if km.mo_ta_qua_tang else km.ten_chuong_trinh
+            else:
+                tien_giam = 0.0
+                ghi_chu = ""
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Áp dụng mã thành công!',
+                'tien_giam': float(tien_giam),
+                'khuyen_mai_id': km.id,
+                'ghi_chu': ghi_chu
+            })
+
+        except Exception as e:
+            print("=== LỖI HỆ THỐNG API KHUYẾN MÃI ===")
+            print(traceback.format_exc()) 
+            return JsonResponse({'success': False, 'message': 'Có lỗi khi tính toán giá trị mã!'})
+
+@login_required
+@phan_quyen(roles=['admin', 'quan_ly'])
+def quan_ly_voucher(request):
+    danh_sach = KhuyenMai.objects.all().order_by('-id')
+    # Đã sửa: Trỏ trực tiếp đến file trong thư mục templates gốc
+    return render(request, 'voucher/quan_ly_voucher.html', {'danh_sach': danh_sach})
+
+@login_required
+@phan_quyen(roles=['admin', 'quan_ly'])
+def them_sua_voucher(request, pk=None):
+    obj = get_object_or_404(KhuyenMai, pk=pk) if pk else None
+    if request.method == 'POST':
+        form = KhuyenMaiForm(request.POST, instance=obj)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Lưu chương trình khuyến mãi thành công!')
+            return redirect('quan_ly_voucher')
+    else:
+        form = KhuyenMaiForm(instance=obj)
+    
+    # Đã sửa: Trỏ trực tiếp đến file trong thư mục templates gốc
+    return render(request, 'voucher/form_voucher.html', {'form': form, 'is_edit': pk is not None})
+
+@login_required
+@phan_quyen(roles=['admin', 'quan_ly'])
+def xoa_voucher(request, pk):
+    obj = get_object_or_404(KhuyenMai, pk=pk)
+    obj.delete()
+    messages.success(request, 'Đã xóa mã khuyến mãi!')
+    return redirect('quan_ly_voucher')
+
+@login_required
+def luu_voucher_ajax(request):
+    if request.method == 'POST':
+        voucher_id = request.POST.get('voucher_id')
+        khuyen_mai = get_object_or_404(KhuyenMai, id=voucher_id)
+        profile = request.user.userprofile
+
+        # ĐÃ FIX: Chỉ kiểm tra và lưu, KHÔNG XÓA
+        if khuyen_mai in profile.voucher_da_luu.all():
+            return JsonResponse({'success': True, 'message': 'Bạn đã lưu mã này rồi!'})
+        else:
+            profile.voucher_da_luu.add(khuyen_mai)
+            return JsonResponse({'success': True, 'message': 'Lưu mã thành công!'})

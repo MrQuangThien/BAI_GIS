@@ -28,7 +28,7 @@
 
         .form-control,
         .form-select {
-            padding: 10px 15px; /* Tối ưu lại padding cho vừa ngón tay chạm */
+            padding: 10px 15px;
             border-radius: 8px;
             border: 1px solid #dee2e6;
             background-color: #fcfcfc;
@@ -68,12 +68,16 @@
             border: 1px solid #e2f0e6 !important;
         }
 
-        /* ĐÃ BỔ SUNG: Class xử lý chiều rộng linh hoạt trên Desktop/Mobile */
         @media (min-width: 768px) {
-            .w-md-auto { width: auto !important; }
+            .w-md-auto {
+                width: auto !important;
+            }
         }
+
         @media (max-width: 767px) {
-            .order-summary-img { max-height: 180px; } /* Thu nhỏ ảnh tóm tắt trên mobile */
+            .order-summary-img {
+                max-height: 180px;
+            }
         }
     </style>
 </head>
@@ -105,18 +109,24 @@
             </div>
         </div>
 
-        <div class="row g-3 g-md-4 align-items-start d-flex flex-column-reverse flex-lg-row">
+        <!-- BỌC TOÀN BỘ 2 CỘT BẰNG THẺ FORM -->
+        <form method="POST" id="formDatHang">
+            {% csrf_token %}
+            <!-- Chứa ID Voucher và Tiền giảm -->
+            <input type="hidden" name="khuyen_mai_id" id="khuyen_mai_id" value="">
+            <input type="hidden" name="tien_giam_gia" id="tien_giam_gia" value="0">
 
-            <div class="col-lg-7">
-                <div class="card shadow-sm border-0 rounded-4">
-                    <div class="card-header bg-white py-3 border-bottom-0 pt-3 pt-md-4">
-                        <h5 class="mb-0 fw-bold fs-5 fs-md-4"><i class="bi bi-person-vcard-fill me-2 text-success"></i>Thông tin liên hệ</h5>
-                    </div>
-                    <div class="card-body p-3 p-md-4 pt-0">
+            <div class="row g-3 g-md-4 align-items-start d-flex flex-column-reverse flex-lg-row">
 
-                        <form method="POST">
-                            {% csrf_token %}
-
+                <!-- ========================================== -->
+                <!-- CỘT TRÁI: THÔNG TIN LIÊN HỆ & NHẬN XE      -->
+                <!-- ========================================== -->
+                <div class="col-lg-7">
+                    <div class="card shadow-sm border-0 rounded-4 mb-4">
+                        <div class="card-header bg-white py-3 border-bottom-0 pt-3 pt-md-4">
+                            <h5 class="mb-0 fw-bold fs-5 fs-md-4"><i class="bi bi-person-vcard-fill me-2 text-success"></i>Thông tin nhận xe</h5>
+                        </div>
+                        <div class="card-body p-3 p-md-4 pt-0">
                             <div class="row g-3">
                                 <div class="col-md-12">
                                     <label class="form-label fw-bold text-dark small">{{ form.ho_ten.label }} <span class="text-danger">*</span></label>
@@ -182,72 +192,108 @@
                                         {% endif %}
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
+                <!-- ========================================== -->
+                <!-- CỘT PHẢI: TÓM TẮT, KHUYẾN MÃI, THANH TOÁN -->
+                <!-- ========================================== -->
+                <div class="col-lg-5">
+                    
+                    <!-- 1. TÓM TẮT ĐƠN HÀNG -->
+                    <div class="card shadow-sm border-0 rounded-4 receipt-card mb-3">
+                        <div class="card-body p-3 p-md-4">
+                            <h5 class="fw-bold mb-3 fs-5 fs-md-4"><i class="bi bi-receipt me-2"></i>Tóm tắt đơn hàng</h5>
+
+                            <div class="text-center mb-3 mb-md-4 bg-white p-2 rounded-3 border">
+                                {% if xe.hinh_anh %}
+                                <img src="{{ xe.hinh_anh.url }}" class="order-summary-img border-0">
+                                {% else %}
+                                <img src="https://via.placeholder.com/400x250?text=Chưa+có+ảnh" class="order-summary-img border-0">
+                                {% endif %}
                             </div>
 
-                            <hr class="text-muted my-3 my-md-4 opacity-25">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h4 class="fw-bold mb-1 text-dark fs-5 fs-md-4">{{ xe.ten_xe }}</h4>
+                                    <span class="badge bg-dark text-white">{{ xe.hang_san_xuat }}</span>
+                                </div>
+                            </div>
 
-                            <h5 class="fw-bold mb-2 mb-md-3 fs-5 fs-md-4">
+                            <div class="d-flex justify-content-between mt-3 mb-2">
+                                <span class="text-muted small fw-semibold">Giá niêm yết:</span>
+                                <span class="fw-bold">{{ xe.gia|intcomma }} VNĐ</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2 d-none" id="dong_giam_gia">
+                                <span class="text-success small fw-semibold">Giảm giá (Khuyến mãi):</span>
+                                <span class="fw-bold text-success" id="hien_thi_tien_giam">- 0 VNĐ</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between border-top border-success border-opacity-25 pt-3 mt-2">
+                                <span class="fw-bold text-success">Cần thanh toán ngay:</span>
+                                <span id="display_thanh_toan_ngay" class="fw-bold text-danger fs-5">0 VNĐ</span>
+                            </div>
+
+                            <p class="text-muted mt-2 fst-italic mb-0" id="ghi_chu_thanh_toan" style="font-size: 0.8rem;">
+                                * Bạn đang chọn hình thức đặt giữ chỗ miễn phí.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 2. MÃ KHUYẾN MÃI -->
+                    <div class="card shadow-sm border-0 rounded-4 mb-3 bg-white">
+                        <div class="card-body p-3 p-md-4">
+                            <label class="form-label fw-bold text-success mb-2 small">
+                                <i class="bi bi-ticket-perforated-fill me-1"></i> Chọn mã khuyến mãi:
+                            </label>
+                            
+                            <!-- Bỏ input-group và nút bấm, chỉ dùng Select -->
+                            <select id="ma_khuyen_mai" class="form-select text-dark fw-semibold border-success shadow-sm" style="cursor: pointer;">
+    <option value="">-- Bấm để chọn voucher trong ví --</option>
+    {% for km in danh_sach_voucher %}
+                                    <option value="{{ km.ma_code }}" data-loai-don="{{ km.loai_don_ap_dung }}">
+                                        [{{ km.ma_code }}] 
+                                        {% if km.loai_khuyen_mai == 'phan_tram' %} - Giảm {{ km.gia_tri }}%
+                                        {% elif km.loai_khuyen_mai == 'tien_mat' %} - Giảm {{ km.gia_tri|intcomma }}đ
+                                        {% else %} - Tặng: {% if km.mo_ta_qua_tang %}{{ km.mo_ta_qua_tang }}{% else %}Quà tặng kèm{% endif %}
+                                        {% endif %}
+                                    </option>
+                                {% endfor %}
+</select>
+                            
+                            <small id="km_message" class="d-block mt-2 fw-semibold"></small>
+                        </div>
+                    </div>
+
+                    <!-- 3. HÌNH THỨC THANH TOÁN -->
+                    <div class="card shadow-sm border-0 rounded-4 mb-4 bg-light">
+                        <div class="card-body p-3 p-md-4">
+                            <h5 class="fw-bold mb-3 fs-5 fs-md-4">
                                 <i class="bi bi-credit-card-2-front-fill me-2 text-primary"></i>Hình thức thanh toán
                             </h5>
-                            <div class="mb-4 bg-light p-3 p-md-4 rounded-4 border">
-                                <label class="form-label fw-bold text-muted mb-2 small">Vui lòng chọn phương thức phù hợp:</label>
+                            <div class="mb-0">
                                 {{ form.loai_don }}
                             </div>
-
-                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 mt-md-5 gap-2 gap-md-0">
-                                <button type="submit" class="btn btn-success checkout-btn shadow fw-bold w-100 w-md-auto order-1 order-md-2">
-                                    Xác nhận đặt hàng <i class="bi bi-chevron-right ms-1"></i>
-                                </button>
-                                
-                                <a href="{% url 'chi_tiet_xe' xe.id %}" class="text-decoration-none text-secondary fw-semibold btn btn-light px-4 py-2 rounded-3 border w-100 w-md-auto order-2 order-md-1">
-                                    <i class="bi bi-arrow-left me-1"></i> Quay lại
-                                </a>
-                            </div>
-                        </form>
-
+                        </div>
                     </div>
+
+                    <!-- 4. NÚT XÁC NHẬN -->
+                    <div class="d-flex flex-column gap-3 mt-2">
+                        <button type="submit" class="btn btn-success checkout-btn shadow fw-bold w-100 py-3 fs-5 text-uppercase">
+                            Xác nhận đặt hàng <i class="bi bi-chevron-right ms-1"></i>
+                        </button>
+                        
+                        <a href="{% url 'chi_tiet_xe' xe.id %}" class="text-center text-decoration-none text-secondary fw-semibold">
+                            <i class="bi bi-arrow-left me-1"></i> Quay lại chi tiết xe
+                        </a>
+                    </div>
+
                 </div>
             </div>
-
-            <div class="col-lg-5">
-                <div class="card shadow-sm border-0 rounded-4 receipt-card">
-                    <div class="card-body p-3 p-md-4">
-                        <h5 class="fw-bold mb-3 fs-5 fs-md-4"><i class="bi bi-receipt me-2"></i>Tóm tắt đơn hàng</h5>
-
-                        <div class="text-center mb-3 mb-md-4 bg-white p-2 rounded-3 border">
-                            {% if xe.hinh_anh %}
-                            <img src="{{ xe.hinh_anh.url }}" class="order-summary-img border-0">
-                            {% else %}
-                            <img src="https://via.placeholder.com/400x250?text=Chưa+có+ảnh" class="order-summary-img border-0">
-                            {% endif %}
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div>
-                                <h4 class="fw-bold mb-1 text-dark fs-5 fs-md-4">{{ xe.ten_xe }}</h4>
-                                <span class="badge bg-dark text-white">{{ xe.hang_san_xuat }}</span>
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-between mt-3 mb-2">
-                            <span class="text-muted small fw-semibold">Giá niêm yết:</span>
-                            <span class="fw-bold">{{ xe.gia|intcomma }} VNĐ</span>
-                        </div>
-
-                        <div class="d-flex justify-content-between border-top border-success border-opacity-25 pt-3 mt-2">
-                            <span class="fw-bold text-success">Cần thanh toán ngay:</span>
-                            <span id="display_thanh_toan_ngay" class="fw-bold text-danger fs-5">0 VNĐ</span>
-                        </div>
-
-                        <p class="text-muted mt-2 fst-italic mb-0" id="ghi_chu_thanh_toan" style="font-size: 0.8rem;">
-                            * Bạn đang chọn hình thức đặt giữ chỗ miễn phí.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-        </div>
+        </form>
     </div>
 
     <footer class="bg-dark text-white text-center py-4 mt-auto">
@@ -256,10 +302,19 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
+<script>
     document.addEventListener("DOMContentLoaded", function () {
-        const giaXe = parseInt("{{ xe.gia }}".replace(/\D/g, ''));
+        // --- 1. KHAI BÁO BIẾN DÙNG CHUNG ---
+        const giaXe = parseInt("{{ xe.gia }}".replace(/\D/g, '')) || 0;
+        let tienGiamGia = 0; // Số tiền được giảm
+        let quaTang = "";    // Quà tặng (nếu có)
+
         const selectLoaiDon = document.querySelector('select[name="loai_don"]');
+        const selectKhuyenMai = document.getElementById('ma_khuyen_mai'); // Bắt sự kiện đổi voucher
+        const msgEl = document.getElementById('km_message');
+        
+        const dongGiamGia = document.getElementById('dong_giam_gia');
+        const hienThiGiam = document.getElementById('hien_thi_tien_giam');
         const displayThanhToan = document.getElementById('display_thanh_toan_ngay');
         const ghiChu = document.getElementById('ghi_chu_thanh_toan');
 
@@ -267,34 +322,153 @@
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " VNĐ";
         }
 
+        // --- 2. HÀM TÍNH TIỀN ---
         function updatePrice() {
-            const loaiDon = selectLoaiDon.value;
-            let soTienPhaiTra = 0;
+            const loaiDon = selectLoaiDon ? selectLoaiDon.value : '';
+            let soTienThanhToanNgay = 0;
             let textGhiChu = "";
 
             if (loaiDon === 'DatCoc') {
-                soTienPhaiTra = 20000000; 
-                textGhiChu = "* Số tiền thanh toán bao gồm 20.000.000 VNĐ để hoàn tất đặt cọc giữ xe.";
+                soTienThanhToanNgay = Math.max(0, 20000000 - tienGiamGia); 
+                if (tienGiamGia > 0 || quaTang !== "") {
+                    textGhiChu = "* Bạn đang đặt cọc giữ chỗ. Khuyến mãi đã được áp dụng thành công vào đơn đặt trước của bạn.";
+                } else {
+                    textGhiChu = "* Cần thanh toán 20.000.000 VNĐ tiền cọc giữ chỗ ngay lúc này.";
+                }
             } else if (loaiDon === 'TraThang') {
-                soTienPhaiTra = giaXe; 
-                textGhiChu = "* Bạn đang thực hiện thanh toán 100% giá trị xe.";
+                soTienThanhToanNgay = Math.max(0, giaXe - tienGiamGia); 
+                textGhiChu = "* Bạn đang thanh toán 100% giá trị xe (Đã trừ trực tiếp tiền khuyến mãi).";
             }
 
-            if (displayThanhToan) displayThanhToan.innerText = formatMoney(soTienPhaiTra);
+            if (quaTang !== "") {
+                dongGiamGia.classList.remove('d-none');
+                hienThiGiam.innerHTML = `<i class="bi bi-gift-fill me-1"></i> ${quaTang}`;
+                hienThiGiam.classList.replace('text-danger', 'text-success');
+            } else if (tienGiamGia > 0) {
+                dongGiamGia.classList.remove('d-none');
+                hienThiGiam.innerText = '- ' + formatMoney(tienGiamGia);
+                hienThiGiam.classList.replace('text-success', 'text-danger');
+            } else {
+                dongGiamGia.classList.add('d-none');
+            }
+
+            if (displayThanhToan) displayThanhToan.innerText = formatMoney(soTienThanhToanNgay);
             if (ghiChu) ghiChu.innerText = textGhiChu;
         }
 
-        if (selectLoaiDon) {
-            selectLoaiDon.addEventListener('change', updatePrice);
-            updatePrice();
+        // --- 3. HÀM ẨN/HIỆN VOUCHER (Đã được đưa vào trong khối) ---
+        function locDropdownVoucher() {
+            if (!selectKhuyenMai || !selectLoaiDon) return;
+            const loaiDonHienTai = selectLoaiDon.value; 
+            let voucherDangChonBiAn = false;
+
+            Array.from(selectKhuyenMai.options).forEach(option => {
+                if (option.value === "") return; 
+
+                const loaiDonCuaVoucher = option.getAttribute('data-loai-don');
+                let duocPhepXuatHien = true;
+
+                if (loaiDonCuaVoucher === 'Tra_thang' && loaiDonHienTai !== 'TraThang') duocPhepXuatHien = false;
+                if (loaiDonCuaVoucher === 'Dat_coc' && loaiDonHienTai !== 'DatCoc') duocPhepXuatHien = false;
+
+                // Tăng cường ẩn tuyệt đối trên mọi trình duyệt
+                option.hidden = !duocPhepXuatHien;
+                option.disabled = !duocPhepXuatHien;
+                option.style.display = duocPhepXuatHien ? '' : 'none';
+
+                if (!duocPhepXuatHien && option.selected) {
+                    voucherDangChonBiAn = true;
+                }
+            });
+
+            if (voucherDangChonBiAn) {
+                selectKhuyenMai.value = "";
+                kiemTraVoucherAPI(); 
+            }
         }
 
+        // --- 4. HÀM CALL API KIỂM TRA MÃ ---
+        function kiemTraVoucherAPI() {
+            if (!selectKhuyenMai) return;
+            const maCode = selectKhuyenMai.value;
+            const loaiDon = selectLoaiDon ? selectLoaiDon.value : '';
+
+            if(!maCode) {
+                tienGiamGia = 0; quaTang = "";
+                document.getElementById('khuyen_mai_id').value = '';
+                document.getElementById('tien_giam_gia').value = '0';
+                if(msgEl) msgEl.innerText = "";
+                updatePrice();
+                return;
+            }
+
+            msgEl.className = 'text-warning d-block mt-2';
+            msgEl.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang tính toán...';
+
+            const formData = new FormData();
+            formData.append('ma_code', maCode);
+            formData.append('gia_xe', giaXe);
+            formData.append('xe_id', '{{ xe.id }}');
+            formData.append('loai_don', loaiDon); 
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch("{% url 'kiem_tra_ma_km' %}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    msgEl.className = 'text-success d-block mt-2';
+                    msgEl.innerHTML = `<i class="bi bi-check-circle-fill"></i> ${data.message}`;
+                    tienGiamGia = data.tien_giam || 0;
+                    quaTang = data.ghi_chu || ""; 
+                    document.getElementById('khuyen_mai_id').value = data.khuyen_mai_id;
+                    document.getElementById('tien_giam_gia').value = tienGiamGia;
+                } else {
+                    msgEl.className = 'text-danger d-block mt-2';
+                    msgEl.innerHTML = `<i class="bi bi-x-circle-fill"></i> ${data.message}`;
+                    tienGiamGia = 0; quaTang = "";
+                    document.getElementById('khuyen_mai_id').value = '';
+                    document.getElementById('tien_giam_gia').value = '0';
+                }
+                updatePrice(); 
+            })
+            .catch(error => {
+                msgEl.className = 'text-danger d-block mt-2';
+                msgEl.innerText = "Có lỗi xảy ra, vui lòng thử lại!";
+                tienGiamGia = 0; quaTang = "";
+                updatePrice();
+            });
+        }
+
+        // --- 5. GẮN SỰ KIỆN LẮNG NGHE ---
+        if (selectKhuyenMai) {
+            selectKhuyenMai.addEventListener('change', kiemTraVoucherAPI);
+        }
+
+        if (selectLoaiDon) {
+            selectLoaiDon.addEventListener('change', function() {
+                locDropdownVoucher(); 
+                if (selectKhuyenMai && selectKhuyenMai.value !== "") {
+                    kiemTraVoucherAPI();
+                } else {
+                    updatePrice();
+                }
+            });
+        }
+
+        // --- 6. KHỞI CHẠY LẦN ĐẦU ---
+        updatePrice();
+        locDropdownVoucher(); // Chạy bộ lọc ngay khi vào trang
+
+        // --- 7. LOGIC ADDRESS ---
         const radioInputs = document.querySelectorAll('input[name="hinh_thuc_nhan"]');
         const labelDiaChi = document.getElementById('label_dia_chi');
         const labelCuaHang = document.getElementById('label_cua_hang');
         const labelNgayGiao = document.getElementById('label_ngay_giao'); 
-
         const dateInput = document.querySelector('input[type="date"]');
+        
         if (dateInput) {
             const today = new Date().toISOString().split('T')[0];
             dateInput.setAttribute('min', today);
@@ -303,48 +477,23 @@
         function updateLabels() {
             const selectedRadio = document.querySelector('input[name="hinh_thuc_nhan"]:checked');
             if (!selectedRadio) return; 
-            
             const selectedValue = selectedRadio.value;
-            
             if (selectedValue === 'Giao_tan_noi') {
                 if(labelDiaChi) labelDiaChi.innerHTML = '<i class="bi bi-geo-alt-fill text-danger me-1"></i> Địa chỉ giao xe tận nơi <span class="text-danger">*</span>';
                 if(labelCuaHang) labelCuaHang.innerHTML = '<i class="bi bi-shop me-1"></i>Chọn chi nhánh gần nhất <span class="text-danger">*</span>';
                 if(labelNgayGiao) labelNgayGiao.innerHTML = '<i class="bi bi-calendar2-check-fill text-danger me-1"></i> Ngày nhận <span class="text-danger">*</span>';
-                
             } else {
                 if(labelDiaChi) labelDiaChi.innerHTML = '<i class="bi bi-house-door-fill text-secondary me-1"></i> Địa chỉ liên hệ <span class="text-danger">*</span>';
                 if(labelCuaHang) labelCuaHang.innerHTML = '<i class="bi bi-shop me-1"></i>Chọn chi nhánh đến nhận <span class="text-danger">*</span>';
                 if(labelNgayGiao) labelNgayGiao.innerHTML = '<i class="bi bi-calendar-event-fill text-success me-1"></i> Ngày hẹn đến showroom <span class="text-danger">*</span>';
             }
         }
-
         if (radioInputs.length > 0) {
-            radioInputs.forEach(radio => {
-                radio.addEventListener('change', updateLabels);
-            });
+            radioInputs.forEach(radio => radio.addEventListener('change', updateLabels));
             updateLabels();
         }
-
-        const requiredElements = document.querySelectorAll("input[required], select[required], textarea[required]");
-        requiredElements.forEach(function(el) {
-            el.addEventListener("invalid", function() {
-                if (el.tagName.toLowerCase() === 'select') {
-                    el.setCustomValidity("Vui lòng chọn một mục trong danh sách này.");
-                } else if (el.type === 'checkbox' || el.type === 'radio') {
-                    el.setCustomValidity("Vui lòng chọn tùy chọn này.");
-                } else if (el.type === 'email') {
-                    el.setCustomValidity("Vui lòng nhập đúng định dạng Email (vd: abc@gmail.com).");
-                } else {
-                    el.setCustomValidity("Vui lòng điền thông tin vào ô này.");
-                }
-            });
-            
-            el.addEventListener("input", function() { el.setCustomValidity(""); });
-            el.addEventListener("change", function() { el.setCustomValidity(""); });
-        });
-    });
+    }); // <-- DẤU ĐÓNG NGOẶC CỦA TOÀN BỘ KHỐI JS NẰM TẬN ĐÂY
     </script>
-
 </body>
 
 </html>

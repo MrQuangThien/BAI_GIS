@@ -1,0 +1,136 @@
+<!-- Đổi tên file này thành file base của Admin mà bạn đang có -->
+{% extends 'base_admin.html' %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h4 class="fw-bold mb-0">
+                        <i class="bi bi-ticket-detailed me-2 text-success"></i>
+                        {% if is_edit %}Sửa Khuyến Mãi{% else %}Tạo Khuyến Mãi Mới{% endif %}
+                    </h4>
+                </div>
+                <div class="card-body p-4 pt-0">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">Mã Code (In hoa, không dấu)</label>
+                                {{ form.ma_code }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">Trạng thái hoạt động</label>
+                                <div class="form-check mt-2">
+                                    {{ form.trang_thai }}
+                                    <label class="form-check-label">Kích hoạt mã này</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-muted">Tên chương trình (Hiển thị cho
+                                    khách)</label>
+                                {{ form.ten_chuong_trinh }}
+                            </div>
+
+                            <div class="col-md-3 d-flex flex-column justify-content-end">
+                                <label class="form-label fw-bold small text-muted mb-2">Loại khuyến mãi</label>
+                                {{ form.loai_khuyen_mai }}
+                            </div>
+                            <div class="col-md-3 d-flex flex-column justify-content-end">
+                                <label class="form-label fw-bold small text-muted mb-2">Mức giảm (VNĐ / %)</label>
+                                {{ form.gia_tri }}
+                            </div>
+
+                            <div class="col-md-3 d-flex flex-column justify-content-end">
+                                <label class="form-label fw-bold small text-muted mb-2">Chiến lược phát hành</label>
+                                {{ form.chien_luoc }}
+                            </div>
+                            
+                            <div class="col-md-3 d-flex flex-column justify-content-end">
+                                <label class="form-label fw-bold small text-primary mb-2">Loại đơn áp dụng</label>
+                                {{ form.loai_don_ap_dung }}
+                            </div>
+                            <div class="col-md-12 mt-3" id="khu-vuc-qua-tang" style="display: none;">
+                                <label class="form-label fw-bold small text-muted">Mô tả quà tặng</label>
+                                {{ form.mo_ta_qua_tang }}
+                                <div class="form-text text-muted fst-italic">Chi tiết quà tặng sẽ được hiển thị cho
+                                    khách hàng.</div>
+                            </div>
+
+                            <div class="col-12 mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label fw-bold small text-muted mb-0">Áp dụng cho mẫu xe
+                                        nào?</label>
+
+                                    <!-- NÚT BỎ CHỌN MỚI THÊM -->
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1"
+                                        onclick="clearXeApDung()" style="font-size: 0.75rem;">
+                                        <i class="bi bi-x-circle me-1"></i> Bỏ chọn
+                                    </button>
+                                </div>
+
+                                {{ form.xe_ap_dung }}
+
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">Ngày bắt đầu</label>
+                                {{ form.ngay_bat_dau }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">Ngày kết thúc</label>
+                                {{ form.ngay_ket_thuc }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                            <a href="{% url 'quan_ly_voucher' %}"
+                                class="btn btn-light border px-4 rounded-pill fw-bold">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-success px-5 rounded-pill fw-bold">
+                                {% if is_edit %}Lưu thay đổi{% else %}Tạo mã ngay{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function clearXeApDung() {
+        // Lấy thẻ select bằng ID mặc định mà Django tự sinh ra
+        let selectBox = document.getElementById('id_xe_ap_dung');
+        if (selectBox) {
+            // Lặp qua tất cả các xe và gỡ bỏ trạng thái "đã chọn"
+            for (let i = 0; i < selectBox.options.length; i++) {
+                selectBox.options[i].selected = false;
+            }
+        }
+    }
+
+     document.addEventListener("DOMContentLoaded", function() {
+        var loaiKhuyenMaiSelect = document.getElementById('id_loai_khuyen_mai');
+        var khuVucQuaTang = document.getElementById('khu-vuc-qua-tang');
+
+        function toggleQuaTang() {
+            // Giả sử giá trị (value) của tuỳ chọn "Quà tặng kèm" là 'qua_tang'. 
+            // Bạn cần kiểm tra lại giá trị thực tế trong mô hình của mình.
+            if (loaiKhuyenMaiSelect.value === 'qua_tang') {
+                khuVucQuaTang.style.display = 'block';
+            } else {
+                khuVucQuaTang.style.display = 'none';
+                // Có thể cân nhắc xoá giá trị trong ô mo_ta_qua_tang khi ẩn đi
+            }
+        }
+
+        // Chạy ngay khi tải trang để hiển thị đúng trạng thái ban đầu (khi sửa voucher)
+        toggleQuaTang();
+
+        // Lắng nghe sự kiện thay đổi
+        loaiKhuyenMaiSelect.addEventListener('change', toggleQuaTang);
+    });
+</script>
+
+{% endblock %}

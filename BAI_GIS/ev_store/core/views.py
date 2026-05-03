@@ -28,9 +28,9 @@ from django.utils.dateparse import parse_datetime
 
 from django.contrib.auth.forms import PasswordChangeForm
 
-from .models import ThongBao, TramSac, XeDien, CuaHang, DonHang, DanhMuc, Feedback, KhoHang, PhienSac, AnhXeDien, PhieuNhapKho, ChiTietPhieuNhap, TinNhanChat, UserProfile, LichLaiThu, DanhGiaTram, KhuyenMai
+from .models import ThongBao, TramSac, XeDien, CuaHang, DonHang, DanhMuc, Feedback, KhoHang, PhienSac, AnhXeDien, PhieuNhapKho, ChiTietPhieuNhap, TinNhanChat, UserProfile, LichLaiThu, DanhGiaTram, KhuyenMai, GioiThieuCuaHang
 
-from .forms import XeDienForm, UserForm, RegisterForm, DonHangForm, DonHangTaiQuayForm, FeedbackForm, UserProfileForm, PhieuNhapKhoForm, ChiTietPhieuNhapFormSet, UserUpdateForm, ProfileUpdateForm, EmailChangeForm, LichLaiThuForm, KhuyenMaiForm
+from .forms import XeDienForm, UserForm, RegisterForm, DonHangForm, DonHangTaiQuayForm, FeedbackForm, UserProfileForm, PhieuNhapKhoForm, ChiTietPhieuNhapFormSet, UserUpdateForm, ProfileUpdateForm, EmailChangeForm, LichLaiThuForm, KhuyenMaiForm, GioiThieuForm
 
 # ==========================================
 # 0. DECORATOR PHÂN QUYỀN
@@ -128,8 +128,42 @@ def tim_kiem(request):
     })
 
 def gioi_thieu(request):
+    # 1. Lấy bài giới thiệu tổng quát (nếu chưa có thì trả về None)
+    gioi_thieu_chung = GioiThieuCuaHang.objects.first()
+    
+    # 2. Lấy danh sách chi nhánh
     danh_sach_cua_hang = CuaHang.objects.all().order_by('id') 
-    return render(request, 'pages/gioi_thieu.html', {'danh_sach_cua_hang': danh_sach_cua_hang})
+    
+    context = {
+        'gioi_thieu_chung': gioi_thieu_chung,
+        'danh_sach_cua_hang': danh_sach_cua_hang
+    }
+    return render(request, 'pages/gioi_thieu.html', context)
+
+@login_required(login_url='login')
+def quan_ly_gioi_thieu(request):
+    # Kiểm tra quyền (chỉ admin/quản lý mới được vào)
+    if not request.user.is_superuser and request.user.userprofile.vai_tro not in ['admin', 'quan_ly']:
+        messages.error(request, 'Bạn không có quyền truy cập trang này!')
+        return redirect('admin_dashboard')
+
+    # Lấy bài giới thiệu đầu tiên trong DB. Nếu chưa có thì tự động tạo sẵn 1 cái rỗng
+    gioi_thieu = GioiThieuCuaHang.objects.first()
+    if not gioi_thieu:
+        gioi_thieu = GioiThieuCuaHang.objects.create(tieu_de="Giới thiệu về EV STORE", noi_dung="")
+
+    # Xử lý khi Admin bấm nút "Lưu nội dung"
+    if request.method == 'POST':
+        form = GioiThieuForm(request.POST, instance=gioi_thieu)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Đã cập nhật bài giới thiệu thành công!')
+            return redirect('quan_ly_gioi_thieu')
+    else:
+        form = GioiThieuForm(instance=gioi_thieu)
+
+    # Truyền form ra giao diện quan_ly_gioi_thieu.html mà bạn vừa tạo lúc nãy
+    return render(request, 'pages/quan_ly_gioi_thieu.html', {'form': form})
 
 def chi_tiet_cua_hang(request, pk):
     cua_hang = get_object_or_404(CuaHang, pk=pk)
@@ -186,6 +220,9 @@ def danh_sach_san_pham(request):
     danh_sach_xe = XeDien.objects.filter(trang_thai=True)
     cac_phan_khuc = DanhMuc.objects.all() 
     cac_hang_xe = XeDien.objects.filter(trang_thai=True).values_list('hang_san_xuat', flat=True).distinct()
+    
+    # THÊM MỚI: Lấy danh sách toàn bộ chi nhánh để đưa ra giao diện
+    cac_chi_nhanh = CuaHang.objects.all().order_by('id')
 
     # 1. NHẬN CÁC YÊU CẦU TỪ FORM
     sort_by = request.GET.get('sort', '')
@@ -193,12 +230,28 @@ def danh_sach_san_pham(request):
     pk_chon = request.GET.get('phan_khuc', '')
     hang_chon = request.GET.get('thuong_hieu', '')
     
-    # Nhận thêm biến Khoảng giá
+    # Nhận thêm biến Tìm kiếm và Chi nhánh
+    tu_khoa = request.GET.get('tu_khoa', '').strip()
+    chi_nhanh_chon = request.GET.get('chi_nhanh', '')
+    
     khoang_gia = request.GET.get('khoang_gia', '')
     gia_min = request.GET.get('gia_min', '')
     gia_max = request.GET.get('gia_max', '')
 
     # 2. XỬ LÝ LỌC
+    # Lọc theo TỪ KHÓA TÌM KIẾM
+    if tu_khoa:
+        danh_sach_xe = danh_sach_xe.filter(ten_xe__icontains=tu_khoa)
+
+    # Lọc theo CHI NHÁNH CỬA HÀNG
+    if chi_nhanh_chon:
+        # Lọc xe thông qua bảng trung gian (kho_hang). Dùng distinct() để không bị trùng xe
+        danh_sach_xe = danh_sach_xe.filter(
+            kho_hang__cua_hang_id=chi_nhanh_chon,
+            kho_hang__so_luong__gt=0 # Chỉ hiển thị xe đang còn tồn kho > 0 ở chi nhánh đó
+        ).distinct()
+
+    # Lọc theo Phân khúc và Hãng
     if pk_chon:
         danh_sach_xe = danh_sach_xe.filter(danh_muc_id=pk_chon)
     if hang_chon:
@@ -219,7 +272,7 @@ def danh_sach_san_pham(request):
     elif khoang_gia == 'tren_2000':
         danh_sach_xe = danh_sach_xe.filter(gia__gt=2000000000)
 
-    # Lọc theo mức giá tự nhập (Ghi đè khoảng giá nếu khách có tự nhập)
+    # Lọc theo mức giá tự nhập
     if gia_min and gia_min.isdigit():
         danh_sach_xe = danh_sach_xe.filter(gia__gte=int(gia_min))
     if gia_max and gia_max.isdigit():
@@ -230,6 +283,7 @@ def danh_sach_san_pham(request):
     elif sort_by == 'gia_giam': danh_sach_xe = danh_sach_xe.order_by('-gia') 
     else: danh_sach_xe = danh_sach_xe.order_by('-id') 
 
+    # Trả về kết quả đếm số lượng cho chức năng Live Count (Ajax)
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'count': danh_sach_xe.count()})
 
@@ -237,11 +291,15 @@ def danh_sach_san_pham(request):
         'danh_sach_xe': danh_sach_xe,
         'cac_phan_khuc': cac_phan_khuc,
         'cac_hang_xe': cac_hang_xe,
+        'cac_chi_nhanh': cac_chi_nhanh, # Đẩy danh sách chi nhánh ra Dropdown
+        
+        'tu_khoa': tu_khoa, # Giữ lại chữ đang gõ trên thanh tìm kiếm
+        'chi_nhanh_chon': chi_nhanh_chon, # Giữ trạng thái của ô chọn chi nhánh
         'pk_chon': int(pk_chon) if pk_chon else None,
         'hang_chon': hang_chon,
         'tieu_chi': tieu_chi,
         'sort_by': sort_by,
-        'khoang_gia': khoang_gia, # Truyền ra HTML để giữ sáng nút
+        'khoang_gia': khoang_gia, 
         'gia_min': gia_min,
         'gia_max': gia_max,
     }

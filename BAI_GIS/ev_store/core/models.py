@@ -388,4 +388,12 @@ class ThongBao(models.Model):
 
     def __str__(self):
         return self.tieu_de
-    
+
+class GioiThieuCuaHang(models.Model):
+    tieu_de = models.CharField(max_length=200, default="Giới thiệu về EV STORE")
+    # Trường nội dung sẽ chứa toàn bộ HTML từ CKEditor
+    noi_dung = models.TextField() 
+    ngay_cap_nhat = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Giới thiệu tổng quát"

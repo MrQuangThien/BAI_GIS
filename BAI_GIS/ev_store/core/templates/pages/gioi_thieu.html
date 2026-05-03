@@ -5,13 +5,21 @@
 
 {% block extra_css %}
 <style>
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Đẩy phần chi nhánh xuống một chút để khi nhảy đến không bị thanh Menu che mất chữ */
+    #khu-vuc-chi-nhanh {
+        scroll-margin-top: 80px; 
+    }
     /* Hero Section */
     .about-hero {
         background: linear-gradient(rgba(25, 135, 84, 0.85), rgba(33, 37, 41, 0.9)),
                     url("https://images.unsplash.com/photo-1593941707882-a5bba14938c7");
         background-size: cover;
         background-position: center;
-        min-height: 60vh;
+        min-height: 50vh;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -20,14 +28,44 @@
         padding: 50px 20px;
     }
 
-    /* Nội dung CKEditor */
+    /* ĐÃ BỔ SUNG: CSS CHO NỘI DUNG TỪ CKEDITOR */
+    .content-detail {
+        line-height: 1.8;
+        font-size: 1.1rem;
+        color: #212529;
+    }
+    .content-detail img {
+        max-width: 100%;
+        height: auto !important;
+        border-radius: 10px;
+        margin: 20px auto;
+        display: block;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .content-detail h2, .content-detail h3, .content-detail h4 {
+        color: #198754;
+        font-weight: bold;
+        margin-top: 30px;
+        margin-bottom: 15px;
+    }
+    .content-detail table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    .content-detail th, .content-detail td {
+        border: 1px solid #dee2e6;
+        padding: 10px;
+    }
+    .content-detail th { background-color: #f8f9fa; }
+
+    /* Nội dung rút gọn CKEditor ở Branch Card */
     .ckeditor-content {
         line-height: 1.8;
         font-size: 1.05rem;
         color: #495057;
     }
 
-    /* ĐÃ BỔ SUNG: Ép đoạn text mô tả chỉ hiện tối đa 3 dòng cho đều thẻ */
     .text-line-clamp {
         display: -webkit-box;
         -webkit-line-clamp: 3;
@@ -65,7 +103,6 @@
         color: #fff;
     }
 
-    /* ĐÃ BỔ SUNG: Tối ưu nút bấm trên Mobile (< 768px) */
     @media (max-width: 767px) {
         .btn-mobile-w100 {
             width: 100%;
@@ -83,23 +120,46 @@
 {% block content %}
 <section class="about-hero mb-5">
     <div class="container">
-        <h1 class="display-4 fw-bold mb-3">Về EV STORE</h1>
-        <p class="lead w-75 mx-auto">
+        <!-- Lấy tiêu đề do Admin nhập, nếu chưa có thì dùng chữ mặc định -->
+        <h1 class="display-4 fw-bold mb-3">{{ gioi_thieu_chung.tieu_de|default:"Về EV STORE" }}</h1>
+        <p class="lead w-75 mx-auto mb-4"> <!-- Thêm mb-4 để tạo khoảng cách với nút -->
             Chúng tôi tự hào là hệ thống phân phối xe điện thông minh lớn nhất, với mạng lưới chi nhánh phủ sóng rộng khắp,
             cam kết mang đến trải nghiệm xanh và hiện đại cho mọi khách hàng.
         </p>
+        
+        <!-- BẮT ĐẦU: NÚT NHẢY NHANH XUỐNG CHI NHÁNH -->
+        <a href="#khu-vuc-chi-nhanh" class="btn btn-outline-light rounded-pill px-4 py-2 fw-bold shadow-sm" style="transition: all 0.3s;">
+            <i class="bi bi-chevron-double-down me-2"></i> Khám phá Hệ thống Chi nhánh
+        </a>
+        <!-- KẾT THÚC: NÚT NHẢY NHANH -->
+        
     </div>
 </section>
 
-<div class="container mb-5 pb-5">
-    <h2 class="fw-bold text-center mb-5">
+<!-- BẮT ĐẦU: PHẦN GIỚI THIỆU TỔNG QUÁT TỪ CKEDITOR -->
+{% if gioi_thieu_chung and gioi_thieu_chung.noi_dung %}
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="content-detail shadow-sm p-4 p-md-5 bg-white rounded-4 border-top border-success border-4">
+                {{ gioi_thieu_chung.noi_dung|safe }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+<!-- KẾT THÚC: PHẦN GIỚI THIỆU TỔNG QUÁT -->
+
+<!-- PHẦN DANH SÁCH CHI NHÁNH -->
+<div class="container mb-5 pb-5" id="khu-vuc-chi-nhanh">
+    <h2 class="fw-bold text-center mb-5 mt-4 border-top pt-5">
         <i class="bi bi-buildings text-success me-2"></i>Hệ thống Chi nhánh của chúng tôi
     </h2>
 
     <div class="row justify-content-center g-4">
         {% for ch in danh_sach_cua_hang %}
         <div class="col-12">
-            <div class="card branch-card shadow-sm border-0 overflow-hidden">
+            <div class="card branch-card shadow-sm border-0 overflow-hidden bg-white">
                 <div class="row g-0 h-100">
                     <div class="col-md-4 bg-light d-flex align-items-center justify-content-center">
                         {% if ch.hinh_anh %}

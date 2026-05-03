@@ -140,14 +140,14 @@
                     {% endif %}
                 </ul>
 
-                <form action="{% url 'tim_kiem' %}" method="GET" class="d-flex mx-lg-3 my-2 my-lg-0 w-100" style="max-width: 400px;">
-                    <div class="input-group shadow-sm">
-                        <input type="text" name="q" class="form-control" placeholder="Nhập tên sản phẩm ..." value="{{ request.GET.q }}" required>
-                        <button class="btn btn-warning text-dark fw-bold" type="submit">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                </form>
+               <form action="{% url 'danh_sach_san_pham' %}" method="GET" class="d-flex mx-lg-3 my-2 my-lg-0 w-100" style="max-width: 400px;">
+    <div class="input-group shadow-sm">
+        <input type="text" name="tu_khoa" class="form-control" placeholder="Nhập tên sản phẩm ..." value="{{ request.GET.tu_khoa }}" required>
+        <button class="btn btn-warning text-dark fw-bold" type="submit">
+            <i class="bi bi-search"></i>
+        </button>
+    </div>
+</form>
 
                 <div class="d-flex align-items-center mt-2 mt-lg-0">
                     {% if user.is_authenticated %}

@@ -146,6 +146,9 @@
                             <a href="{% url 'quan_ly_cua_hang' %}" class="{% if request.resolver_match.url_name == 'quan_ly_cua_hang' %}active{% endif %}">
                                 <i class="bi bi-shop me-2"></i> Quản lý Cửa Hàng
                             </a>
+                            <a href="{% url 'quan_ly_gioi_thieu' %}" class="{% if request.resolver_match.url_name == 'quan_ly_gioi_thieu' %}active{% endif %}">
+                                <i class="bi bi-file-earmark-richtext me-2"></i> Trang giới thiệu
+                            </a>
                             {% endif %}
 
                             <a href="{% url 'quan_ly_phieu_nhap' %}" class="{% if request.resolver_match.url_name == 'quan_ly_phieu_nhap' %}active{% endif %}">

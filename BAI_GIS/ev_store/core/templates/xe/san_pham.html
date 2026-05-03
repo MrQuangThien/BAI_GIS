@@ -127,38 +127,15 @@
 
         /* TỐI ƯU HÓA MOBILE (< 768px) */
         @media (max-width: 767px) {
-            .product-img {
-                height: 150px; /* Ảnh thấp lại để vừa 2 cột */
-                padding: 10px;
-            }
-            .product-card .card-title {
-                font-size: 0.9rem;
-            }
-            .product-card .fs-6 {
-                font-size: 0.9rem !important; /* Giá tiền nhỏ lại */
-            }
-            .badge-container .badge {
-                font-size: 0.65rem;
-                padding: 3px 5px;
-            }
-            /* Ẩn bớt icon trên mobile để tiết kiệm diện tích */
+            .product-img { height: 150px; padding: 10px; }
+            .product-card .card-title { font-size: 0.9rem; }
+            .product-card .fs-6 { font-size: 0.9rem !important; }
+            .badge-container .badge { font-size: 0.65rem; padding: 3px 5px; }
             .badge-container .bi { display: none; } 
-            .quick-filter-bar {
-                padding: 10px;
-            }
-            .filter-btn {
-                padding: 5px 10px;
-                font-size: 0.85rem;
-            }
-            /* Các input số trong Modal lọc */
-            #displayMin, #displayMax {
-                font-size: 0.85rem;
-            }
-            /* Gói gọn phần "Sắp xếp" */
-            .sort-group {
-                flex-wrap: wrap; 
-                gap: 10px;
-            }
+            .quick-filter-bar { padding: 10px; }
+            .filter-btn { padding: 5px 10px; font-size: 0.85rem; }
+            #displayMin, #displayMax { font-size: 0.85rem; }
+            .sort-group { flex-wrap: wrap; gap: 10px; }
         }
    </style>
 </head>
@@ -184,6 +161,33 @@
         <form method="GET" id="filterForm">
             
             <div class="quick-filter-bar">
+                <!-- ========================================== -->
+                <!-- BẮT ĐẦU: PHẦN TÌM KIẾM VÀ CHỌN CHI NHÁNH -->
+                <!-- ========================================== -->
+                <div class="row g-2 mb-3 pb-3 border-bottom">
+                    <div class="col-md-7 col-lg-8">
+                        <div class="input-group shadow-sm border rounded-3 overflow-hidden">
+                            <span class="input-group-text bg-white border-0 text-muted"><i class="bi bi-search"></i></span>
+                            <input type="text" name="tu_khoa" class="form-control border-0 shadow-none" placeholder="Tìm kiếm tên sản phẩm..." value="{{ tu_khoa|default:'' }}">
+                            <button class="btn btn-success fw-bold px-3 px-md-4 border-0" type="submit">Tìm kiếm</button>
+                        </div>
+                    </div>
+                    <div class="col-md-5 col-lg-4">
+                        <div class="input-group shadow-sm border rounded-3 overflow-hidden h-100">
+                            <span class="input-group-text bg-white border-0 text-success"><i class="bi bi-geo-alt-fill"></i></span>
+                            <select name="chi_nhanh" class="form-select border-0 shadow-none fw-medium text-dark" onchange="this.form.submit()">
+                                <option value="">Tất cả chi nhánh</option>
+                                {% for cn in cac_chi_nhanh %}
+                                    <option value="{{ cn.id }}" {% if chi_nhanh_chon|stringformat:"s" == cn.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ cn.ten_cua_hang }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- ========================================== -->
+
                 <div class="d-flex align-items-center gap-2 gap-md-3 mb-2 mb-md-3">
                     <button type="button" class="btn filter-btn d-flex align-items-center fw-bold text-nowrap" data-bs-toggle="modal" data-bs-target="#filterModal">
                         <i class="bi bi-funnel me-1 me-md-2 fs-6 fs-md-5"></i> Lọc
@@ -218,14 +222,16 @@
                         </label>
                     </div>
 
-                    {% if hang_chon or pk_chon or tieu_chi or sort_by or khoang_gia or gia_min or gia_max %}
+                    <!-- Đã bổ sung biến tu_khoa và chi_nhanh_chon vào lệnh Xóa lọc -->
+                    {% if hang_chon or pk_chon or tieu_chi or sort_by or khoang_gia or gia_min or gia_max or tu_khoa or chi_nhanh_chon %}
                         <a href="{% url 'danh_sach_san_pham' %}" class="text-danger small text-decoration-none fw-bold">
-                            <i class="bi bi-x-circle me-1"></i>Xóa lọc
+                            <i class="bi bi-x-circle me-1"></i>Xóa tất cả lọc
                         </a>
                     {% endif %}
                 </div>
             </div>
 
+            <!-- MODAL BỘ LỌC GIỮ NGUYÊN -->
             <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content border-0 rounded-4">
@@ -320,7 +326,7 @@
                                     </label>
                                     {% for pk in cac_phan_khuc %}
                                     <label class="filter-box">
-                                        <input type="radio" name="phan_khuc" value="{{ pk.id }}" class="d-none" {% if pk_chon == pk.id %}checked{% endif %}>
+                                        <input type="radio" name="phan_khuc" value="{{ pk.id }}" class="d-none" {% if pk_chon|stringformat:"s" == pk.id|stringformat:"s" %}checked{% endif %}>
                                         <span>{{ pk.ten_danh_muc }}</span>
                                     </label>
                                     {% endfor %}
@@ -381,7 +387,7 @@
                 <div class="col-12 text-center text-muted py-5 mt-3 bg-white rounded shadow-sm border">
                     <i class="bi bi-search fs-1 d-block mb-3 text-secondary"></i>
                     <h5 class="fw-bold">Không tìm thấy xe nào phù hợp!</h5>
-                    <p class="small">Vui lòng thử bỏ bớt các tiêu chí lọc.</p>
+                    <p class="small">Vui lòng thử bỏ bớt các tiêu chí lọc hoặc đổi từ khóa.</p>
                     <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-success mt-2 fw-bold shadow-sm">Xóa lọc để xem tất cả</a>
                 </div>
                 {% endfor %}
@@ -420,9 +426,13 @@
                 });
             }
 
-            filterForm.querySelectorAll('input').forEach(input => {
+            // Gắn event cho tất cả input và select trong form để Live Count hoạt động mượt mà
+            filterForm.querySelectorAll('input, select').forEach(input => {
                 input.addEventListener('change', function(e) {
-                    if(e.target.type !== 'range') fetchLiveCount();
+                    // Loại trừ range (vì đã gọi hàm riêng) và Loại trừ ô text (để tránh spam server khi đang gõ phím)
+                    if(e.target.type !== 'range' && e.target.type !== 'text' && e.target.name !== 'chi_nhanh') {
+                        fetchLiveCount();
+                    }
                 });
             });
 

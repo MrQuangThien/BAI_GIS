@@ -1,0 +1,76 @@
+{% extends 'base_admin.html' %}
+
+{% block extra_css %}
+<!-- Load CSS mặc định của CKEditor -->
+<style>
+    /* Ép khung CKEditor rộng và cao theo yêu cầu của Giảng viên */
+    .ck-editor__editable_inline {
+        min-height: 500px !important;
+        font-size: 16px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold"><i class="bi bi-file-earmark-richtext me-2 text-success"></i>Cập nhật Giới thiệu Cửa hàng</h3>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" novalidate>
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tiêu đề trang</label>
+                    {{ form.tieu_de }}
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-primary"><i class="bi bi-pencil-square me-1"></i>Nội dung bài viết (CKEditor 5)</label>
+                    <!-- Django render trường noi_dung (textarea có id='editor') vào đây -->
+                    {{ form.noi_dung }}
+                </div>
+
+                <div class="text-end border-top pt-3">
+                    <button type="submit" class="btn btn-success px-5 py-2 fw-bold rounded-pill shadow-sm">
+                        <i class="bi bi-save me-1"></i> Lưu nội dung
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- CDN CKEditor 5 -->
+<script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Tìm ô textarea có ID là 'editor' và biến nó thành CKEditor
+        ClassicEditor
+            .create(document.querySelector('#editor'), {
+                toolbar: [
+                    'heading', '|',
+                    'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|',
+                    'insertTable', 'mediaEmbed', 'undo', 'redo'
+                ]
+            })
+            .catch(error => {
+                console.error(error);
+            });
+    });
+</script>
+{% endblock %}

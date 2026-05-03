@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import XeDien, DonHang, KhoHang, CuaHang, PhienSac, UserProfile, Feedback,PhieuNhapKho, ChiTietPhieuNhap, YeuCauHoTro, LichLaiThu, KhuyenMai
+from .models import XeDien, DonHang, KhoHang, CuaHang, PhienSac, UserProfile, Feedback,PhieuNhapKho, ChiTietPhieuNhap, YeuCauHoTro, LichLaiThu, KhuyenMai, GioiThieuCuaHang
 from django.forms import inlineformset_factory
 
 # ==========================================
@@ -454,4 +454,11 @@ class KhuyenMaiForm(forms.ModelForm):
             'loai_don_ap_dung': forms.Select(attrs={'class': 'form-select'}),
             'trang_thai': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'xe_ap_dung': forms.SelectMultiple(attrs={'class': 'form-select', 'size': '4'}),
+        }
+class GioiThieuForm(forms.ModelForm):
+    class Meta:
+        model = GioiThieuCuaHang
+        fields = ['tieu_de', 'noi_dung']
+        widgets = {
+            'noi_dung': forms.Textarea(attrs={'id': 'editor', 'class': 'form-control'}),
         }

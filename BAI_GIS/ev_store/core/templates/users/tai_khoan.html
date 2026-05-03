@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load humanize %} 
+{% load humanize %}
 
 {% block title %}Tài khoản của tôi | EV STORE{% endblock %}
 
@@ -8,12 +8,12 @@
 <div class="container my-4 my-md-5">
     <div class="row">
         {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-4 shadow-sm" role="alert">
-                    <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-4 shadow-sm" role="alert">
+            <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
         {% endif %}
 
         <!-- SIDEBAR MENU -->
@@ -21,42 +21,63 @@
             <div class="card border-0 shadow-sm rounded-4 text-center p-3 p-md-4 mb-3">
                 <div class="position-relative d-inline-block mx-auto mb-2">
                     {% if user.userprofile.avatar %}
-                        <img src="{{ user.userprofile.avatar.url }}" id="avatarPreviewMenu" class="rounded-circle border border-3 border-success object-fit-cover" style="width: 100px; height: 100px;">
+                    <img src="{{ user.userprofile.avatar.url }}" id="avatarPreviewMenu"
+                        class="rounded-circle border border-3 border-success object-fit-cover"
+                        style="width: 100px; height: 100px;">
                     {% else %}
-                        <img src="https://via.placeholder.com/150" id="avatarPreviewMenu" class="rounded-circle border border-3 border-success object-fit-cover" style="width: 100px; height: 100px;">
+                    <img src="https://via.placeholder.com/150" id="avatarPreviewMenu"
+                        class="rounded-circle border border-3 border-success object-fit-cover"
+                        style="width: 100px; height: 100px;">
                     {% endif %}
                 </div>
-                
-                <label for="id_avatar" class="btn btn-outline-success btn-sm rounded-pill fw-bold mb-2 mb-md-3" style="cursor: pointer;">
+
+                <label for="id_avatar" class="btn btn-outline-success btn-sm rounded-pill fw-bold mb-2 mb-md-3"
+                    style="cursor: pointer;">
                     <i class="bi bi-camera me-1"></i> Đổi ảnh
                 </label>
-                <input type="file" name="avatar" id="id_avatar" accept="image/*" class="d-none" form="profile-form" onchange="previewImage(event)">
+                <input type="file" name="avatar" id="id_avatar" accept="image/*" class="d-none" form="profile-form"
+                    onchange="previewImage(event)">
 
                 <h5 class="fw-bold text-dark mb-0 fs-6 fs-md-5">{{ user.last_name }} {{ user.first_name }}</h5>
                 <p class="text-muted small mb-0">@{{ user.username }}</p>
             </div>
 
-            <div class="nav nav-pills flex-column shadow-sm rounded-4 bg-white p-2 mobile-scroll-menu" id="account-tabs" role="tablist">
-                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'profile' or not active_tab %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#content-profile" type="button" role="tab">
+            <div class="nav nav-pills flex-column shadow-sm rounded-4 bg-white p-2 mobile-scroll-menu" id="account-tabs"
+                role="tablist">
+                <button
+                    class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'profile' or not active_tab %}active{% endif %}"
+                    data-bs-toggle="pill" data-bs-target="#content-profile" type="button" role="tab">
                     <i class="bi bi-person-lines-fill me-2"></i> Hồ sơ cá nhân
                 </button>
-                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'orders' %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#content-orders" type="button" role="tab">
+                <button
+                    class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'orders' %}active{% endif %}"
+                    data-bs-toggle="pill" data-bs-target="#content-orders" type="button" role="tab">
                     <i class="bi bi-box-seam me-2"></i> Lịch sử mua xe
                 </button>
-                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'laithu' %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#content-laithu" type="button" role="tab">
+                <button
+                    class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'laithu' %}active{% endif %}"
+                    data-bs-toggle="pill" data-bs-target="#content-laithu" type="button" role="tab">
                     <i class="bi bi-car-front-fill me-2"></i> Lịch sử Lái thử
                 </button>
-                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'sacpin' %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#content-sacpin" type="button" role="tab">
+                <button
+                    class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'sacpin' %}active{% endif %}"
+                    data-bs-toggle="pill" data-bs-target="#content-sacpin" type="button" role="tab">
                     <i class="bi bi-ev-station-fill me-2"></i> Lịch sử Sạc pin
                 </button>
-                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'voucher' %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#content-voucher" type="button" role="tab">
+                <button
+                    class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'voucher' %}active{% endif %}"
+                    data-bs-toggle="pill" data-bs-target="#content-voucher" type="button" role="tab">
                     <i class="bi bi-ticket-perforated-fill me-2"></i> Ví Voucher
                 </button>
                 <hr class="my-2 opacity-25 d-none d-md-block">
-                <button class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'email' %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#content-email" type="button" role="tab">
+                <button
+                    class="nav-link text-start fw-bold py-3 px-3 mb-1 {% if active_tab == 'email' %}active{% endif %}"
+                    data-bs-toggle="pill" data-bs-target="#content-email" type="button" role="tab">
                     <i class="bi bi-envelope-check me-2"></i> Đổi Email
                 </button>
-                <button class="nav-link text-start fw-bold py-3 px-3 mb-0 {% if active_tab == 'security' %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#content-security" type="button" role="tab">
+                <button
+                    class="nav-link text-start fw-bold py-3 px-3 mb-0 {% if active_tab == 'security' %}active{% endif %}"
+                    data-bs-toggle="pill" data-bs-target="#content-security" type="button" role="tab">
                     <i class="bi bi-shield-lock-fill me-2"></i> Đổi mật khẩu
                 </button>
             </div>
@@ -64,184 +85,247 @@
 
         <!-- MAIN CONTENT TABS -->
         <div class="col-md-8 col-lg-9">
-            <div class="tab-content shadow-sm bg-white rounded-4 p-3 p-md-5 border-0 min-vh-50" id="account-tab-content">
+            <div class="tab-content shadow-sm bg-white rounded-4 p-3 p-md-5 border-0 min-vh-50"
+                id="account-tab-content">
 
-                <!-- 1. TAB HỒ SƠ -->
-                <div class="tab-pane fade {% if active_tab == 'profile' or not active_tab %}show active{% endif %}" id="content-profile" role="tabpanel">
-                    <h4 class="fw-bold mb-3 mb-md-4 text-success border-bottom pb-2 pb-md-3"><i class="bi bi-info-circle me-2"></i>Hồ Sơ Của Tôi</h4>
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+                <div class="tab-pane fade {% if active_tab == 'profile' or not active_tab %}show active{% endif %}"
+                    id="content-profile" role="tabpanel">
+                    <h4 class="fw-bold mb-3 mb-md-4 text-success border-bottom pb-2 pb-md-3"><i
+                            class="bi bi-info-circle me-2"></i>Hồ Sơ Của Tôi</h4>
                     <form id="profile-form" method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="row g-3 g-md-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-muted">Họ (Last Name)</label>
-                                <input type="text" name="last_name" value="{{ u_form.last_name.value|default:'' }}" class="form-control bg-light" required>
+                                <input type="text" name="last_name" value="{{ u_form.last_name.value|default:'' }}"
+                                    class="form-control bg-light" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-muted">Tên (First Name)</label>
-                                <input type="text" name="first_name" value="{{ u_form.first_name.value|default:'' }}" class="form-control bg-light" required>
+                                <input type="text" name="first_name" value="{{ u_form.first_name.value|default:'' }}"
+                                    class="form-control bg-light" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-muted">Email đăng nhập</label>
-                                <input type="email" value="{{ u_form.email.value|default:'' }}" class="form-control bg-secondary-subtle text-muted border-0" readonly>
+                                <input type="email" value="{{ u_form.email.value|default:'' }}"
+                                    class="form-control bg-secondary-subtle text-muted border-0" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-muted">Số điện thoại</label>
-                                <input type="text" name="so_dien_thoai" value="{{ p_form.so_dien_thoai.value|default:'' }}" class="form-control bg-light">
+                                <input type="text" name="so_dien_thoai"
+                                    value="{{ p_form.so_dien_thoai.value|default:'' }}" class="form-control bg-light">
                             </div>
+
                             <div class="col-12">
                                 <label class="form-label fw-bold small text-muted">Địa chỉ liên hệ</label>
-                                <textarea name="dia_chi" class="form-control bg-light" rows="3">{{ p_form.dia_chi.value|default:'' }}</textarea>
+
+                                <!-- Ô nhập liệu và 2 nút chức năng -->
+                                <div class="input-group mb-2 shadow-sm rounded">
+                                    <textarea id="dia_chi_input" name="dia_chi" class="form-control bg-light" rows="2"
+                                        placeholder="Nhập địa chỉ nhà, tên đường, quận/huyện...">{{ p_form.dia_chi.value|default:'' }}</textarea>
+
+                                    <!-- Nút tìm kiếm địa chỉ -->
+                                    <button
+                                        class="btn btn-outline-primary d-flex flex-column align-items-center justify-content-center px-3"
+                                        type="button" id="btn-tim-ban-do" title="Tìm vị trí này trên bản đồ">
+                                        <i class="bi bi-search mb-1"></i><small style="font-size: 0.7rem;">Tìm
+                                            Map</small>
+                                    </button>
+
+                                    <!-- Nút định vị GPS -->
+                                    <button
+                                        class="btn btn-outline-success d-flex flex-column align-items-center justify-content-center px-3"
+                                        type="button" id="btn-lay-vi-tri" title="Lấy vị trí hiện tại của tôi">
+                                        <i class="bi bi-geo-alt-fill mb-1"></i><small style="font-size: 0.7rem;">Định
+                                            vị</small>
+                                    </button>
+                                </div>
+
+                                <div id="mapPicker"
+                                    style="height: 350px; width: 100%; border-radius: 8px; border: 1px solid #dee2e6; z-index: 1;">
+                                </div>
                             </div>
                         </div>
+
                         <div class="text-center text-md-end mt-4 pt-3 border-top">
-                            <button type="submit" name="btn_cap_nhat_thong_tin" class="btn btn-success px-5 fw-bold rounded-pill shadow-sm w-100 w-md-auto">Lưu thay đổi</button>
+                            <button type="submit" name="btn_cap_nhat_thong_tin"
+                                class="btn btn-success px-5 fw-bold rounded-pill shadow-sm w-100 w-md-auto">Lưu thay
+                                đổi</button>
                         </div>
                     </form>
                 </div>
 
                 <!-- 2. TAB MUA XE -->
-                <div class="tab-pane fade {% if active_tab == 'orders' %}show active{% endif %}" id="content-orders" role="tabpanel">
-                    <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3"><i class="bi bi-box-seam me-2 text-primary"></i>Lịch sử mua hàng</h4>
-                    
+                <div class="tab-pane fade {% if active_tab == 'orders' %}show active{% endif %}" id="content-orders"
+                    role="tabpanel">
+                    <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3"><i
+                            class="bi bi-box-seam me-2 text-primary"></i>Lịch sử mua hàng</h4>
+
                     {% if danh_sach_don_hang %}
-                        <div class="d-flex flex-column gap-3">
+                    <div class="d-flex flex-column gap-3">
                         {% for don in danh_sach_don_hang %}
-                            <div class="card border border-light-subtle shadow-sm rounded-4 overflow-hidden">
-                                <div class="card-header bg-light d-flex justify-content-between align-items-center pt-3 pb-2">
-                                    <span class="text-muted small"><i class="bi bi-clock me-1"></i> Ngày đặt: <strong>{{ don.ngay_dat|date:"d/m/Y" }}</strong></span>
-                                    <span class="badge {% if don.trang_thai == 'Paid' %}bg-success{% elif don.trang_thai == 'Cancelled' %}bg-danger{% else %}bg-warning text-dark{% endif %} px-3 py-2 rounded-pill">
-                                        {{ don.get_trang_thai_display }}
-                                    </span>
-                                </div>
-                                <div class="card-body p-3 p-md-4">
-                                    <div class="d-flex align-items-center">
-                                        {% if don.xe.hinh_anh %}
-                                            <img src="{{ don.xe.hinh_anh.url }}" class="rounded-3 object-fit-cover me-3 border" style="width: 120px; height: 80px;">
-                                        {% else %}
-                                            <div class="bg-secondary-subtle rounded-3 me-3 d-flex align-items-center justify-content-center text-muted" style="width: 120px; height: 80px;">
-                                                <i class="bi bi-car-front fs-3"></i>
-                                            </div>
-                                        {% endif %}
-                                        <div class="flex-grow-1">
-                                            <h6 class="fw-bold mb-1 fs-5">{{ don.xe.ten_xe }}</h6>
-                                            <p class="text-muted small mb-1">Loại đơn: <span class="badge border text-dark">{{ don.get_loai_don_display }}</span></p>
-                                            <p class="text-danger fw-bold mb-0 fs-6">{{ don.tong_tien|intcomma }} ₫</p>
-                                        </div>
-                                        <a href="{% url 'chi_tiet_don_khach' don.id %}" class="btn btn-outline-success rounded-pill px-4 fw-bold shadow-sm">Chi tiết</a>
+                        <div class="card border border-light-subtle shadow-sm rounded-4 overflow-hidden">
+                            <div
+                                class="card-header bg-light d-flex justify-content-between align-items-center pt-3 pb-2">
+                                <span class="text-muted small"><i class="bi bi-clock me-1"></i> Ngày đặt: <strong>{{
+                                        don.ngay_dat|date:"d/m/Y" }}</strong></span>
+                                <span
+                                    class="badge {% if don.trang_thai == 'Paid' %}bg-success{% elif don.trang_thai == 'Cancelled' %}bg-danger{% else %}bg-warning text-dark{% endif %} px-3 py-2 rounded-pill">
+                                    {{ don.get_trang_thai_display }}
+                                </span>
+                            </div>
+                            <div class="card-body p-3 p-md-4">
+                                <div class="d-flex align-items-center">
+                                    {% if don.xe.hinh_anh %}
+                                    <img src="{{ don.xe.hinh_anh.url }}" class="rounded-3 object-fit-cover me-3 border"
+                                        style="width: 120px; height: 80px;">
+                                    {% else %}
+                                    <div class="bg-secondary-subtle rounded-3 me-3 d-flex align-items-center justify-content-center text-muted"
+                                        style="width: 120px; height: 80px;">
+                                        <i class="bi bi-car-front fs-3"></i>
                                     </div>
+                                    {% endif %}
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold mb-1 fs-5">{{ don.xe.ten_xe }}</h6>
+                                        <p class="text-muted small mb-1">Loại đơn: <span
+                                                class="badge border text-dark">{{ don.get_loai_don_display }}</span></p>
+                                        <p class="text-danger fw-bold mb-0 fs-6">{{ don.tong_tien|intcomma }} ₫</p>
+                                    </div>
+                                    <a href="{% url 'chi_tiet_don_khach' don.id %}"
+                                        class="btn btn-outline-success rounded-pill px-4 fw-bold shadow-sm">Chi tiết</a>
                                 </div>
                             </div>
+                        </div>
                         {% endfor %}
-                        </div>
+                    </div>
                     {% else %}
-                        <div class="text-center py-5 text-muted bg-light rounded-4 border border-dashed">
-                            <i class="bi bi-bag-x display-1 opacity-25 mb-3 d-block"></i>
-                            <h5 class="fw-bold fs-5">Bạn chưa có đơn hàng nào</h5>
-                            <p class="small px-2">Hãy khám phá các dòng xe điện tuyệt vời của chúng tôi nhé!</p>
-                            <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-success rounded-pill px-4 mt-2 fw-bold shadow-sm">Mua sắm ngay</a>
-                        </div>
+                    <div class="text-center py-5 text-muted bg-light rounded-4 border border-dashed">
+                        <i class="bi bi-bag-x display-1 opacity-25 mb-3 d-block"></i>
+                        <h5 class="fw-bold fs-5">Bạn chưa có đơn hàng nào</h5>
+                        <p class="small px-2">Hãy khám phá các dòng xe điện tuyệt vời của chúng tôi nhé!</p>
+                        <a href="{% url 'danh_sach_san_pham' %}"
+                            class="btn btn-success rounded-pill px-4 mt-2 fw-bold shadow-sm">Mua sắm ngay</a>
+                    </div>
                     {% endif %}
                 </div>
 
                 <!-- 3. TAB LÁI THỬ -->
-                <div class="tab-pane fade {% if active_tab == 'laithu' %}show active{% endif %}" id="content-laithu" role="tabpanel">
-                    <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3"><i class="bi bi-car-front-fill me-2 text-info"></i>Lịch sử Lái thử</h4>
-                    
+                <div class="tab-pane fade {% if active_tab == 'laithu' %}show active{% endif %}" id="content-laithu"
+                    role="tabpanel">
+                    <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3"><i
+                            class="bi bi-car-front-fill me-2 text-info"></i>Lịch sử Lái thử</h4>
+
                     {% if danh_sach_lai_thu %}
-                        <div class="table-responsive bg-white border rounded-4 shadow-sm">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="py-3 ps-3">Ngày đăng ký</th>
-                                        <th class="py-3">Mẫu xe</th>
-                                        <th class="py-3">Chi nhánh trải nghiệm</th>
-                                        <th class="py-3 pe-3">Trạng thái</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                    <div class="table-responsive bg-white border rounded-4 shadow-sm">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="py-3 ps-3">Ngày đăng ký</th>
+                                    <th class="py-3">Mẫu xe</th>
+                                    <th class="py-3">Chi nhánh trải nghiệm</th>
+                                    <th class="py-3 pe-3">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                                 {% for lt in danh_sach_lai_thu %}
-                                    <tr>
-                                        <td class="ps-3">{{ lt.ngay_tao|date:"d/m/Y" }}</td>
-                                        
-                                        <td class="fw-bold text-primary">
-                                            {% if lt.xe_quan_tam %}
-                                                {{ lt.xe_quan_tam.ten_xe }}
-                                            {% else %}
-                                                <span class="text-muted fw-normal fst-italic">Chưa chọn xe</span>
-                                            {% endif %}
-                                        </td>
-                                        
-                                        <td><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ lt.cua_hang.ten_cua_hang }}</td>
-                                        <td class="pe-3">
-                                            {% if lt.trang_thai == 'Da_hoan_tat' %}
-                                                <span class="badge bg-success rounded-pill px-3 py-2">Đã trải nghiệm</span>
-                                            {% elif lt.trang_thai == 'Cho_xac_nhan' %}
-                                                <span class="badge bg-warning text-dark rounded-pill px-3 py-2">Đang chờ hẹn</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary rounded-pill px-3 py-2">{{ lt.get_trang_thai_display }}</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
+                                <tr>
+                                    <td class="ps-3">{{ lt.ngay_tao|date:"d/m/Y" }}</td>
+
+                                    <td class="fw-bold text-primary">
+                                        {% if lt.xe_quan_tam %}
+                                        {{ lt.xe_quan_tam.ten_xe }}
+                                        {% else %}
+                                        <span class="text-muted fw-normal fst-italic">Chưa chọn xe</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ lt.cua_hang.ten_cua_hang
+                                        }}</td>
+                                    <td class="pe-3">
+                                        {% if lt.trang_thai == 'Da_hoan_tat' %}
+                                        <span class="badge bg-success rounded-pill px-3 py-2">Đã trải nghiệm</span>
+                                        {% elif lt.trang_thai == 'Cho_xac_nhan' %}
+                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">Đang chờ
+                                            hẹn</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary rounded-pill px-3 py-2">{{
+                                            lt.get_trang_thai_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
                                 {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
+                            </tbody>
+                        </table>
+                    </div>
                     {% else %}
-                        <div class="text-center py-5 text-muted bg-light rounded-4 border border-dashed">
-                            <i class="bi bi-journal-x display-1 opacity-25 mb-3 d-block"></i>
-                            <h5 class="fw-bold fs-5">Bạn chưa đăng ký lái thử lần nào</h5>
-                            <a href="{% url 'danh_sach_san_pham' %}" class="btn btn-outline-primary rounded-pill mt-3 fw-bold px-4">Đăng ký trải nghiệm ngay</a>
-                        </div>
+                    <div class="text-center py-5 text-muted bg-light rounded-4 border border-dashed">
+                        <i class="bi bi-journal-x display-1 opacity-25 mb-3 d-block"></i>
+                        <h5 class="fw-bold fs-5">Bạn chưa đăng ký lái thử lần nào</h5>
+                        <a href="{% url 'danh_sach_san_pham' %}"
+                            class="btn btn-outline-primary rounded-pill mt-3 fw-bold px-4">Đăng ký trải nghiệm ngay</a>
+                    </div>
                     {% endif %}
                 </div>
 
                 <!-- 4. TAB SẠC PIN -->
-                <div class="tab-pane fade {% if active_tab == 'sacpin' %}show active{% endif %}" id="content-sacpin" role="tabpanel">
-                    <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3"><i class="bi bi-ev-station-fill me-2 text-success"></i>Lịch sử Sạc pin</h4>
-                    
+                <div class="tab-pane fade {% if active_tab == 'sacpin' %}show active{% endif %}" id="content-sacpin"
+                    role="tabpanel">
+                    <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3"><i
+                            class="bi bi-ev-station-fill me-2 text-success"></i>Lịch sử Sạc pin</h4>
+
                     {% if danh_sach_phien_sac %}
-                        <div class="table-responsive bg-white border rounded-4 shadow-sm">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="py-3 ps-3">Thời gian</th>
-                                        <th class="py-3">Trạm sạc</th>
-                                        <th class="py-3">Điện năng</th>
-                                        <th class="py-3">Tổng tiền</th>
-                                        <th class="py-3 pe-3">Trạng thái</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                    <div class="table-responsive bg-white border rounded-4 shadow-sm">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="py-3 ps-3">Thời gian</th>
+                                    <th class="py-3">Trạm sạc</th>
+                                    <th class="py-3">Điện năng</th>
+                                    <th class="py-3">Tổng tiền</th>
+                                    <th class="py-3 pe-3">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                                 {% for ps in danh_sach_phien_sac %}
-                                    <tr>
-                                        <td class="small ps-3">{{ ps.thoi_gian_bat_dau|date:"d/m/Y H:i" }}</td>
-                                        <td class="fw-bold text-success"><i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ ps.tram_sac.ten_tram }}</td>
-                                        <td class="fw-semibold">{{ ps.dien_nang_tieu_thu }} <span class="text-muted small">kWh</span></td>
-                                        <td class="fw-bold text-danger">{{ ps.tong_tien|intcomma }} ₫</td>
-                                        <td class="pe-3">
-                                            <span class="badge {% if ps.trang_thai == 'Hoan thanh' %}bg-success{% else %}bg-warning text-dark{% endif %} rounded-pill px-2 py-1">
-                                                {{ ps.trang_thai }}
-                                            </span>
-                                        </td>
-                                    </tr>
+                                <tr>
+                                    <td class="small ps-3">{{ ps.thoi_gian_bat_dau|date:"d/m/Y H:i" }}</td>
+                                    <td class="fw-bold text-success"><i
+                                            class="bi bi-geo-alt-fill text-danger me-1"></i>{{ ps.tram_sac.ten_tram }}
+                                    </td>
+                                    <td class="fw-semibold">{{ ps.dien_nang_tieu_thu }} <span
+                                            class="text-muted small">kWh</span></td>
+                                    <td class="fw-bold text-danger">{{ ps.tong_tien|intcomma }} ₫</td>
+                                    <td class="pe-3">
+                                        <span
+                                            class="badge {% if ps.trang_thai == 'Hoan thanh' %}bg-success{% else %}bg-warning text-dark{% endif %} rounded-pill px-2 py-1">
+                                            {{ ps.trang_thai }}
+                                        </span>
+                                    </td>
+                                </tr>
                                 {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
+                            </tbody>
+                        </table>
+                    </div>
                     {% else %}
-                        <div class="text-center py-5 text-muted bg-light rounded-4 border border-dashed">
-                            <i class="bi bi-plug-fill display-1 opacity-25 mb-3 d-block"></i>
-                            <h5 class="fw-bold fs-5">Bạn chưa sử dụng dịch vụ sạc pin</h5>
-                            <p class="small px-2">Lịch sử sạc tại các trạm sẽ được cập nhật tại đây.</p>
-                            <a href="{% url 'ban_do_gis' %}" class="btn btn-outline-success rounded-pill mt-2 px-4 fw-bold">Tìm trạm sạc quanh đây</a>
-                        </div>
+                    <div class="text-center py-5 text-muted bg-light rounded-4 border border-dashed">
+                        <i class="bi bi-plug-fill display-1 opacity-25 mb-3 d-block"></i>
+                        <h5 class="fw-bold fs-5">Bạn chưa sử dụng dịch vụ sạc pin</h5>
+                        <p class="small px-2">Lịch sử sạc tại các trạm sẽ được cập nhật tại đây.</p>
+                        <a href="{% url 'ban_do_gis' %}"
+                            class="btn btn-outline-success rounded-pill mt-2 px-4 fw-bold">Tìm trạm sạc quanh đây</a>
+                    </div>
                     {% endif %}
                 </div>
 
                 <!-- 5. TAB VÍ VOUCHER -->
-                <div class="tab-pane fade {% if active_tab == 'voucher' %}show active{% endif %}" id="content-voucher" role="tabpanel">
-                    <h4 class="fw-bold mb-3 mb-md-4 text-danger border-bottom pb-2 pb-md-3"><i class="bi bi-wallet2 me-2"></i>Ví Voucher Của Tôi</h4>
-                    
+                <div class="tab-pane fade {% if active_tab == 'voucher' %}show active{% endif %}" id="content-voucher"
+                    role="tabpanel">
+                    <h4 class="fw-bold mb-3 mb-md-4 text-danger border-bottom pb-2 pb-md-3"><i
+                            class="bi bi-wallet2 me-2"></i>Ví Voucher Của Tôi</h4>
+
                     <div class="row g-3">
                         <!-- VOUCHER THÀNH VIÊN -->
                         {% for km in voucher_private %}
@@ -253,9 +337,11 @@
                                     </div>
                                     <div>
                                         <h6 class="fw-bold mb-1 text-success">{{ km.ten_chuong_trinh }}</h6>
-                                        <p class="text-muted small mb-2"><i class="bi bi-clock-history me-1"></i>Hạn dùng: {{ km.ngay_ket_thuc|date:"d/m/Y" }}</p>
+                                        <p class="text-muted small mb-2"><i class="bi bi-clock-history me-1"></i>Hạn
+                                            dùng: {{ km.ngay_ket_thuc|date:"d/m/Y" }}</p>
                                         <div class="d-inline-block bg-light px-2 py-1 border rounded text-dark">
-                                            Mã code: <span class="fw-bold text-danger user-select-all">{{ km.ma_code }}</span>
+                                            Mã code: <span class="fw-bold text-danger user-select-all">{{ km.ma_code
+                                                }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -273,9 +359,11 @@
                                     </div>
                                     <div>
                                         <h6 class="fw-bold mb-1 text-primary">{{ km.ten_chuong_trinh }}</h6>
-                                        <p class="text-muted small mb-2"><i class="bi bi-clock-history me-1"></i>Hạn dùng: {{ km.ngay_ket_thuc|date:"d/m/Y" }}</p>
+                                        <p class="text-muted small mb-2"><i class="bi bi-clock-history me-1"></i>Hạn
+                                            dùng: {{ km.ngay_ket_thuc|date:"d/m/Y" }}</p>
                                         <div class="d-inline-block bg-light px-2 py-1 border rounded text-dark">
-                                            Mã code: <span class="fw-bold text-danger user-select-all">{{ km.ma_code }}</span>
+                                            Mã code: <span class="fw-bold text-danger user-select-all">{{ km.ma_code
+                                                }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -288,12 +376,15 @@
                         <div class="col-md-6">
                             <div class="card bg-danger-subtle border-danger border-2 rounded-4 h-100 shadow-sm">
                                 <div class="card-body d-flex align-items-center position-relative overflow-hidden">
-                                    <i class="bi bi-gift-fill text-danger opacity-25 position-absolute end-0 bottom-0" style="font-size: 5rem; transform: rotate(-15deg); margin-right: -10px;"></i>
+                                    <i class="bi bi-gift-fill text-danger opacity-25 position-absolute end-0 bottom-0"
+                                        style="font-size: 5rem; transform: rotate(-15deg); margin-right: -10px;"></i>
                                     <div class="z-1">
                                         <h6 class="fw-bold mb-1 text-danger">Quà tặng sau Lái thử!</h6>
                                         <p class="text-dark small mb-2 fw-semibold">{{ km.ten_chuong_trinh }}</p>
-                                        <div class="d-inline-block bg-white px-2 py-1 border border-danger rounded text-dark">
-                                            Mã code: <span class="fw-bold text-danger user-select-all">{{ km.ma_code }}</span>
+                                        <div
+                                            class="d-inline-block bg-white px-2 py-1 border border-danger rounded text-dark">
+                                            Mã code: <span class="fw-bold text-danger user-select-all">{{ km.ma_code
+                                                }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -305,18 +396,23 @@
                         <div class="col-12 text-center py-5 bg-light rounded-4 border border-dashed">
                             <i class="bi bi-wallet2 display-1 opacity-25 mb-3 d-block text-danger"></i>
                             <h5 class="fw-bold fs-5">Ví của bạn đang trống</h5>
-                            <p class="small text-muted px-2">Hãy săn thêm các mã khuyến mãi công khai trên trang chủ nhé!</p>
-                            <a href="{% url 'trang_chu' %}" class="btn btn-outline-danger rounded-pill px-4 mt-2 fw-bold">Săn voucher ngay</a>
+                            <p class="small text-muted px-2">Hãy săn thêm các mã khuyến mãi công khai trên trang chủ
+                                nhé!</p>
+                            <a href="{% url 'trang_chu' %}"
+                                class="btn btn-outline-danger rounded-pill px-4 mt-2 fw-bold">Săn voucher ngay</a>
                         </div>
                         {% endif %}
                     </div>
                 </div>
 
                 <!-- 6. TAB EMAIL -->
-                <div class="tab-pane fade {% if active_tab == 'email' %}show active{% endif %}" id="content-email" role="tabpanel">
-                    <h4 class="fw-bold mb-3 mb-md-4 text-primary border-bottom pb-2 pb-md-3 fs-5 fs-md-4"><i class="bi bi-envelope-at me-2"></i>Thay đổi Email</h4>
-                    <p class="text-muted mb-4 small">Để đảm bảo an toàn cho tài khoản của bạn, vui lòng nhập mật khẩu hiện tại khi muốn đổi sang Email mới.</p>
-                    
+                <div class="tab-pane fade {% if active_tab == 'email' %}show active{% endif %}" id="content-email"
+                    role="tabpanel">
+                    <h4 class="fw-bold mb-3 mb-md-4 text-primary border-bottom pb-2 pb-md-3 fs-5 fs-md-4"><i
+                            class="bi bi-envelope-at me-2"></i>Thay đổi Email</h4>
+                    <p class="text-muted mb-4 small">Để đảm bảo an toàn cho tài khoản của bạn, vui lòng nhập mật khẩu
+                        hiện tại khi muốn đổi sang Email mới.</p>
+
                     <form method="POST" class="bg-light p-3 p-md-4 rounded-4 border border-light-subtle">
                         {% csrf_token %}
                         <div class="row g-3 g-md-4">
@@ -325,23 +421,27 @@
                                 <label class="form-label fw-bold small text-muted">{{ field.label }}</label>
                                 {{ field }}
                                 {% if field.errors %}
-                                    <div class="text-danger small mt-1"><i class="bi bi-exclamation-triangle"></i> {{ field.errors|striptags }}</div>
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-triangle"></i> {{
+                                    field.errors|striptags }}</div>
                                 {% endif %}
                             </div>
                             {% endfor %}
                         </div>
                         <div class="text-center text-md-end mt-4 pt-3 border-top">
-                            <button type="submit" name="btn_doi_email" class="btn btn-primary px-5 fw-bold rounded-pill shadow-sm w-100 w-md-auto">
+                            <button type="submit" name="btn_doi_email"
+                                class="btn btn-primary px-5 fw-bold rounded-pill shadow-sm w-100 w-md-auto">
                                 Cập nhật Email
                             </button>
                         </div>
                     </form>
                 </div>
-                
+
                 <!-- 7. TAB BẢO MẬT -->
-                <div class="tab-pane fade {% if active_tab == 'security' %}show active{% endif %}" id="content-security" role="tabpanel">
-                    <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3 fs-5 fs-md-4"><i class="bi bi-shield-lock me-2 text-warning"></i>Đổi mật khẩu</h4>
-                    
+                <div class="tab-pane fade {% if active_tab == 'security' %}show active{% endif %}" id="content-security"
+                    role="tabpanel">
+                    <h4 class="fw-bold mb-3 mb-md-4 text-dark border-bottom pb-2 pb-md-3 fs-5 fs-md-4"><i
+                            class="bi bi-shield-lock me-2 text-warning"></i>Đổi mật khẩu</h4>
+
                     <form method="POST" class="bg-white p-2 p-md-0">
                         {% csrf_token %}
                         <div class="row">
@@ -350,17 +450,20 @@
                                 <label class="form-label fw-bold small text-muted">{{ field.label }}</label>
                                 {{ field }}
                                 {% if field.errors %}
-                                    <div class="text-danger small mt-1"><i class="bi bi-exclamation-triangle"></i> {{ field.errors|striptags }}</div>
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-triangle"></i> {{
+                                    field.errors|striptags }}</div>
                                 {% endif %}
                                 {% if field.help_text %}
-                                    <div class="form-text text-muted fst-italic" style="font-size: 0.75rem;">{{ field.help_text|safe }}</div>
+                                <div class="form-text text-muted fst-italic" style="font-size: 0.75rem;">{{
+                                    field.help_text|safe }}</div>
                                 {% endif %}
                             </div>
                             {% endfor %}
                         </div>
 
                         <div class="text-center text-md-end mt-4 mt-md-5 pt-3 border-top">
-                            <button type="submit" name="btn_doi_mat_khau" class="btn btn-dark px-5 fw-bold rounded-pill shadow-sm w-100 w-md-auto">
+                            <button type="submit" name="btn_doi_mat_khau"
+                                class="btn btn-dark px-5 fw-bold rounded-pill shadow-sm w-100 w-md-auto">
                                 Lưu mật khẩu mới
                             </button>
                         </div>
@@ -374,59 +477,229 @@
 <style>
     /* CSS Menu Trái (Giữ nguyên của bạn) */
     .nav-pills .nav-link {
-        color: #495057; border-radius: 12px; transition: all 0.3s ease;
+        color: #495057;
+        border-radius: 12px;
+        transition: all 0.3s ease;
     }
+
     .nav-pills .nav-link:hover:not(.active) {
-        background-color: #e9f7ef; color: #198754;
+        background-color: #e9f7ef;
+        color: #198754;
     }
+
     .nav-pills .nav-link.active {
-        background-color: #198754 !important; color: white !important; box-shadow: 0 4px 10px rgba(25, 135, 84, 0.3);
+        background-color: #198754 !important;
+        color: white !important;
+        box-shadow: 0 4px 10px rgba(25, 135, 84, 0.3);
     }
+
     .nav-pills .nav-link.text-danger.active {
-        background-color: #dc3545 !important; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+        background-color: #dc3545 !important;
+        box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
     }
-    .border-dashed { border-style: dashed !important; }
+
+    .border-dashed {
+        border-style: dashed !important;
+    }
 
     /* Vuốt ngang cho Mobile */
     @media (max-width: 767px) {
         .mobile-scroll-menu {
-            flex-direction: row !important; flex-wrap: nowrap; overflow-x: auto;
-            -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 10px !important; gap: 10px;
+            flex-direction: row !important;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding: 10px !important;
+            gap: 10px;
         }
-        .mobile-scroll-menu::-webkit-scrollbar { display: none; }
+
+        .mobile-scroll-menu::-webkit-scrollbar {
+            display: none;
+        }
+
         .mobile-scroll-menu .nav-link {
-            margin-bottom: 0 !important; white-space: nowrap; padding: 10px 20px !important;
-            border-radius: 50px !important; text-align: center !important;
+            margin-bottom: 0 !important;
+            white-space: nowrap;
+            padding: 10px 20px !important;
+            border-radius: 50px !important;
+            text-align: center !important;
         }
     }
 
     /* Bổ sung CSS cho Input của form Email & Mật khẩu nếu chưa có */
-    #content-security input, #content-email input {
-        display: block; 
-        width: 100%; 
+    #content-security input,
+    #content-email input {
+        display: block;
+        width: 100%;
         padding: 0.75rem 1rem;
-        font-size: 1rem; 
-        font-weight: 400; 
+        font-size: 1rem;
+        font-weight: 400;
         line-height: 1.5;
-        color: #212529; 
+        color: #212529;
         background-color: #fcfcfc;
-        border: 1px solid #ced4da; 
+        border: 1px solid #ced4da;
         border-radius: 0.5rem;
         transition: all 0.2s ease-in-out;
     }
 
-    #content-security input:focus, #content-email input:focus {
-        border-color: #198754; 
+    #content-security input:focus,
+    #content-email input:focus {
+        border-color: #198754;
         background-color: #fff;
-        outline: 0; 
+        outline: 0;
         box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15);
     }
 </style>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Tọa độ mặc định ban đầu (Trung tâm TP.HCM)
+    let defaultLat = 10.7769;
+    let defaultLng = 106.7009;
 
+    // 2. Khởi tạo bản đồ
+    const map = L.map('mapPicker').setView([defaultLat, defaultLng], 15);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker = L.marker([defaultLat, defaultLng], {draggable: true}).addTo(map);
+    const diaChiInput = document.getElementById('dia_chi_input');
+    const btnTimMap = document.getElementById('btn-tim-ban-do');
+
+    // Fix lỗi bản đồ bị xám một góc khi render trong Tab Bootstrap
+    setTimeout(function(){ map.invalidateSize(); }, 500);
+
+    // =========================================================
+    // HÀM 1: TỌA ĐỘ -> ĐỊA CHỈ (Khi kéo thả ghim hoặc ấn Định vị)
+    // =========================================================
+    function geocodeLatLng(lat, lng) {
+        diaChiInput.value = "Đang tìm địa chỉ...";
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.display_name) {
+                    diaChiInput.value = data.display_name;
+                } else {
+                    diaChiInput.value = "Không tìm thấy địa chỉ tại tọa độ này.";
+                }
+            })
+            .catch(error => {
+                console.error("Lỗi Geocoding:", error);
+                diaChiInput.value = "Lỗi kết nối bản đồ.";
+            });
+    }
+
+    // =========================================================
+    // HÀM 2: ĐỊA CHỈ -> TỌA ĐỘ (Khi ấn nút Tìm Map)
+    // =========================================================
+    function searchAddressOnMap(query, isAutoLoad = false) {
+        if (!query) {
+            if (!isAutoLoad) alert("Vui lòng nhập địa chỉ vào ô trống trước khi tìm kiếm!");
+            return;
+        }
+
+        // Tạo hiệu ứng xoay xoay (loading) cho nút Tìm Map
+        const originalHtml = btnTimMap.innerHTML;
+        if (!isAutoLoad) {
+            btnTimMap.innerHTML = '<span class="spinner-border spinner-border-sm mt-2" role="status"></span>';
+            btnTimMap.disabled = true;
+        }
+
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (!isAutoLoad) {
+                    btnTimMap.innerHTML = originalHtml;
+                    btnTimMap.disabled = false;
+                }
+
+                if (data && data.length > 0) {
+                    const lat = data[0].lat;
+                    const lng = data[0].lon;
+                    
+                    // Dời bản đồ và ghim đến vị trí vừa tìm được
+                    const newLatLng = new L.LatLng(lat, lng);
+                    map.setView(newLatLng, 16);
+                    marker.setLatLng(newLatLng);
+                    
+                    if (!isAutoLoad) diaChiInput.value = data[0].display_name; // Cập nhật lại tên chuẩn
+                } else {
+                    if (!isAutoLoad) alert("Không tìm thấy! Vui lòng nhập địa chỉ chung chung hơn (VD: Tên đường, Quận, Tỉnh).");
+                }
+            })
+            .catch(error => {
+                if (!isAutoLoad) {
+                    btnTimMap.innerHTML = originalHtml;
+                    btnTimMap.disabled = false;
+                    alert("Lỗi kết nối máy chủ bản đồ.");
+                }
+            });
+    }
+
+    // --- GẮN CÁC SỰ KIỆN TƯƠNG TÁC ---
+
+    // Sự kiện 1: Bấm nút "Tìm Map"
+    btnTimMap.addEventListener('click', function() {
+        searchAddressOnMap(diaChiInput.value.trim());
+    });
+
+    // Sự kiện 2: Bấm Enter trong ô nhập địa chỉ cũng tự đi tìm
+    diaChiInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchAddressOnMap(diaChiInput.value.trim());
+        }
+    });
+
+    // Sự kiện 3: Click lên bản đồ
+    map.on('click', function(e) {
+        marker.setLatLng(e.latlng);
+        geocodeLatLng(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Sự kiện 4: Kéo thả ghim
+    marker.on('dragend', function(e) {
+        const position = marker.getLatLng();
+        geocodeLatLng(position.lat, position.lng);
+    });
+
+    // Sự kiện 5: Nút Định vị GPS (Vị trí của tôi)
+    document.getElementById('btn-lay-vi-tri').addEventListener('click', function() {
+        if (navigator.geolocation) {
+            diaChiInput.value = "Đang định vị...";
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const newLatLng = new L.LatLng(position.coords.latitude, position.coords.longitude);
+                    map.setView(newLatLng, 16);
+                    marker.setLatLng(newLatLng);
+                    geocodeLatLng(position.coords.latitude, position.coords.longitude);
+                }, 
+                function(error) {
+                    alert("Không thể lấy vị trí. Vui lòng cấp quyền vị trí cho trình duyệt.");
+                    diaChiInput.value = "";
+                }
+            );
+        } else {
+            alert("Trình duyệt không hỗ trợ định vị.");
+        }
+    });
+
+    // --- TÍNH NĂNG ĐẶC BIỆT: Tự động load bản đồ nếu khách đã có địa chỉ ---
+    if (diaChiInput.value.trim() !== "") {
+        searchAddressOnMap(diaChiInput.value.trim(), true);
+    }
+});
+</script>
 <script>
     function previewImage(event) {
         var reader = new FileReader();
-        reader.onload = function() {
+        reader.onload = function () {
             var output = document.getElementById('avatarPreviewMenu');
             output.src = reader.result;
         }

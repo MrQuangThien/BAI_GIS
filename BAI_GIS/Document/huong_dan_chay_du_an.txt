@@ -1,0 +1,29 @@
+bước 1 clone git về máy
+------------------------------------------------------------
+git clone https://github.com/MrQuangThien/BAI_GIS.git
+
+cd BAI_GIS
+
+git checkout DEV
+---------------------------------------------------------------
+bước 2  cài đặt thư viện 
+----------------------------------------- 
+pip install -r requirements.txt
+-------------------------------------------
+bước 3 chạy lệnh
+----------------------------------
+python manage.py migrate
+--------------------------------
+
+bước 4 tao tk admin
+---------------------------------------
+python manage.py createsuperuser
+--------------------------------------------
+bước 5
+chạy dự án
+--------------------------------
+python manage.py runserver
+
+
+
+

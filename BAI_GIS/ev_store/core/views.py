@@ -1137,7 +1137,7 @@ def sua_cua_hang(request, pk):
 @phan_quyen(roles=['admin', 'quan_ly'])
 def xoa_cua_hang(request, pk):
     ch = get_object_or_404(CuaHang, pk=pk)
-    if not ch.xedien_set.exists(): ch.delete()
+    if not ch.danh_sach_xe.exists(): ch.delete()
     return redirect('quan_ly_cua_hang')
 
 
